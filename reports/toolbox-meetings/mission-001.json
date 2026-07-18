@@ -13,5 +13,8 @@
   "approval_required": false,
   "forbidden_actions": ["deploy", "ssh", "patch containers", "rotate secrets", "modify live services", "create product features"],
   "required_response": ["department", "captain", "mission_understanding", "owned_systems", "risks", "forbidden_actions", "definition_of_done", "handoff_to", "status"],
-  "status": "awaiting_department_reports"
+  "status": "department_reports_received",
+  "processed_at": "2026-07-18T19:10:00Z",
+  "processed_by": "command-desk",
+  "response_summary": "All nine departments returned alignment reports. This was a no-mutation doctrine drill; no production status was inferred."
 }

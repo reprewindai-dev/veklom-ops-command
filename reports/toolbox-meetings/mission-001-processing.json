@@ -1,0 +1,11 @@
+{
+  "mission_id": "mission-001",
+  "source": "reports/command-desk-inbox.jsonl",
+  "processed_by": "command-desk",
+  "processed_at": "2026-07-18T19:10:00Z",
+  "assignments_created": 9,
+  "responses_created": 9,
+  "production_mutation": false,
+  "deployment": "not applicable",
+  "validation": "pending final validation"
+}
