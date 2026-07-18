@@ -9,4 +9,6 @@ reports/latest/*.json
 reports/latest/*.log
 teams/*/reports/*.log
 teams/*/reports/*.json
-
+.runtime/
+teams/*/info
+teams/*/warn
