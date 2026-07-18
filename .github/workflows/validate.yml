@@ -1,0 +1,20 @@
+name: Validate Ops Command
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate structure and JSON
+        run: bash scripts/verify-repo-structure.sh
+      - name: Scan tracked content for obvious secret material
+        run: bash teams/security-secrets/scripts/check-secrets.sh

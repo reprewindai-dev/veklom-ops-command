@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Veklom public protocol manifest",
+  "type": "object",
+  "required": ["service", "repo", "role", "version", "base_url", "health", "dependencies", "auth_mode", "status", "capabilities", "links"],
+  "properties": {
+    "service": {"type":"string"}, "repo": {"type":"string"}, "role": {"type":"string"}, "version": {"type":"string"}, "base_url": {"type":"string", "format":"uri"},
+    "health": {"type":"string"}, "dependencies": {"type":"array", "items":{"type":"string"}},
+    "auth_mode": {"enum":["none","bearer","server-api-key","session","x402","mixed"]}, "status": {"type":"string"},
+    "capabilities": {"type":"array", "items":{"type":"string"}}, "links": {"type":"object", "additionalProperties":{"type":"string", "format":"uri"}}
+  },
+  "additionalProperties": false
+}

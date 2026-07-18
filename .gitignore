@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+coverage/
+.DS_Store
+reports/latest/*.json
+reports/latest/*.log
+teams/*/reports/*.log
+teams/*/reports/*.json
+
