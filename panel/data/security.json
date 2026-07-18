@@ -1,0 +1,1 @@
+{"secret_scan":"passed on last repo validation","tracked_env":"not detected","public_ports":"host verification required","raw_ip_onboarding":"not evaluated","manifest_leaks":"schema and doctrine guard present","token_rotation":"metadata-only; no credentials stored","veto":"Security & Secrets may block release"}

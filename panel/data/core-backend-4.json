@@ -1,0 +1,6 @@
+[
+  {"repo":"reprewindai-dev/veklom-byos-backend","owner_departments":["production-truth","release-control","security-secrets","runtime-governance"],"protocol":"unknown","introspect":"unknown","health":"unknown","dependencies":"unknown","coolify":"unknown","last_verified":"not verified","risk":"unverified"},
+  {"repo":"reprewindai-dev/cappo-backend","owner_departments":["runtime-governance","production-truth","release-control"],"protocol":"unknown","introspect":"unknown","health":"unknown","dependencies":"unknown","coolify":"unknown","last_verified":"not verified","risk":"unverified"},
+  {"repo":"reprewindai-dev/gnomledger","owner_departments":["evidence-ledger","production-truth","release-control"],"protocol":"unknown","introspect":"unknown","health":"unknown","dependencies":"unknown","coolify":"unknown","last_verified":"not verified","risk":"unverified"},
+  {"repo":"reprewindai-dev/lockerphycer","owner_departments":["security-secrets","runtime-governance","production-truth","release-control"],"protocol":"unknown","introspect":"unknown","health":"unknown","dependencies":"unknown","coolify":"unknown","last_verified":"not verified","risk":"unverified"}
+]
