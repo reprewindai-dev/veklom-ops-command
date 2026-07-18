@@ -27,7 +27,11 @@ async function teamState(team) {
   const reportDir = join(dir, 'reports');
   let reports = [];
   try { reports = (await readdir(reportDir)).filter((name) => !name.endsWith('.gitkeep')).slice(-5); } catch {}
-  return { team, mission: (await text(join(dir, 'team.md'))).split('\n').find((line) => line.toLowerCase().startsWith('mission:'))?.replace(/^mission:\s*/i, '') || 'Mission recorded in team.md', targetCount: config.targets?.length || 0, reports, watcher: 'not running' };
+  const departmentReport = await text(join(DEPARTMENT_REPORTS, `${team}.jsonl`), '');
+  let latestReport = null;
+  const latestLine = departmentReport.trim().split('\n').filter(Boolean).at(-1);
+  if (latestLine) { try { latestReport = JSON.parse(latestLine); } catch {} }
+  return { team, mission: (await text(join(dir, 'team.md'))).split('\n').find((line) => line.toLowerCase().startsWith('mission:'))?.replace(/^mission:\s*/i, '') || 'Mission recorded in team.md', targetCount: config.targets?.length || 0, reports, latestReport, watcher: 'not running' };
 }
 async function latestMission() {
   try {
