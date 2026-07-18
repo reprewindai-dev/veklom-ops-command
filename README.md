@@ -35,7 +35,7 @@ Before major work, complete `runbooks/toolbox-meeting.md` and create an explicit
 
 ## Founder panel
 
-Run `./scripts/start-panel.sh` and open `http://127.0.0.1:4173`. The private panel reads this repository's version, branch, commit, canonical team configs, reports, and change state. Its Command Desk message box appends approval-gated instructions to `reports/command-desk-inbox.jsonl` for the operating team to process.
+Run `./scripts/start-panel.sh` from Git Bash, `powershell -ExecutionPolicy Bypass -File .\scripts\start-panel.ps1` from Windows PowerShell, or double-click `scripts/start-panel.cmd`. Then open `http://127.0.0.1:4173`. The private panel reads this repository's version, branch, commit, canonical team configs, reports, and change state. Its Command Desk message box appends approval-gated instructions to `reports/command-desk-inbox.jsonl` for the operating team to process.
 
 ## Safe start
 
