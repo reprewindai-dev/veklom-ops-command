@@ -3,7 +3,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 if command -v poltergeist >/dev/null 2>&1; then
-  for config in "$ROOT_DIR"/teams/*/poltergeist.config.json; do
+  CANONICAL_TEAMS=(command-desk poltergeist-platform production-truth release-control build-devex security-secrets runtime-governance evidence-ledger edge-fleet-vnp)
+  for team in "${CANONICAL_TEAMS[@]}"; do
+    config="$ROOT_DIR/teams/$team/poltergeist.config.json"
     team_dir="$(dirname "$config")"
     team="$(basename "$team_dir")"
     echo "=== $team ==="

@@ -7,7 +7,9 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PIDS_DIR="${VEKLOM_OPS_PIDS_DIR:-$ROOT_DIR/.runtime/pids}"
 mkdir -p "$PIDS_DIR"
 
-for config in "$ROOT_DIR"/teams/*/poltergeist.config.json; do
+CANONICAL_TEAMS=(command-desk poltergeist-platform production-truth release-control build-devex security-secrets runtime-governance evidence-ledger edge-fleet-vnp)
+for team in "${CANONICAL_TEAMS[@]}"; do
+  config="$ROOT_DIR/teams/$team/poltergeist.config.json"
   team_dir="$(dirname "$config")"
   team="$(basename "$team_dir")"
   pid_file="$PIDS_DIR/$team.pid"

@@ -1,0 +1,54 @@
+import { createServer } from 'node:http';
+import { readFile, appendFile, readdir, stat } from 'node:fs/promises';
+import { existsSync, watch } from 'node:fs';
+import { join, resolve, relative } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+
+const exec = promisify(execFile);
+const PANEL_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)));
+const ROOT = resolve(PANEL_DIR, '..');
+const PORT = Number(process.env.VEKLOM_OPS_PANEL_PORT || 4173);
+const HOST = process.env.VEKLOM_OPS_PANEL_HOST || '127.0.0.1';
+const VERSION_FILE = join(ROOT, 'VERSION');
+const INBOX = join(ROOT, 'reports', 'command-desk-inbox.jsonl');
+const TEAMS = ['command-desk','poltergeist-platform','production-truth','release-control','build-devex','security-secrets','runtime-governance','evidence-ledger','edge-fleet-vnp'];
+const clients = new Set();
+
+async function text(path, fallback = '') { try { return await readFile(path, 'utf8'); } catch { return fallback; } }
+async function git(args) { try { const { stdout } = await exec('git', ['-C', ROOT, ...args]); return stdout.trim(); } catch { return 'unavailable'; } }
+async function teamState(team) {
+  const dir = join(ROOT, 'teams', team);
+  const config = JSON.parse(await text(join(dir, 'poltergeist.config.json'), '{}'));
+  const reportDir = join(dir, 'reports');
+  let reports = [];
+  try { reports = (await readdir(reportDir)).filter((name) => !name.endsWith('.gitkeep')).slice(-5); } catch {}
+  return { team, mission: (await text(join(dir, 'team.md'))).split('\n').find((line) => line.toLowerCase().startsWith('mission:'))?.replace(/^mission:\s*/i, '') || 'Mission recorded in team.md', targetCount: config.targets?.length || 0, reports, watcher: 'not running' };
+}
+async function state() {
+  const [version, branch, sha, dirty] = await Promise.all([text(VERSION_FILE, 'unversioned'), git(['branch','--show-current']), git(['rev-parse','--short','HEAD']), git(['status','--porcelain'])]);
+  return { product: 'Veklom Ops Command', version: version.trim(), branch, commit: sha, dirty: Boolean(dirty), generatedAt: new Date().toISOString(), teams: await Promise.all(TEAMS.map(teamState)) };
+}
+function json(res, status, payload) { res.writeHead(status, {'content-type':'application/json; charset=utf-8','cache-control':'no-store'}); res.end(JSON.stringify(payload)); }
+function sendEvent(payload) { const message = `data: ${JSON.stringify(payload)}\n\n`; for (const client of clients) client.write(message); }
+async function body(req) { let raw=''; for await (const chunk of req) raw += chunk; if (raw.length > 10000) throw new Error('message too large'); return JSON.parse(raw || '{}'); }
+async function handler(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  if (req.method === 'GET' && url.pathname === '/api/state') return json(res, 200, await state());
+  if (req.method === 'GET' && url.pathname === '/api/events') { res.writeHead(200, {'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'}); res.write(`data: ${JSON.stringify(await state())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
+  if (req.method === 'POST' && url.pathname === '/api/messages') {
+    try {
+      const message = await body(req);
+      if (typeof message.text !== 'string' || message.text.trim().length < 1) return json(res, 400, {error:'text is required'});
+      const record = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), from: 'founder-operator', to: 'command-desk', text: message.text.trim(), risk: message.risk || 'medium', requiresApproval: message.requiresApproval !== false, status: 'queued' };
+      await appendFile(INBOX, JSON.stringify(record) + '\n', { encoding:'utf8' }); sendEvent({type:'message', record}); return json(res, 201, record);
+    } catch (error) { return json(res, 400, {error: error.message}); }
+  }
+  if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) { res.writeHead(200, {'content-type':'text/html; charset=utf-8'}); return res.end(await text(join(PANEL_DIR, 'public', 'index.html'))); }
+  if (req.method === 'GET' && url.pathname.startsWith('/')) { const requested = resolve(PANEL_DIR, 'public', `.${url.pathname}`); if (relative(join(PANEL_DIR, 'public'), requested).startsWith('..')) return json(res, 403, {error:'forbidden'}); if (existsSync(requested)) { res.writeHead(200, {'content-type': requested.endsWith('.css') ? 'text/css' : 'text/javascript'}); return res.end(await readFile(requested)); } }
+  return json(res, 404, {error:'not found'});
+}
+
+createServer((req,res) => handler(req,res).catch(error => json(res, 500, {error:'panel failure', detail:error.message}))).listen(PORT, HOST, () => console.log(`Veklom Ops Panel listening on http://${HOST}:${PORT}`));
+try { watch(join(ROOT, 'teams'), { recursive: true }, () => sendEvent({type:'state', data: null})); } catch { setInterval(() => sendEvent({type:'state', data: null}), 5000); }

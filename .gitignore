@@ -7,6 +7,7 @@ coverage/
 .DS_Store
 reports/latest/*.json
 reports/latest/*.log
+reports/command-desk-inbox.jsonl
 teams/*/reports/*.log
 teams/*/reports/*.json
 .runtime/

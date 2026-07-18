@@ -33,6 +33,10 @@ Named people are persona anchors only. They do not imply employment, endorsement
 
 Before major work, complete `runbooks/toolbox-meeting.md` and create an explicit department handoff using `standards/interdepartment-message.schema.json`.
 
+## Founder panel
+
+Run `./scripts/start-panel.sh` and open `http://127.0.0.1:4173`. The private panel reads this repository's version, branch, commit, canonical team configs, reports, and change state. Its Command Desk message box appends approval-gated instructions to `reports/command-desk-inbox.jsonl` for the operating team to process.
+
 ## Safe start
 
 ```bash
