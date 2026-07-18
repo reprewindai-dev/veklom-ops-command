@@ -13,6 +13,8 @@ const PORT = Number(process.env.VEKLOM_OPS_PANEL_PORT || 4173);
 const HOST = process.env.VEKLOM_OPS_PANEL_HOST || '127.0.0.1';
 const VERSION_FILE = join(ROOT, 'VERSION');
 const INBOX = join(ROOT, 'reports', 'command-desk-inbox.jsonl');
+const MISSIONS = join(ROOT, 'reports', 'toolbox-meetings');
+const DEPARTMENT_REPORTS = join(ROOT, 'reports', 'departments');
 const TEAMS = ['command-desk','poltergeist-platform','production-truth','release-control','build-devex','security-secrets','runtime-governance','evidence-ledger','edge-fleet-vnp'];
 const clients = new Set();
 
@@ -26,9 +28,19 @@ async function teamState(team) {
   try { reports = (await readdir(reportDir)).filter((name) => !name.endsWith('.gitkeep')).slice(-5); } catch {}
   return { team, mission: (await text(join(dir, 'team.md'))).split('\n').find((line) => line.toLowerCase().startsWith('mission:'))?.replace(/^mission:\s*/i, '') || 'Mission recorded in team.md', targetCount: config.targets?.length || 0, reports, watcher: 'not running' };
 }
+async function latestMission() {
+  try {
+    const files = (await readdir(MISSIONS)).filter((name) => name.endsWith('.json')).sort();
+    if (!files.length) return null;
+    const mission = JSON.parse(await text(join(MISSIONS, files.at(-1)), '{}'));
+    const departments = [mission.primary_department, ...(mission.supporting_departments || [])];
+    mission.responses = await Promise.all(departments.map(async (department) => ({ department, status: existsSync(join(DEPARTMENT_REPORTS, `${department}.jsonl`)) ? 'reported' : 'awaiting_response' })));
+    return mission;
+  } catch { return null; }
+}
 async function state() {
-  const [version, branch, sha, dirty] = await Promise.all([text(VERSION_FILE, 'unversioned'), git(['branch','--show-current']), git(['rev-parse','--short','HEAD']), git(['status','--porcelain'])]);
-  return { product: 'Veklom Ops Command', version: version.trim(), branch, commit: sha, dirty: Boolean(dirty), generatedAt: new Date().toISOString(), teams: await Promise.all(TEAMS.map(teamState)) };
+  const [version, branch, sha, dirty, mission] = await Promise.all([text(VERSION_FILE, 'unversioned'), git(['branch','--show-current']), git(['rev-parse','--short','HEAD']), git(['status','--porcelain']), latestMission()]);
+  return { product: 'Veklom Ops Command', version: version.trim(), branch, commit: sha, dirty: Boolean(dirty), generatedAt: new Date().toISOString(), mission, teams: await Promise.all(TEAMS.map(teamState)) };
 }
 function json(res, status, payload) { res.writeHead(status, {'content-type':'application/json; charset=utf-8','cache-control':'no-store'}); res.end(JSON.stringify(payload)); }
 function sendEvent(payload) { const message = `data: ${JSON.stringify(payload)}\n\n`; for (const client of clients) client.write(message); }

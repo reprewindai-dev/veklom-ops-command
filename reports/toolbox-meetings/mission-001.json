@@ -1,0 +1,17 @@
+{
+  "mission_id": "mission-001",
+  "created_at": "2026-07-18T00:00:00Z",
+  "requested_by": "Chris / Founder Operator",
+  "title": "Veklom Ops Command alignment drill",
+  "primary_objective": "Read the final Veklom operating doctrine and report how your department will protect, verify, and hand off work.",
+  "scope": "Private ops-command repository only; no product or production changes.",
+  "primary_department": "command-desk",
+  "supporting_departments": ["poltergeist-platform", "production-truth", "release-control", "build-devex", "security-secrets", "runtime-governance", "evidence-ledger", "edge-fleet-vnp"],
+  "risk_level": "low",
+  "production_impact": false,
+  "security_impact": false,
+  "approval_required": false,
+  "forbidden_actions": ["deploy", "ssh", "patch containers", "rotate secrets", "modify live services", "create product features"],
+  "required_response": ["department", "captain", "mission_understanding", "owned_systems", "risks", "forbidden_actions", "definition_of_done", "handoff_to", "status"],
+  "status": "awaiting_department_reports"
+}
