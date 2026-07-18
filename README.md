@@ -25,9 +25,13 @@ These are Tier 0 and receive the strictest gates:
 
 The ops command repo watches these repos; it is not embedded in any one of them.
 
-## Team-of-teams
+## Nine-department team-of-teams
 
-Each team is an independent Poltergeist project with `team.md`, tool-agnostic agent contracts, scripts, reports, and a `poltergeist.config.json`. `scripts/start-watch-teams.sh` starts one daemon per team, while `scripts/status-watch-teams.sh` aggregates state.
+The canonical departments are Command Desk, Poltergeist Platform, Production Truth, Release Control, Build & DevEx, Security & Secrets, Runtime Governance, Evidence & Ledger, and Edge Fleet & VNP Signals. Each is an independent Poltergeist project with `team.md`, tool-agnostic agent contracts, scripts, reports, and a `poltergeist.config.json`. `scripts/start-watch-teams.sh` starts one daemon per team, while `scripts/status-watch-teams.sh` aggregates state.
+
+Named people are persona anchors only. They do not imply employment, endorsement, or public affiliation.
+
+Before major work, complete `runbooks/toolbox-meeting.md` and create an explicit department handoff using `standards/interdepartment-message.schema.json`.
 
 ## Safe start
 
@@ -41,4 +45,3 @@ To enable watchers, install Poltergeist and Watchman using the upstream instruct
 ## Scope boundary
 
 This repository observes, verifies, records, and gates. It does not SSH into production, patch running containers, rotate credentials, or deploy services.
-

@@ -7,7 +7,7 @@ export VEKLOM_OPS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 import json
 import os
 from pathlib import Path
-teams = ['production-sre','protocol-mesh','security-secrets','release-manager','build-ide','edge-fleet','product-runtime','evidence-proof']
+teams = ['command-desk','poltergeist-platform','production-truth','release-control','build-devex','security-secrets','runtime-governance','evidence-ledger','edge-fleet-vnp']
 root = Path(os.environ['VEKLOM_OPS_ROOT'])
 for team in teams:
     base = root / 'teams' / team

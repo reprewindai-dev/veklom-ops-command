@@ -27,4 +27,6 @@ Every release record must contain repository, branch, commit SHA, changed files,
 - Never treat synthetic or mock evidence as production evidence.
 - Never use this repo as a production runtime.
 - Never enable automatic production deployment from a watcher.
-
+- Private operations matrices may contain Coolify container names, internal ports, server role notes, and deployment diagnostics.
+- Public `/protocol.json` manifests must never expose container names, private IPs, secrets, environment variables, SSH paths, raw infrastructure details, or internal Docker hostnames.
+- Persona anchors model leadership standards only; they do not represent real Veklom staff or endorsements.

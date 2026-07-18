@@ -11,6 +11,10 @@
 | Portal, Apex, Terminal, GPC, product surface | Product Runtime | Protocol Mesh and Release |
 | PGL, Gnomledger, settlement, permit, retrieval proof | Evidence Proof | Protocol Mesh and Release |
 
+## Canonical departments
+
+Command Desk routes. Poltergeist Platform owns watcher discipline. Production Truth owns live claims. Release Control owns source-to-deploy proof. Build & DevEx owns local work. Security & Secrets has veto power over exposure. Runtime Governance owns Cappo/cAPI enforcement. Evidence & Ledger owns persisted proof. Edge Fleet & VNP Signals owns regional probes and scoring.
+
 ## Execution sequence
 
 ```text
@@ -19,4 +23,3 @@ Chris command → router → captain → sub-agent checks → release gate → s
 ```
 
 No captain may self-approve a production release. Build/IDE agents may prepare changes; only Release Manager can declare release readiness after required evidence exists.
-
