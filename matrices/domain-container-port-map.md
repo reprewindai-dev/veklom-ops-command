@@ -8,9 +8,10 @@
 | governance.veklom.com | tvxcsezs2ypd8tjuj6ic9gih-230135676493 | 3002 | no |
 | control.veklom.com | tvxcsezs2ypd8tjuj6ic9gih-230135676493 | 3002 | no |
 | interlink.veklom.com | ox6sadqw5cqrkz7tbhwb12qx-142016658979 | 3000 | no |
-| pgl.veklom.com | xlkby54o7jdlib3rz2p510cs-180811986986 | 8000 | no |
-| capi.veklom.com | cappo-backend-node | 8000 | no |
-| cappo.veklom.com | cappo-backend-node | 8000 | no |
+| pgl.veklom.com | xlkby54o7jdlib3rz2p510cs-180811986986 | 8095 | no |
+| capi.veklom.com | cappo-backend-node | 8093 | no |
+| cappo.veklom.com | cappo-backend-node | 8093 | no |
+| lockerphycer.veklom.com | lockerphycer-node | 8092 | no |
 | vnp.veklom.com | veklom-vnp-standalone-node | 8089 | no |
 
 Expected public exposure: 80/443 and restricted SSH only. Treat mappings as starting truth until verified.
