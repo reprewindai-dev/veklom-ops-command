@@ -1,0 +1,1 @@
+{"name":"veklom-agent-runner","private":true,"type":"module","scripts":{"run":"node runner.mjs"},"engines":{"node":">=20"}}

@@ -37,6 +37,10 @@ Before major work, complete `runbooks/toolbox-meeting.md` and create an explicit
 
 Run `./scripts/start-panel.sh` from Git Bash, `powershell -ExecutionPolicy Bypass -File .\scripts\start-panel.ps1` from Windows PowerShell, or double-click `scripts/start-panel.cmd`. Then open `http://127.0.0.1:4173`. The private panel reads this repository's version, branch, commit, canonical team configs, reports, and change state. Its Command Desk message box appends approval-gated instructions to `reports/command-desk-inbox.jsonl` for the operating team to process.
 
+The actual department execution layer is `runner/runner.mjs`. Configure an approved model/API key and run `scripts/run-agent-mission.ps1`; without those credentials the runner refuses to execute and does not fabricate reports.
+
+Continuous operation is defined in `AUTONOMY_DOCTRINE.md` and started with `scripts/start-agent-watch.ps1`. Uncertain or production-impacting work must stop for clarification/approval.
+
 ## Safe start
 
 ```bash
