@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-HOSTS=(api.veklom.com bingo.veklom.com governance.veklom.com control.veklom.com interlink.veklom.com pgl.veklom.com duel.veklom.com capi.veklom.com cappo.veklom.com vnp.veklom.com)
+HOSTS=(api.veklom.com bingo.veklom.com governance.veklom.com control.veklom.com interlink.veklom.com pgl.veklom.com duel.veklom.com capi.veklom.com cappo.veklom.com vnp.veklom.com lockerphycer.veklom.com)
 for host in "${HOSTS[@]}"; do
   echo "=== $host ==="
   for path in /protocol.json /health /health/dependencies; do
