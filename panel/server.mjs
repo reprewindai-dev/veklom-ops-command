@@ -31,7 +31,7 @@ async function teamState(team) {
   let latestReport = null;
   const latestLine = departmentReport.trim().split('\n').filter(Boolean).at(-1);
   if (latestLine) { try { latestReport = JSON.parse(latestLine); } catch {} }
-  return { team, mission: (await text(join(dir, 'team.md'))).split('\n').find((line) => line.toLowerCase().startsWith('mission:'))?.replace(/^mission:\s*/i, '') || 'Mission recorded in team.md', targetCount: config.targets?.length || 0, reports, latestReport, watcher: 'not running' };
+  return { team, mission: (await text(join(dir, 'team.md'))).split('\n').find((line) => line.toLowerCase().startsWith('mission:'))?.replace(/^mission:\s*/i, '') || 'Mission recorded in team.md', targetCount: config.targets?.length || 0, reports, latestReport, report_url: `/reports/departments/${team}`, watcher: 'not running' };
 }
 async function latestMission() {
   try {
@@ -43,7 +43,7 @@ async function latestMission() {
       const reportPath = join(DEPARTMENT_REPORTS, `${department}.jsonl`);
       const raw = await text(reportPath, '');
       const latest = raw.trim().split('\n').filter(Boolean).at(-1);
-      return { department, status: latest ? 'reported' : 'awaiting_response', report: latest ? JSON.parse(latest) : null };
+      return { department, status: latest ? 'reported' : 'awaiting_response', report_url: `/reports/departments/${department}`, report: latest ? JSON.parse(latest) : null };
     }));
     return mission;
   } catch { return null; }
@@ -53,12 +53,29 @@ async function state() {
   return { product: 'Veklom Ops Command', version: version.trim(), branch, commit: sha, dirty: Boolean(dirty), generatedAt: new Date().toISOString(), mission, capabilities: JSON.parse(capabilities), coreBackend4: JSON.parse(coreBackend4), security: JSON.parse(security), teams: await Promise.all(TEAMS.map(teamState)) };
 }
 function json(res, status, payload) { res.writeHead(status, {'content-type':'application/json; charset=utf-8','cache-control':'no-store'}); res.end(JSON.stringify(payload)); }
+function html(res, status, body) { res.writeHead(status, {'content-type':'text/html; charset=utf-8','cache-control':'no-store'}); res.end(body); }
+function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char])); }
+async function reportPage(title, value) { return `<!doctype html><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>body{background:#0b0e13;color:#eef3f8;font:15px/1.5 system-ui;padding:32px}main{max-width:1000px;margin:auto}pre{white-space:pre-wrap;background:#121720;border:1px solid #26303d;border-radius:12px;padding:20px;color:#c8f6e9}a{color:#66e3c4}</style><main><p><a href="/">← Back to Veklom Ops Command</a></p><h1>${escapeHtml(title)}</h1><pre>${escapeHtml(JSON.stringify(value, null, 2))}</pre></main>`; }
 function sendEvent(payload) { const message = `data: ${JSON.stringify(payload)}\n\n`; for (const client of clients) client.write(message); }
 async function body(req) { let raw=''; for await (const chunk of req) raw += chunk; if (raw.length > 10000) throw new Error('message too large'); return JSON.parse(raw || '{}'); }
 async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (req.method === 'GET' && url.pathname === '/api/state') return json(res, 200, await state());
   if (req.method === 'GET' && url.pathname === '/api/events') { res.writeHead(200, {'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'}); res.write(`data: ${JSON.stringify(await state())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
+  if (req.method === 'GET' && url.pathname.startsWith('/reports/departments/')) {
+    const department = url.pathname.split('/').at(-1);
+    if (!TEAMS.includes(department)) return json(res, 404, {error:'unknown department'});
+    const raw = await text(join(DEPARTMENT_REPORTS, `${department}.jsonl`), '');
+    const latest = raw.trim().split('\n').filter(Boolean).at(-1);
+    if (!latest) return html(res, 404, await reportPage(`${department} report`, {status:'awaiting_response'}));
+    return html(res, 200, await reportPage(`${department} report`, JSON.parse(latest)));
+  }
+  if (req.method === 'GET' && url.pathname.startsWith('/reports/toolbox-meetings/')) {
+    const mission = url.pathname.split('/').at(-1);
+    if (!/^mission-[a-z0-9-]+$/.test(mission)) return json(res, 404, {error:'invalid mission'});
+    const value = JSON.parse(await text(join(MISSIONS, `${mission}.json`), '{}'));
+    return html(res, 200, await reportPage(`${mission} toolbox meeting`, value));
+  }
   if (req.method === 'POST' && url.pathname === '/api/messages') {
     try {
       const message = await body(req);
