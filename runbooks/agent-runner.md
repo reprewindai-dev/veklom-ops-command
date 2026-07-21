@@ -1,6 +1,6 @@
 # Veklom Agent Runner
 
-The runner is the execution layer between the founder inbox and department reports. It reads the newest queued instruction, sends each department a constrained prompt containing its own doctrine and roster, validates the returned JSON, writes `reports/departments/<team>.jsonl`, updates Mission state, and writes a run record under `reports/agent-runs/`.
+The runner is the parent/child execution layer between the founder inbox and department reports. The Command Desk parent reads the newest queued instruction and spawns one isolated child worker for each department. Each child receives its own doctrine, roster, mission, and cAPI admission context, then returns validated JSON to `reports/departments/<team>.jsonl`. The parent updates Mission state and writes a run record under `reports/agent-runs/`.
 
 For continuous operation, run `scripts/start-agent-watch.ps1` from PowerShell or `scripts/start-agent-watch.cmd`. The watch daemon observes the declared Veklom ops scope and triggers the governed runner when the founder inbox changes. It does not grant production tools.
 
