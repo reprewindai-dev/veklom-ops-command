@@ -1,0 +1,69 @@
+{
+  "run_id": "ac733149-a97e-4273-9f4f-4737debbdcda",
+  "parent": "command-desk",
+  "mission_id": "mission-backend-purge",
+  "trigger": {
+    "mission_id": "mission-backend-purge",
+    "timestamp": "2026-07-25T16:30:00Z"
+  },
+  "children": [
+    {
+      "team": "command-desk",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "poltergeist-platform",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "production-truth",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "release-control",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "build-devex",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "security-secrets",
+      "status": "failed",
+      "output": "",
+      "error": "security-secrets: missing or invalid handoff_to"
+    },
+    {
+      "team": "runtime-governance",
+      "status": "failed",
+      "output": "",
+      "error": "runtime-governance: missing or invalid handoff_to"
+    },
+    {
+      "team": "evidence-ledger",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "edge-fleet-vnp",
+      "status": "failed",
+      "output": "",
+      "error": "edge-fleet-vnp: missing or invalid handoff_to"
+    }
+  ],
+  "child_count": 9,
+  "production_mutation": false,
+  "capi_boundary": "required for capabilities",
+  "started_at": "2026-07-25T16:44:56.479Z"
+}

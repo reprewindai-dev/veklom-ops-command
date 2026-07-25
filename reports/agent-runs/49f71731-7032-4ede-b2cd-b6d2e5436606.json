@@ -1,0 +1,69 @@
+{
+  "run_id": "49f71731-7032-4ede-b2cd-b6d2e5436606",
+  "parent": "command-desk",
+  "mission_id": "mission-backend-purge",
+  "trigger": {
+    "mission_id": "mission-backend-purge",
+    "timestamp": "2026-07-25T16:30:00Z"
+  },
+  "children": [
+    {
+      "team": "command-desk",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "poltergeist-platform",
+      "status": "reported",
+      "output": "{\"team\":\"poltergeist-platform\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"bddd5b73-7c18-4f7c-8659-ce2209c7e208\"}",
+      "error": ""
+    },
+    {
+      "team": "production-truth",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "release-control",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "build-devex",
+      "status": "reported",
+      "output": "{\"team\":\"build-devex\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"12c035d6-e9cb-4011-88a7-c0e8a6384891\"}",
+      "error": ""
+    },
+    {
+      "team": "security-secrets",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "runtime-governance",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    },
+    {
+      "team": "evidence-ledger",
+      "status": "failed",
+      "output": "",
+      "error": "evidence-ledger: missing or invalid handoff_to"
+    },
+    {
+      "team": "edge-fleet-vnp",
+      "status": "failed",
+      "output": "",
+      "error": "fetch failed"
+    }
+  ],
+  "child_count": 9,
+  "production_mutation": false,
+  "capi_boundary": "required for capabilities",
+  "started_at": "2026-07-25T16:54:43.743Z"
+}

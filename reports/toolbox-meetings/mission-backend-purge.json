@@ -1,0 +1,18 @@
+{
+  "mission_id": "mission-backend-purge",
+  "instructions": "Harden the 4 Backends (gnomledger, cappo-backend, veklom-byos-backend-2, lockerphycer). 1. Purge ANY reference to ports 3000 and 8000. 2. Ensure they map to their canonical ports: Gnomledger (8001), CAPPO (8002), BYOS (8088), Lockerphycer (8092). 3. Ensure cAPI is embedded and connected. 4. Use git to commit these changes to a new branch named 'ops-backend-hardening' and simulate a PR push.",
+  "target_repos": [
+    "gnomledger",
+    "cappo-backend",
+    "veklom-byos-backend-2",
+    "lockerphycer"
+  ],
+  "status": "department_reports_received",
+  "processed_at": "2026-07-25T17:06:59.973Z",
+  "processed_by": "command-desk-parent-agent",
+  "parent_run_id": "bb1d9799-6f1d-4dc4-b1f4-ca7ed4103428",
+  "trigger": {
+    "mission_id": "mission-backend-purge",
+    "timestamp": "2026-07-25T16:30:00Z"
+  }
+}

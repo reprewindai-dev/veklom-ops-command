@@ -1,0 +1,69 @@
+{
+  "run_id": "bb1d9799-6f1d-4dc4-b1f4-ca7ed4103428",
+  "parent": "command-desk",
+  "mission_id": "mission-backend-purge",
+  "trigger": {
+    "mission_id": "mission-backend-purge",
+    "timestamp": "2026-07-25T16:30:00Z"
+  },
+  "children": [
+    {
+      "team": "command-desk",
+      "status": "reported",
+      "output": "{\"team\":\"command-desk\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"6792c080-0db7-4356-bae3-9feef9d093e7\"}",
+      "error": ""
+    },
+    {
+      "team": "poltergeist-platform",
+      "status": "reported",
+      "output": "{\"team\":\"poltergeist-platform\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"4b0694a7-5062-495e-8094-69b0f4aa18da\"}",
+      "error": ""
+    },
+    {
+      "team": "production-truth",
+      "status": "reported",
+      "output": "{\"team\":\"production-truth\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"d3b6a735-646b-46ca-9e02-1bdb822c56b6\"}",
+      "error": ""
+    },
+    {
+      "team": "release-control",
+      "status": "reported",
+      "output": "{\"team\":\"release-control\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"eefcc6d8-5d3c-4f0e-9db6-293550ed21c6\"}",
+      "error": ""
+    },
+    {
+      "team": "build-devex",
+      "status": "reported",
+      "output": "{\"team\":\"build-devex\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"3dcd745c-85c5-4b0d-af22-74c5cdfa279a\"}",
+      "error": ""
+    },
+    {
+      "team": "security-secrets",
+      "status": "reported",
+      "output": "{\"team\":\"security-secrets\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"b4a8d997-74af-4a76-9248-e73c893d7ab6\"}",
+      "error": ""
+    },
+    {
+      "team": "runtime-governance",
+      "status": "reported",
+      "output": "{\"team\":\"runtime-governance\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"c3504bb1-c101-4bbf-9607-f1b92e357e45\"}",
+      "error": ""
+    },
+    {
+      "team": "evidence-ledger",
+      "status": "reported",
+      "output": "{\"team\":\"evidence-ledger\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"3f31eb6a-8309-4dde-b385-a271a487210a\"}",
+      "error": ""
+    },
+    {
+      "team": "edge-fleet-vnp",
+      "status": "reported",
+      "output": "{\"team\":\"edge-fleet-vnp\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"bff88050-670b-4ce9-ad3d-e5edbf4919d0\"}",
+      "error": ""
+    }
+  ],
+  "child_count": 9,
+  "production_mutation": false,
+  "capi_boundary": "required for capabilities",
+  "started_at": "2026-07-25T17:06:59.977Z"
+}

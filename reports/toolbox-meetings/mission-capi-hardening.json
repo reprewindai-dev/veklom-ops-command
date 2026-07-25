@@ -1,0 +1,4 @@
+{
+  "mission_id": "mission-capi-hardening",
+  "instructions": "Harden the cAPI repository to act as the Unified MCP Gateway. 1. Read cAPI/src and remove legacy mocks. 2. Ensure networking explicitly uses Coolify container names (cappo-backend-node, etc.) instead of localhost. 3. Write basic Playwright tests proving integration. 4. Use git to commit these changes to a new branch named 'ops-capi-hardening' and simulate pushing a PR."
+}
