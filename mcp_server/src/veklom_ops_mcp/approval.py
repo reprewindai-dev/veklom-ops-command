@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import argparse
 import base64
+import fcntl
 import hashlib
 import hmac
 import json
 import secrets
 import time
 from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 from .config import SETTINGS, Settings
@@ -50,12 +50,20 @@ class ApprovalAuthority:
         self.settings = settings
 
     def _key(self) -> bytes:
-        if not self.settings.approval_hmac_key:
+        raw = self.settings.approval_hmac_key
+        if not raw:
             raise ApprovalError("Approval authority is not configured.")
-        return self.settings.approval_hmac_key.encode()
+        key = raw.encode()
+        if len(key) < 32:
+            raise ApprovalError("Approval authority key must be at least 32 bytes.")
+        return key
 
     def issue(self, action: str, params: dict[str, Any], approved_by: str, ttl_seconds: int | None = None) -> str:
+        if not action or not approved_by:
+            raise ApprovalError("Action and approver identity are required.")
         ttl = min(ttl_seconds or self.settings.approval_ttl_seconds, self.settings.approval_ttl_seconds)
+        if ttl < 1:
+            raise ApprovalError("Approval TTL must be positive.")
         now = int(time.time())
         claims = ApprovalClaims(
             v=1,
@@ -73,16 +81,19 @@ class ApprovalAuthority:
     def verify_and_consume(self, token: str, action: str, params: dict[str, Any]) -> ApprovalClaims:
         try:
             version, payload_b64, sig_b64 = token.split(".", 2)
-        except ValueError as exc:
+            payload = _b64decode(payload_b64)
+            supplied_sig = _b64decode(sig_b64)
+        except (ValueError, base64.binascii.Error) as exc:
             raise ApprovalError("Malformed approval token.") from exc
         if version != "v1":
             raise ApprovalError("Unsupported approval token version.")
-        payload = _b64decode(payload_b64)
         expected = hmac.new(self._key(), payload, hashlib.sha256).digest()
-        if not hmac.compare_digest(expected, _b64decode(sig_b64)):
+        if not hmac.compare_digest(expected, supplied_sig):
             raise ApprovalError("Approval signature is invalid.")
-        raw = json.loads(payload)
-        claims = ApprovalClaims(**raw)
+        try:
+            claims = ApprovalClaims(**json.loads(payload))
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ApprovalError("Approval payload is invalid.") from exc
         now = int(time.time())
         if claims.expires_at < now:
             raise ApprovalError("Approval token expired.")
@@ -98,22 +109,30 @@ class ApprovalAuthority:
     def _consume_nonce(self, nonce: str, expires_at: int) -> None:
         path = self.settings.approval_store
         path.parent.mkdir(parents=True, exist_ok=True)
+        lock_path = path.with_suffix(path.suffix + ".lock")
         now = int(time.time())
-        seen: set[str] = set()
-        retained: list[dict[str, Any]] = []
-        if path.exists():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                try:
-                    row = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if int(row.get("expires_at", 0)) >= now:
-                    retained.append(row)
-                    seen.add(str(row.get("nonce", "")))
-        if nonce in seen:
-            raise ApprovalError("Approval token has already been consumed.")
-        retained.append({"nonce": nonce, "expires_at": expires_at})
-        path.write_text("".join(canonical_json(row) + "\n" for row in retained), encoding="utf-8")
+        with lock_path.open("a+", encoding="utf-8") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                seen: set[str] = set()
+                retained: list[dict[str, Any]] = []
+                if path.exists():
+                    for line in path.read_text(encoding="utf-8").splitlines():
+                        try:
+                            row = json.loads(line)
+                        except json.JSONDecodeError:
+                            continue
+                        if int(row.get("expires_at", 0)) >= now:
+                            retained.append(row)
+                            seen.add(str(row.get("nonce", "")))
+                if nonce in seen:
+                    raise ApprovalError("Approval token has already been consumed.")
+                retained.append({"nonce": nonce, "expires_at": expires_at})
+                temporary = path.with_suffix(path.suffix + ".tmp")
+                temporary.write_text("".join(canonical_json(row) + "\n" for row in retained), encoding="utf-8")
+                temporary.replace(path)
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def main() -> None:
@@ -124,7 +143,8 @@ def main() -> None:
     parser.add_argument("--ttl", type=int, default=None)
     args = parser.parse_args()
     settings = Settings.from_env()
-    settings.validate()
+    if not settings.approval_hmac_key:
+        raise SystemExit("VEKLOM_MCP_APPROVAL_HMAC_KEY is required to mint approvals")
     params = json.loads(args.params_json)
     if not isinstance(params, dict):
         raise SystemExit("--params-json must decode to a JSON object")
