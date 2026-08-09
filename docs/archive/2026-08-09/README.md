@@ -1,6 +1,6 @@
 # Archived cross-repo operating documentation — 2026-08-09
 
-The canonical architecture/runtime reference is now [`../../00_VEKLOM_BIBLE.md`](../../00_VEKLOM_BIBLE.md).
+The canonical architecture/runtime reference is now [`../../../00_VEKLOM_BIBLE.md`](../../../00_VEKLOM_BIBLE.md).
 
 Superseded historical material remains in Git history:
 
