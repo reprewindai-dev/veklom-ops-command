@@ -31,7 +31,7 @@ class Settings:
     environment: str
     coolify_base_url: str
     coolify_read_token: str | None
-    coolify_write_token: str | None
+    coolify_deploy_token: str | None
     byos_base_url: str
     cappo_base_url: str
     pgl_base_url: str
@@ -58,7 +58,7 @@ class Settings:
             environment=os.getenv("VEKLOM_MCP_ENVIRONMENT", "production"),
             coolify_base_url=os.getenv("COOLIFY_BASE_URL", "http://host.docker.internal:8000").rstrip("/"),
             coolify_read_token=os.getenv("COOLIFY_READ_TOKEN"),
-            coolify_write_token=os.getenv("COOLIFY_WRITE_TOKEN"),
+            coolify_deploy_token=os.getenv("COOLIFY_DEPLOY_TOKEN"),
             byos_base_url=os.getenv("VEKLOM_BYOS_BASE_URL", "https://api.veklom.com").rstrip("/"),
             cappo_base_url=os.getenv("VEKLOM_CAPPO_BASE_URL", "https://cappo.veklom.com").rstrip("/"),
             pgl_base_url=os.getenv("VEKLOM_PGL_BASE_URL", "https://pgl.veklom.com").rstrip("/"),
@@ -89,7 +89,7 @@ class Settings:
             missing = [
                 name
                 for name, value in (
-                    ("COOLIFY_WRITE_TOKEN", self.coolify_write_token),
+                    ("COOLIFY_DEPLOY_TOKEN", self.coolify_deploy_token),
                     ("VEKLOM_MCP_APPROVAL_HMAC_KEY", self.approval_hmac_key),
                 )
                 if not value
@@ -98,8 +98,8 @@ class Settings:
                 raise RuntimeError(
                     f"Write mode is fail-closed; missing required settings: {', '.join(missing)}"
                 )
-            if self.coolify_read_token and self.coolify_read_token == self.coolify_write_token:
-                raise RuntimeError("Read and write Coolify tokens must be different credentials.")
+            if self.coolify_read_token and self.coolify_read_token == self.coolify_deploy_token:
+                raise RuntimeError("Read and deploy Coolify tokens must be different credentials.")
 
         for label, url in (
             ("COOLIFY_BASE_URL", self.coolify_base_url),
