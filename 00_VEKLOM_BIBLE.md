@@ -3,8 +3,8 @@
 > **READ THIS FIRST.** This is the canonical architecture + runtime-truth contract for Veklom.
 > It supersedes older “Golden Bible”, agent-alignment, deployment-topology, port-doctrine, and infrastructure-constant documents wherever they conflict.
 >
-> **Last runtime verification:** 2026-08-09 01:42 UTC, using owner-supplied Coolify 4.1.2 screens, active Traefik dynamic configuration, proxy logs, and Sentinel logs.
-> **Last repository verification:** 2026-08-09 against GitHub `main`/default branches.
+> **Last runtime verification:** 2026-08-09 01:42 UTC, using owner-supplied Coolify 4.1.2 screens, active Traefik dynamic configuration, proxy logs, Sentinel logs, and Coolify Advanced settings.
+> **Last repository verification:** 2026-08-09 against GitHub default branches.
 > **Rule:** a claim that has not been independently reverified must be labeled `LAST_KNOWN`, `CONFIGURED`, `UNVERIFIED`, or `TARGET` — never presented as production fact.
 
 ---
@@ -45,19 +45,15 @@ The stable object is the **capability contract**, including inputs, outputs, pre
 
 ### Standalone products vs Capability OS
 
-Some Veklom-built systems are also independently sellable products. Their standalone UI is **not** embedded wholesale inside Capability OS.
+Some Veklom-built systems are independently sellable products. Their standalone UI is **not** embedded wholesale inside Capability OS.
 
-Examples:
-
-- **Project Genome Ledger / PGL** can expose its own registry, certificates, lineage, ledger, exports, and billing as a standalone product. Inside Veklom, its underlying provenance/evidence/lineage capabilities are rebuilt into Veklom-native surfaces.
-- **ABIDE** can have its own standalone blueprint workbench. Inside Veklom, its blueprint/contract compilation capabilities appear as native Capability OS functions.
-- The same rule applies to other reusable Veklom modules: reuse the capability/domain logic; do not paste standalone product pages into the OS.
+- **Project Genome Ledger / PGL** can expose its own registry, certificates, lineage, ledger, exports, and billing as a standalone product. Inside Veklom, its provenance/evidence/lineage capabilities are rebuilt into Veklom-native surfaces.
+- **ABIDE** can have its own standalone blueprint workbench. Inside Veklom, its blueprint/contract capabilities appear as native Capability OS functions.
+- The same rule applies to RepoGate, Apex, Discovery, and other reusable Veklom modules: reuse the domain logic/capability; do not paste standalone product pages into the OS.
 
 ---
 
 ## 3. Canonical Component Responsibilities
-
-Names are implementation domains, not UI requirements.
 
 | Domain | Canonical responsibility |
 |---|---|
@@ -72,32 +68,19 @@ Names are implementation domains, not UI requirements.
 | **VNP** | Measurement, telemetry, routing/observation evidence. |
 | **RepoGate** | Repository/capability intake, inspection, findings, policy/security gating. |
 | **Veklom ID** | Identity/trust events and identity-side verification. |
-| **x402** | Settlement/payment protocol integration where verified; it is not automatically proof of execution. |
+| **x402** | Settlement/payment integration where verified; payment is not automatically proof of execution. |
 
 ### No absolute marketing claims without proof
 
-Do **not** claim any of the following merely because code, a diagram, or a README mentions them:
-
-- “100% production ready”
-- “SOC 2 Type II compliant/certified”
-- “HIPAA compliant”
-- “FIPS 140-2 compliant”
-- “hardware enclave protected”
-- “secrets never enter software memory”
-- “prompt injection eliminated”
-- “immutable / impossible for admins to delete”
-- sub-microsecond global quarantine
-- on-chain finality
-
-Use exact, testable language backed by current evidence.
+Do not claim “100% production ready”, certification/compliance, hardware enclave protection, “secrets never enter software memory”, “prompt injection eliminated”, physical immutability, sub-microsecond global quarantine, or on-chain finality merely because a README or diagram says so. Use exact, testable language backed by current evidence.
 
 ---
 
-## 4. Source Repositories — Current Working Set
+## 4. Current Working Repository Set
 
-These are the active repositories that participate directly in the current Veklom capability/runtime stack and therefore inherit this Bible:
+These repositories participate directly in the current Veklom capability/runtime stack and inherit this Bible:
 
-- `reprewindai-dev/veklom-ops-command` — cross-repo operating control plane and canonical operational Bible
+- `reprewindai-dev/veklom-ops-command`
 - `reprewindai-dev/veklom-byos-backend`
 - `reprewindai-dev/cappo-backend`
 - `reprewindai-dev/cAPI`
@@ -110,9 +93,9 @@ These are the active repositories that participate directly in the current Veklo
 - `reprewindai-dev/veklomdiscovery`
 - `reprewindai-dev/Veklom-ID`
 - `reprewindai-dev/real-repo-gate-for-veklom`
-- `reprewindai-dev/apex` (standalone blueprint/product surface; capability reuse must follow the standalone-vs-OS rule above)
+- `reprewindai-dev/apex`
 
-Historical experiments, duplicate repos, generated prototypes, and old `uacp*` variants are **not automatically canonical** because they exist. Promote a repo into this list only after source + runtime ownership are verified.
+Historical experiments, duplicate repos, generated prototypes, and old `uacp*` variants are not automatically canonical because they exist.
 
 ---
 
@@ -123,31 +106,44 @@ Historical experiments, duplicate repos, generated prototypes, and old `uacp*` v
 - **GitHub default branch = source truth.**
 - **Coolify = deployment/runtime configuration truth.**
 - Environment secrets belong in deployment secret management, not committed `.env` files.
-- Do not make a direct hot patch and then leave GitHub stale. Emergency runtime fixes must be reconciled back to source.
-- Do not publish credentials, tokens, private keys, or secret values in issues, docs, chat, screenshots, or logs.
+- Emergency runtime fixes must be reconciled back into GitHub.
+- Never publish credentials, tokens, private keys, or secret values in issues, docs, chat, screenshots, or logs.
 
 ### Coolify management method
 
-- Use the **Coolify UI/API** for Coolify resource management.
+- Use the **Coolify UI/API/MCP** for Coolify resource management where available.
+- Coolify's MCP endpoint is exposed by the Coolify instance itself and authenticated with a bearer token created under Coolify Security/API Tokens.
 - SSH is reserved for **direct host/container verification or operations** that cannot be performed safely through Coolify.
 - Do not turn routine Coolify management into ad-hoc SSH editing.
 
 ### Docker networking
 
-- `localhost` means **the current container/process namespace**.
-- Inter-container traffic on the same Docker network should use the current service/container DNS name or an explicitly managed service endpoint.
-- Do not hard-code ephemeral Coolify-generated container names into application source when a stable service hostname/config variable exists.
+- `localhost` means the current container/process namespace.
+- Inter-container traffic should use stable service/container DNS or an explicitly managed endpoint.
+- Do not hard-code ephemeral Coolify-generated container IDs into product source when a stable service name/config variable exists.
 
-### Port rule — corrected
+### Host-port reservations vs internal container ports — VERIFIED / CORRECTED
 
-The old rule “port 3000 or 8000 may never be used by a public-facing service” is **false**.
+This distinction is mandatory.
 
-Current verified routing includes services listening internally on `3000` and `8000` behind Traefik. The correct rule is:
+**Host ports are infrastructure-owned and may be reserved. Internal Docker ports are separate.**
 
-- Internal container ports may be `3000`, `8000`, or any valid application port.
-- Avoid conflicting **host-published** ports on the same host.
-- Public traffic should normally enter through Traefik on `80/443` and route to the service’s internal port.
-- Every route must document the actual runtime target; do not infer a port from an old Bible.
+Current verified host bindings/reservations on Server 0 include:
+
+- **Host `80` / `443`** — Traefik public ingress.
+- **Host `8000`** — **Coolify itself**. The Coolify UI is reached on `:8000`, and Coolify's MCP endpoint is `http://<coolify-host>:8000/mcp`. **Do not publish a Veklom application directly on host port 8000.**
+- **Host `8080`** — bound by the Coolify Traefik proxy configuration for its internal API/dashboard service path. Do not allocate it to an unrelated host-published application without first changing and revalidating proxy ownership.
+
+**Internal container port `8000` is not the same thing as host port `8000`.** A container may listen on internal `8000` when that port is only reachable on the Docker network and Traefik routes to it. The current Gnomledger `ledger.veklom.com` route is configured this way.
+
+The same distinction applies to `3000`: multiple current services are configured to listen on internal Docker port `3000` behind Traefik. That does **not** prove host port `3000` is free. The prior reason for reserving host `3000` has not yet been reverified in the 2026-08-09 Coolify evidence, so **do not allocate host port 3000 until it is explicitly reverified**.
+
+Canonical rule:
+
+1. Never choose a host-published port from memory.
+2. Check current Coolify/host bindings first.
+3. Public services normally enter through Traefik `80/443` and route to an internal container port.
+4. Internal `3000`/`8000` are allowed when isolated behind Docker/Traefik; host `8000` is currently reserved by Coolify.
 
 ---
 
@@ -168,8 +164,7 @@ Private operational detail; do not copy this section into public documentation.
 | Server timezone | `UTC` |
 | Proxy | Running |
 | Sentinel | In Sync |
-
-The owner-supplied Coolify screen reported the server reachable and validated.
+| Coolify MCP | exposed at Coolify `:8000/mcp` when enabled; bearer-token authenticated |
 
 ### Sentinel — VERIFIED
 
@@ -180,11 +175,11 @@ Current configuration shown in Coolify:
 - metrics history: `7 days`
 - push interval: `60s`
 
-Live Sentinel logs supplied on 2026-08-09 show repeated `200` responses from `/api/health`, periodic pushes to `/api/v1/sentinel/push`, and successful CPU/memory history queries. Treat Sentinel as operational for this verification window; re-check before making a later availability claim.
+Owner-supplied live Sentinel logs on 2026-08-09 show repeated `200` health responses, periodic pushes to `/api/v1/sentinel/push`, and successful CPU/memory history queries.
 
 ### CA certificate — VERIFIED SCREEN STATE
 
-Coolify showed its CA certificate as valid until `2036-05-15 00:23:57` and the recommended container mount path:
+Coolify showed its CA certificate as valid until `2036-05-15 00:23:57` and the recommended mount path:
 
 `/data/coolify/ssl/coolify-ca.crt:/etc/ssl/certs/coolify-ca.crt:ro`
 
@@ -192,37 +187,27 @@ Only mount it where a container actually needs to trust Coolify-managed database
 
 ---
 
-## 7. Traefik Proxy — VERIFIED + UPGRADE STATUS
-
-### Current deployed state
+## 7. Traefik Proxy — VERIFIED 2026-08-09
 
 Owner-provided Coolify configuration shows:
 
 - proxy container: `coolify-proxy`
-- image branch configured as `traefik:v3.6`
-- actual installed version reported by Coolify: **v3.6.25**
-- ports: `80:80`, `443:443`, `443:443/udp`, `8080:8080`
+- configured image branch: `traefik:v3.6`
+- installed version reported by Coolify: `v3.6.25`
+- bindings: `80:80`, `443:443`, `443:443/udp`, `8080:8080`
 - Docker provider enabled
 - file provider directory: `/traefik/dynamic/`
 - file watch enabled
 - `exposedByDefault=false`
 - ACME HTTP challenge via the `http` entrypoint
 
-### Upstream status — VERIFIED 2026-08-09
-
-- Coolify `v4.1.2` is the current upstream Coolify release.
-- Latest upstream Traefik release is **v3.7.10**.
-- Deployed Traefik remains **v3.6.25**.
-
-**Do not perform an in-place production minor upgrade simply because Coolify displays the notice.** Back up Coolify/proxy state, inspect the Traefik v3 migration guide, test the exact dynamic configuration against v3.7, and then upgrade through the supported Coolify flow.
-
-Relevant migration behavior in the 3.7 branch includes stricter middleware/path handling in later 3.7 patch releases. The currently supplied configuration is Docker/file-provider based rather than Kubernetes, so Kubernetes-specific CRD migrations are not applicable to this host; still test all Veklom routers and middleware before cutover.
+Coolify reports a newer Traefik `v3.7` minor line is available. Do not perform a production minor upgrade solely because the notice appears. Back up proxy state, review upstream migration notes, test the exact dynamic configuration, then upgrade through the supported Coolify flow.
 
 ---
 
 ## 8. Active Traefik Dynamic Routes — CONFIGURED 2026-08-09
 
-`CONFIGURED` means present in the active dynamic configuration screen. It does **not** by itself mean the upstream service is healthy.
+`CONFIGURED` means present in the active dynamic configuration screen. It does not by itself prove the upstream service is healthy.
 
 | Host | Configured target |
 |---|---|
@@ -239,27 +224,17 @@ Relevant migration behavior in the 3.7 branch includes stricter middleware/path 
 | `pgl.veklom.com` | `gnomledger-api-1:8001` |
 | `repogate.veklom.com` | `veklom-repo-gate:3000` |
 | `api.veklom.com` | current BYOS application target on `8088` |
-| `control.veklom.com` / `app.veklom.com` | current Veklom control-plane target on `3002` in `veklom.yaml` |
+| `control.veklom.com` / `app.veklom.com` | current control-plane target on `3002` in `veklom.yaml` |
 
-There are also old `.bak` and `.disabled*` route files in the dynamic-config directory. They are historical artifacts and must not be treated as active topology. Keep backups outside the watched dynamic directory when practical.
+Old `.bak` and `.disabled*` route files are historical artifacts and must not be treated as active topology.
 
 ---
 
 ## 9. KNOWN PRODUCTION ISSUE — ACME / ROOT DOMAIN ROUTING
 
-**Open issue as of the 2026-08-09 verification window.**
+Traefik logs supplied for the 2026-08-09 verification window show failed Let’s Encrypt HTTP-01 renewals for combinations of `veklom.com`, `www.veklom.com`, and `app.veklom.com`. The challenge requests resolve through Cloudflare addresses and return `404` from `/.well-known/acme-challenge/...`.
 
-Traefik logs show failed Let’s Encrypt HTTP-01 renewals for combinations of:
-
-- `veklom.com`
-- `www.veklom.com`
-- `app.veklom.com`
-
-The challenges resolve through Cloudflare addresses and return `404` from `/.well-known/acme-challenge/...`.
-
-The dynamic configuration also contains overlapping root-domain intent (`veklom-redirect.yaml` and `veklom.yaml` both reference Veklom root/control hosts). Do not “fix” certificates by trial-and-error. First determine which origin should own each hostname, then make DNS/proxy/router ownership unambiguous and retest HTTP-01 or move to the appropriate certificate strategy.
-
-Until resolved, do not describe root-domain certificate renewal as healthy merely because application HTTPS currently loads.
+The dynamic configuration also contains overlapping root-domain intent (`veklom-redirect.yaml` and `veklom.yaml`). Determine which origin owns each hostname, make DNS/proxy/router ownership unambiguous, then retest certificate issuance. Do not describe root-domain renewal as healthy merely because an existing certificate still serves HTTPS.
 
 ---
 
@@ -268,31 +243,26 @@ Until resolved, do not describe root-domain certificate renewal as healthy merel
 - Browser frontends do not connect directly to PostgreSQL.
 - Frontends call authenticated service APIs.
 - Database topology is runtime configuration, not a hard-coded product assumption.
-- Separate domain databases/schemas and least-privilege credentials are preferred over one unrestricted account.
-- `pgvector` is a persistence capability, not a reason for every frontend/service to share direct DB access.
-- Never spin up a new hosted database just because an old document says one exists or does not exist. Verify current ownership and migration requirements first.
+- Prefer domain separation and least-privilege credentials over one unrestricted account.
+- Never create a new hosted database merely because an old document says one exists or does not exist; verify current ownership and migration requirements first.
 
-The old July document listed specific Server 0 PostgreSQL/Redis containers and a multi-database layout. Those are now `LAST_KNOWN` until each database/resource is revalidated in current Coolify state.
+Older July documents containing exact PostgreSQL/Redis container IDs and a multi-database layout are `LAST_KNOWN` until each resource is revalidated in current Coolify state.
 
 ---
 
 ## 11. Evidence Standard
 
-Veklom’s evidence model must distinguish:
+Distinguish:
 
 - **assertion** — a claim in text
 - **runtime observation** — logs/UI/API output
 - **persisted evidence** — durable record tied to an execution
 - **cryptographically verified evidence** — signatures/hash-chain/anchor verification actually checked
-- **external finality** — an independent external anchor or settlement confirmed against its authoritative system
+- **external finality** — independent anchor/settlement confirmed against its authoritative system
 
 A hash chain is **tamper-evident**. Do not automatically call it physically immutable or undeletable.
 
-Reason-rich evidence should prefer structured fields such as:
-
-`policy_id`, `policy_version`, `rule_id`, `jurisdiction`, `classification`, `decision`, `reason_code`, `evaluator_version`, `input_hash`, `output_hash`, `authority_grant`, `delegation_chain`, `execution_id`, and verification state.
-
-Human-readable legal explanations may be generated from those fields, but Veklom must not fabricate legal conclusions.
+Reason-rich evidence should prefer structured fields such as `policy_id`, `policy_version`, `rule_id`, `jurisdiction`, `classification`, `decision`, `reason_code`, `evaluator_version`, `input_hash`, `output_hash`, `authority_grant`, `delegation_chain`, `execution_id`, and verification state.
 
 ---
 
@@ -304,23 +274,10 @@ When an older document overlaps with this Bible:
 
 1. Preserve it under `docs/archive/<date>/` when it has historical value.
 2. Replace the old root file with a short deprecation pointer when agents/tools may still discover that filename.
-3. Never maintain two competing “canonical” topology documents.
+3. Never maintain two competing canonical topology documents.
 4. Repo-specific docs may describe local APIs/build/test behavior, but must defer cross-repo architecture, deployment ownership, and runtime topology to this Bible.
 
-### Safe labels
-
-Use these status words consistently:
-
-- `VERIFIED_LIVE`
-- `VERIFIED_REPO`
-- `CONFIGURED`
-- `LAST_KNOWN`
-- `TARGET`
-- `UNVERIFIED`
-- `DEMO`
-- `ARCHIVED`
-
-Do not use “100% real”, “gold standard”, “production ready”, or compliance-certification language as a substitute for evidence.
+Use status labels: `VERIFIED_LIVE`, `VERIFIED_REPO`, `CONFIGURED`, `LAST_KNOWN`, `TARGET`, `UNVERIFIED`, `DEMO`, `ARCHIVED`.
 
 ---
 
@@ -330,10 +287,10 @@ Before changing this Bible:
 
 1. Identify the exact claim being changed.
 2. Verify source truth in the relevant GitHub default branch.
-3. Verify runtime truth in Coolify / the actual deployed endpoint when the claim concerns production.
+3. Verify runtime truth in Coolify / the deployed endpoint when the claim concerns production.
 4. Record the verification date and evidence type.
 5. Update dependent repo mirrors/pointers.
 6. Archive superseded canonical docs.
 7. If runtime and source disagree, record the drift explicitly instead of choosing the more convenient story.
 
-**The Bible is not “true because it is called the Bible.” It is canonical because every factual claim is either verified, qualified, or explicitly marked unknown.**
+**The Bible is not true because it is called the Bible. It is canonical because every factual claim is either verified, qualified, or explicitly marked unknown.**
