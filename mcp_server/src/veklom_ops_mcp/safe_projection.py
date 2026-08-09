@@ -7,6 +7,9 @@ SAFE_FIELDS: dict[str, set[str]] = {
         "uuid", "name", "description", "ip", "port", "proxy_type", "proxy_status",
         "is_reachable", "is_usable", "created_at", "updated_at", "timezone",
     },
+    "server_resource": {
+        "id", "uuid", "name", "type", "status", "created_at", "updated_at",
+    },
     "application": {
         "id", "uuid", "name", "description", "fqdn", "config_hash", "git_repository",
         "git_branch", "git_commit_sha", "git_full_url", "docker_registry_image_name",
@@ -14,13 +17,17 @@ SAFE_FIELDS: dict[str, set[str]] = {
         "health_check_path", "health_check_port", "health_check_method", "status",
         "environment_id", "destination_id", "swarm_replicas", "created_at", "updated_at",
     },
+    "environment_presence": {
+        "uuid", "key", "is_literal", "is_multiline", "is_preview", "is_runtime",
+        "is_buildtime", "is_shared", "is_shown_once", "version", "created_at", "updated_at",
+    },
     "database": {
         "id", "uuid", "name", "description", "type", "status", "image", "is_public",
         "public_port", "environment_id", "destination_id", "created_at", "updated_at",
     },
     "service": {
         "id", "uuid", "name", "description", "status", "server_status", "environment_id",
-        "destination_id", "created_at", "updated_at",
+        "destination_id", "server_id", "service_type", "config_hash", "created_at", "updated_at",
     },
     "deployment": {
         "id", "application_id", "deployment_uuid", "pull_request_id", "force_rebuild",
@@ -55,3 +62,21 @@ def project(kind: str, value: Any) -> Any:
             result["_pagination"] = value["_pagination"]
         return result
     return _project_row(kind, value)
+
+
+def project_domains(value: Any) -> list[dict[str, Any]]:
+    """Project Coolify server-domain output to IP + domain names only."""
+    if not isinstance(value, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for row in value:
+        if not isinstance(row, dict):
+            continue
+        domains = row.get("domains")
+        rows.append(
+            {
+                "ip": row.get("ip"),
+                "domains": [str(item) for item in domains] if isinstance(domains, list) else [],
+            }
+        )
+    return rows
