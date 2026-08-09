@@ -21,6 +21,33 @@ def test_application_projection_excludes_unknown_and_sensitive_fields():
     }
 
 
+def test_environment_presence_projection_never_returns_values():
+    raw = [
+        {
+            "uuid": "env-1",
+            "key": "COVENANT_EVIDENCE_SIGNING_KEY",
+            "value": "private-value-must-never-leave",
+            "real_value": "decoded-private-value-must-never-leave",
+            "is_runtime": True,
+            "is_buildtime": False,
+            "is_preview": False,
+        }
+    ]
+    result = project("environment_presence", raw)
+    assert result == [
+        {
+            "uuid": "env-1",
+            "key": "COVENANT_EVIDENCE_SIGNING_KEY",
+            "is_runtime": True,
+            "is_buildtime": False,
+            "is_preview": False,
+        }
+    ]
+    serialized = repr(result)
+    assert "private-value-must-never-leave" not in serialized
+    assert "decoded-private-value-must-never-leave" not in serialized
+
+
 def test_database_projection_never_returns_credentials_or_connection_strings():
     raw = {
         "uuid": "db-1",
