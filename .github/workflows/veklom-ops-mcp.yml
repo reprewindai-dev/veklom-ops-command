@@ -73,6 +73,11 @@ jobs:
           print(f"classified_tools={len(tools)}")
           PY
 
+      - name: Prove deployment files contain no approval private key
+        run: |
+          ! grep -R "VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64" \
+            mcp_server/docker-compose.yml mcp_server/.env.example mcp_server/Dockerfile
+
   container:
     name: Hardened container build
     runs-on: ubuntu-latest
@@ -113,9 +118,12 @@ jobs:
           python - <<'PY'
           import json
           data = json.load(open('/tmp/health.json'))
-          assert data['mcp'] == 'ready'
-          assert data['writes_enabled'] is False
-          assert data['database_writes'] is False
-          assert data['arbitrary_shell'] is False
-          assert data['secret_value_reads'] is False
+          assert data == {'status': 'ok', 'service': 'veklom-ops-mcp'}
           PY
+
+      - name: Prove sensitive deployment material is absent from container env
+        run: |
+          env_dump="$(docker inspect veklom-mcp-ci --format '{{json .Config.Env}}')"
+          case "$env_dump" in
+            *VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64*) exit 1 ;;
+          esac
