@@ -8,7 +8,7 @@ import httpx
 
 from .config import SETTINGS, Settings
 from .redaction import redact
-from .safe_projection import project
+from .safe_projection import project, project_domains
 
 
 class UpstreamError(RuntimeError):
@@ -49,16 +49,25 @@ class CoolifyClient:
     async def list_servers(self) -> Any:
         return project("server", await self._request("GET", "/servers"))
 
+    async def get_server(self, uuid: str) -> Any:
+        return project("server", await self._request("GET", f"/servers/{uuid}"))
+
+    async def server_resources(self, uuid: str) -> Any:
+        return project("server_resource", await self._request("GET", f"/servers/{uuid}/resources"))
+
+    async def server_domains(self, uuid: str) -> Any:
+        return project_domains(await self._request("GET", f"/servers/{uuid}/domains"))
+
     async def list_applications(self) -> Any:
         return project("application", await self._request("GET", "/applications"))
 
     async def get_application(self, uuid: str) -> Any:
         return project("application", await self._request("GET", f"/applications/{uuid}"))
 
+    async def application_env_presence(self, uuid: str) -> Any:
+        return project("environment_presence", await self._request("GET", f"/applications/{uuid}/envs"))
+
     async def application_logs(self, uuid: str, lines: int) -> Any:
-        # This path still passes recursive redaction. If the configured Coolify
-        # read credential is not allowed to read logs, the tool fails closed and
-        # returns an upstream error instead of escalating to read:sensitive/root.
         lines = max(1, min(lines, self.settings.max_log_lines))
         return redact(
             await self._request("GET", f"/applications/{uuid}/logs", params={"lines": lines}),
@@ -80,6 +89,13 @@ class CoolifyClient:
     async def get_service(self, uuid: str) -> Any:
         return project("service", await self._request("GET", f"/services/{uuid}"))
 
+    async def service_logs(self, uuid: str, lines: int) -> Any:
+        lines = max(1, min(lines, self.settings.max_log_lines))
+        return redact(
+            await self._request("GET", f"/services/{uuid}/logs", params={"lines": lines}),
+            max_chars=self.settings.max_response_chars,
+        )
+
     async def list_deployments(self) -> Any:
         return project("deployment", await self._request("GET", "/deployments"))
 
@@ -94,6 +110,15 @@ class CoolifyClient:
 
     async def stop_application(self, uuid: str) -> Any:
         return await self._request("POST", f"/applications/{uuid}/stop", deploy=True)
+
+    async def restart_service(self, uuid: str) -> Any:
+        return await self._request("POST", f"/services/{uuid}/restart", deploy=True)
+
+    async def start_service(self, uuid: str) -> Any:
+        return await self._request("POST", f"/services/{uuid}/start", deploy=True)
+
+    async def stop_service(self, uuid: str) -> Any:
+        return await self._request("POST", f"/services/{uuid}/stop", deploy=True)
 
     async def deploy(self, uuid: str, *, force: bool = False) -> Any:
         return await self._request("POST", "/deploy", deploy=True, json_body={"uuid": uuid, "force": force})
