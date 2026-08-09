@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import base64
-import fcntl
 import hashlib
 import hmac
 import json
@@ -10,6 +9,8 @@ import secrets
 import time
 from dataclasses import asdict, dataclass
 from typing import Any
+
+from filelock import FileLock
 
 from .config import SETTINGS, Settings
 
@@ -109,30 +110,25 @@ class ApprovalAuthority:
     def _consume_nonce(self, nonce: str, expires_at: int) -> None:
         path = self.settings.approval_store
         path.parent.mkdir(parents=True, exist_ok=True)
-        lock_path = path.with_suffix(path.suffix + ".lock")
         now = int(time.time())
-        with lock_path.open("a+", encoding="utf-8") as lock_file:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            try:
-                seen: set[str] = set()
-                retained: list[dict[str, Any]] = []
-                if path.exists():
-                    for line in path.read_text(encoding="utf-8").splitlines():
-                        try:
-                            row = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-                        if int(row.get("expires_at", 0)) >= now:
-                            retained.append(row)
-                            seen.add(str(row.get("nonce", "")))
-                if nonce in seen:
-                    raise ApprovalError("Approval token has already been consumed.")
-                retained.append({"nonce": nonce, "expires_at": expires_at})
-                temporary = path.with_suffix(path.suffix + ".tmp")
-                temporary.write_text("".join(canonical_json(row) + "\n" for row in retained), encoding="utf-8")
-                temporary.replace(path)
-            finally:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        with FileLock(str(path) + ".lock", timeout=5):
+            seen: set[str] = set()
+            retained: list[dict[str, Any]] = []
+            if path.exists():
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if int(row.get("expires_at", 0)) >= now:
+                        retained.append(row)
+                        seen.add(str(row.get("nonce", "")))
+            if nonce in seen:
+                raise ApprovalError("Approval token has already been consumed.")
+            retained.append({"nonce": nonce, "expires_at": expires_at})
+            temporary = path.with_suffix(path.suffix + ".tmp")
+            temporary.write_text("".join(canonical_json(row) + "\n" for row in retained), encoding="utf-8")
+            temporary.replace(path)
 
 
 def main() -> None:
