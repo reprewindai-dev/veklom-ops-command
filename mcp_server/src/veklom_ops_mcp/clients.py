@@ -8,6 +8,7 @@ import httpx
 
 from .config import SETTINGS, Settings
 from .redaction import redact
+from .safe_projection import project
 
 
 class UpstreamError(RuntimeError):
@@ -46,38 +47,44 @@ class CoolifyClient:
         return redact(payload, max_chars=self.settings.max_response_chars)
 
     async def list_servers(self) -> Any:
-        return await self._request("GET", "/servers")
+        return project("server", await self._request("GET", "/servers"))
 
     async def list_applications(self) -> Any:
-        return await self._request("GET", "/applications")
+        return project("application", await self._request("GET", "/applications"))
 
     async def get_application(self, uuid: str) -> Any:
-        return await self._request("GET", f"/applications/{uuid}")
+        return project("application", await self._request("GET", f"/applications/{uuid}"))
 
     async def application_logs(self, uuid: str, lines: int) -> Any:
+        # This path still passes recursive redaction. If the configured Coolify
+        # read credential is not allowed to read logs, the tool fails closed and
+        # returns an upstream error instead of escalating to read:sensitive/root.
         lines = max(1, min(lines, self.settings.max_log_lines))
-        return await self._request("GET", f"/applications/{uuid}/logs", params={"lines": lines})
+        return redact(
+            await self._request("GET", f"/applications/{uuid}/logs", params={"lines": lines}),
+            max_chars=self.settings.max_response_chars,
+        )
 
     async def list_databases(self) -> Any:
-        return await self._request("GET", "/databases")
+        return project("database", await self._request("GET", "/databases"))
 
     async def get_database(self, uuid: str) -> Any:
-        return await self._request("GET", f"/databases/{uuid}")
+        return project("database", await self._request("GET", f"/databases/{uuid}"))
 
     async def database_backups(self, uuid: str) -> Any:
-        return await self._request("GET", f"/databases/{uuid}/backups")
+        return project("backup", await self._request("GET", f"/databases/{uuid}/backups"))
 
     async def list_services(self) -> Any:
-        return await self._request("GET", "/services")
+        return project("service", await self._request("GET", "/services"))
 
     async def get_service(self, uuid: str) -> Any:
-        return await self._request("GET", f"/services/{uuid}")
+        return project("service", await self._request("GET", f"/services/{uuid}"))
 
     async def list_deployments(self) -> Any:
-        return await self._request("GET", "/deployments")
+        return project("deployment", await self._request("GET", "/deployments"))
 
     async def get_deployment(self, uuid: str) -> Any:
-        return await self._request("GET", f"/deployments/{uuid}")
+        return project("deployment", await self._request("GET", f"/deployments/{uuid}"))
 
     async def restart_application(self, uuid: str) -> Any:
         return await self._request("POST", f"/applications/{uuid}/restart", deploy=True)
