@@ -117,7 +117,9 @@ No arbitrary command tool exists.
 
 ## Audit evidence
 
-Every MCP call records a local JSONL hash-chain event. The ledger stores hashes of requests/results plus tool, action, tier, outcome, approval identity, and previous hash. It intentionally does not persist raw tool arguments or raw output.
+Governed upstream operational reads/writes, denials, approval escalations, failures, and completed mutations record local JSONL hash-chain events. The ledger stores hashes of requests/results plus tool, action, tier, outcome, approval identity, and previous hash. It intentionally does not persist raw tool arguments or raw output.
+
+Pure introspection tools such as `operations_policy`, `verify_mcp_audit_chain`, and `recent_mcp_audit_events` do not mutate the chain they are inspecting. The Operator Evidence Panel also reads the current chain state rather than adding an event merely because it was rendered.
 
 Use:
 
@@ -125,6 +127,16 @@ Use:
 - `recent_mcp_audit_events`
 
 for inspection.
+
+## Verification after mutations
+
+Coolify lifecycle operations can be asynchronous. A successful POST response means the operation was accepted/executed by the upstream API; it is **not automatically proof that the resulting production state is healthy**.
+
+After a mutation, the operator/client must re-read the affected application/service/deployment and, where relevant, the public health endpoint before calling the change complete. The canonical completion rule remains:
+
+```text
+request -> authorize -> mutate -> runtime re-read -> live health/proof -> evidence
+```
 
 ## Transport
 
@@ -179,7 +191,7 @@ ChatGPT
       -> Coolify/Veklom source-of-truth read
       -> safe-field projection
       -> redact
-      -> hash-chain audit
+      -> operational audit evidence
       -> structured result / operator panel
 
 State-changing request
@@ -187,8 +199,8 @@ State-changing request
   -> derive runtime safety facts
   -> external Ed25519 approval when required
   -> deploy-scoped upstream action
-  -> verify result
-  -> audit evidence
+  -> re-read runtime/live health
+  -> record/inspect evidence
 ```
 
 ## Local validation
@@ -220,4 +232,5 @@ Then connect an MCP inspector to `http://127.0.0.1:8787/mcp` using the same bear
 7. Enable the lifecycle plane only after policy/approval tests are green.
 8. Verify a medium-risk operation in a safe/sandbox resource before production.
 9. Verify a high-risk operation refuses without an externally signed approval and consumes a valid approval exactly once.
-10. Confirm the MCP container has no approval private key, Docker socket, host filesystem mount, database mutation credential, or arbitrary shell capability.
+10. After every mutation test, re-read runtime state and health before calling it successful.
+11. Confirm the MCP container has no approval private key, Docker socket, host filesystem mount, database mutation credential, or arbitrary shell capability.
