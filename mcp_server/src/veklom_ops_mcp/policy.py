@@ -21,8 +21,6 @@ class PolicyDecision:
     reason: str
 
 
-# Explicit never-allow list. These are not merely "high risk"; they violate the
-# Veklom trust boundary and cannot be enabled by an approval token.
 FORBIDDEN_ACTIONS = {
     "database.write",
     "database.schema_change",
@@ -43,7 +41,6 @@ FORBIDDEN_ACTIONS = {
     "host.arbitrary_shell",
 }
 
-
 LOW_RISK_ACTIONS = {
     "infra.health.read",
     "infra.topology.read",
@@ -61,7 +58,6 @@ LOW_RISK_ACTIONS = {
     "github.read",
 }
 
-
 MEDIUM_RISK_ACTIONS = {
     "service.restart",
     "service.redeploy_same_commit",
@@ -70,7 +66,6 @@ MEDIUM_RISK_ACTIONS = {
     "cache.invalidate",
     "runtime.scale_within_bounds",
 }
-
 
 HIGH_RISK_ACTIONS = {
     "service.stop",
@@ -86,18 +81,14 @@ HIGH_RISK_ACTIONS = {
 
 
 def _medium_needs_approval(context: dict[str, Any]) -> tuple[bool, str]:
-    """Resolve conditional approval for medium-risk actions.
-
-    Medium-risk operations may execute autonomously only when every declared
-    guardrail is satisfied. Missing context fails toward approval, never toward
-    silent execution.
-    """
+    """Resolve conditional approval using proven runtime context only."""
     environment = str(context.get("environment", "production")).lower()
     healthy_replicas = context.get("healthy_replicas")
     affects_single_instance = bool(context.get("affects_single_instance", True))
     causes_downtime = bool(context.get("causes_downtime", False))
     changes_effective_config = bool(context.get("changes_effective_config", False))
     same_artifact = bool(context.get("same_artifact", False))
+    artifact_digest_verified = bool(context.get("artifact_digest_verified", False))
     active_incident = bool(context.get("active_incident", False))
 
     if changes_effective_config:
@@ -107,8 +98,9 @@ def _medium_needs_approval(context: dict[str, Any]) -> tuple[bool, str]:
     if environment == "production" and affects_single_instance:
         if not isinstance(healthy_replicas, int) or healthy_replicas < 2:
             return True, "Production action lacks redundancy proof."
-    if context.get("action") == "service.redeploy_same_commit" and not same_artifact:
-        return True, "Redeploy is not proven to use the same source artifact."
+    if context.get("action") == "service.redeploy_same_commit":
+        if not same_artifact or not artifact_digest_verified:
+            return True, "Redeploy lacks proof that the exact source artifact/commit is unchanged."
     if active_incident and environment == "production":
         return True, "Production incident changes require human/coding-agent approval."
 
