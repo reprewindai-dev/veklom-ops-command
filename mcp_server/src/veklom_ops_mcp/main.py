@@ -10,6 +10,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from .config import SETTINGS
 from .tools import mcp
 from . import app_ui as _app_ui  # noqa: F401  Registers MCP App resource/tools.
+from .tool_annotations import apply_tool_annotations
 
 
 class InboundSecurityMiddleware:
@@ -70,4 +71,5 @@ async def health(_: Request) -> JSONResponse:
 
 
 SETTINGS.validate()
+apply_tool_annotations(mcp)
 app: Any = InboundSecurityMiddleware(mcp.streamable_http_app())
