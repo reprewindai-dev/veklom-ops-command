@@ -1,0 +1,33 @@
+services:
+  veklom-ops-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "8787"
+    environment:
+      VEKLOM_MCP_ENVIRONMENT: "${VEKLOM_MCP_ENVIRONMENT:-production}"
+      VEKLOM_MCP_ACCESS_TOKEN: "${VEKLOM_MCP_ACCESS_TOKEN:-}"
+      VEKLOM_MCP_ALLOW_UNAUTHENTICATED: "${VEKLOM_MCP_ALLOW_UNAUTHENTICATED:-false}"
+      VEKLOM_MCP_WRITES_ENABLED: "${VEKLOM_MCP_WRITES_ENABLED:-false}"
+      VEKLOM_MCP_APPROVAL_HMAC_KEY: "${VEKLOM_MCP_APPROVAL_HMAC_KEY:-}"
+      COOLIFY_BASE_URL: "${COOLIFY_BASE_URL:-http://host.docker.internal:8000}"
+      COOLIFY_READ_TOKEN: "${COOLIFY_READ_TOKEN:-}"
+      COOLIFY_WRITE_TOKEN: "${COOLIFY_WRITE_TOKEN:-}"
+      MCP_ALLOWED_HOSTS: "${MCP_ALLOWED_HOSTS:-}"
+      MCP_ALLOWED_ORIGINS: "${MCP_ALLOWED_ORIGINS:-}"
+    volumes:
+      - veklom_ops_mcp_state:/data/veklom-mcp
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  veklom_ops_mcp_state:
