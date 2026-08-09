@@ -23,3 +23,6 @@ veklom-mcp-approve = "veklom_ops_mcp.approve:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+veklom_ops_mcp = ["assets/*.html"]
