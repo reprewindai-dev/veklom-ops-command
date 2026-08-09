@@ -137,6 +137,8 @@ def operations_policy() -> dict[str, Any]:
         "database_write_tools_exposed": False,
         "arbitrary_shell_exposed": False,
         "secret_value_tools_exposed": False,
+        "coolify_credential_classes": ["read", "deploy"],
+        "coolify_write_or_root_credentials_required": False,
     }
 
 
@@ -150,7 +152,7 @@ def evaluate_operation(action: str, context: dict[str, Any] | None = None) -> di
 
 @mcp.tool()
 async def infrastructure_overview() -> dict[str, Any]:
-    """Read a redacted inventory plus live Veklom health. No secret values are returned."""
+    """Read a safe-projected inventory plus live Veklom health. No secret values are returned."""
     async def collect() -> dict[str, Any]:
         servers, applications, databases, services, deployments, health = await asyncio.gather(
             coolify.list_servers(), coolify.list_applications(), coolify.list_databases(),
@@ -181,16 +183,50 @@ async def security_posture() -> dict[str, Any]:
 
 
 @mcp.tool()
+async def list_servers() -> Any:
+    """List safe-projected Coolify server topology without keys, tokens, proxy config bodies, or validation logs."""
+    return await _read_call(tool="list_servers", action="infra.topology.read", params={}, operation=coolify.list_servers)
+
+
+@mcp.tool()
+async def get_server(server_uuid: str) -> Any:
+    """Inspect one server through an explicit safe-field projection."""
+    params = {"server_uuid": server_uuid}
+    return await _read_call(tool="get_server", action="infra.topology.read", params=params, operation=lambda: coolify.get_server(server_uuid))
+
+
+@mcp.tool()
+async def get_server_resources(server_uuid: str) -> Any:
+    """List resource identity/type/status for one server without exposing resource configuration bodies."""
+    params = {"server_uuid": server_uuid}
+    return await _read_call(tool="get_server_resources", action="infra.topology.read", params=params, operation=lambda: coolify.server_resources(server_uuid))
+
+
+@mcp.tool()
+async def get_server_domains(server_uuid: str) -> Any:
+    """Read the domain names Coolify associates with a server for topology/drift analysis."""
+    params = {"server_uuid": server_uuid}
+    return await _read_call(tool="get_server_domains", action="infra.routes.read", params=params, operation=lambda: coolify.server_domains(server_uuid))
+
+
+@mcp.tool()
 async def list_applications() -> Any:
-    """List Coolify applications through a read-only credential with recursive secret redaction."""
+    """List Coolify applications through a safe-field projection and read-only credential."""
     return await _read_call(tool="list_applications", action="infra.resources.read", params={}, operation=coolify.list_applications)
 
 
 @mcp.tool()
 async def get_application(application_uuid: str) -> Any:
-    """Inspect one Coolify application. Sensitive fields are always redacted even if upstream returns them."""
+    """Inspect one application using an explicit safe-field projection."""
     params = {"application_uuid": application_uuid}
     return await _read_call(tool="get_application", action="infra.resources.read", params=params, operation=lambda: coolify.get_application(application_uuid))
+
+
+@mcp.tool()
+async def get_application_env_presence(application_uuid: str) -> Any:
+    """Return environment-variable names/flags only. Values and real_values are structurally discarded."""
+    params = {"application_uuid": application_uuid}
+    return await _read_call(tool="get_application_env_presence", action="environment.presence.read", params=params, operation=lambda: coolify.application_env_presence(application_uuid))
 
 
 @mcp.tool()
@@ -209,40 +245,48 @@ async def list_databases() -> Any:
 
 @mcp.tool()
 async def get_database(database_uuid: str) -> Any:
-    """Read redacted database metadata only; never credentials or data mutation."""
+    """Read safe-projected database metadata only; never credentials, URLs, SQL, or data mutation."""
     params = {"database_uuid": database_uuid}
     return await _read_call(tool="get_database", action="database.schema.read", params=params, operation=lambda: coolify.get_database(database_uuid))
 
 
 @mcp.tool()
 async def get_database_backups(database_uuid: str) -> Any:
-    """Inspect database backup configuration/status without creating, restoring, or deleting backups."""
+    """Inspect database backup configuration/status without creating, restoring, triggering, or deleting backups."""
     params = {"database_uuid": database_uuid}
     return await _read_call(tool="get_database_backups", action="database.read", params=params, operation=lambda: coolify.database_backups(database_uuid))
 
 
 @mcp.tool()
 async def list_services() -> Any:
-    """List Coolify services using the read credential."""
+    """List Coolify service stacks through a safe-field projection."""
     return await _read_call(tool="list_services", action="infra.resources.read", params={}, operation=coolify.list_services)
 
 
 @mcp.tool()
 async def get_service(service_uuid: str) -> Any:
-    """Inspect one Coolify service with sensitive fields redacted."""
+    """Inspect one Coolify service stack without compose bodies or environment values."""
     params = {"service_uuid": service_uuid}
     return await _read_call(tool="get_service", action="infra.resources.read", params=params, operation=lambda: coolify.get_service(service_uuid))
 
 
 @mcp.tool()
+async def get_service_logs(service_uuid: str, lines: int = 100) -> Any:
+    """Read a capped, redacted tail of service-stack logs."""
+    capped = max(1, min(lines, SETTINGS.max_log_lines))
+    params = {"service_uuid": service_uuid, "lines": capped}
+    return await _read_call(tool="get_service_logs", action="infra.logs.read", params=params, operation=lambda: coolify.service_logs(service_uuid, capped))
+
+
+@mcp.tool()
 async def list_deployments() -> Any:
-    """Read active deployment state."""
+    """Read active deployment state without deployment log bodies."""
     return await _read_call(tool="list_deployments", action="infra.deployments.read", params={}, operation=coolify.list_deployments)
 
 
 @mcp.tool()
 async def get_deployment(deployment_uuid: str) -> Any:
-    """Read one deployment record with response redaction."""
+    """Read one safe-projected deployment record."""
     params = {"deployment_uuid": deployment_uuid}
     return await _read_call(tool="get_deployment", action="infra.deployments.read", params=params, operation=lambda: coolify.get_deployment(deployment_uuid))
 
@@ -269,6 +313,19 @@ async def _application_medium_context(application_uuid: str, *, same_artifact: b
         "causes_downtime": False,
         "changes_effective_config": False,
         "same_artifact": same_artifact,
+        "artifact_digest_verified": False,
+        "active_incident": False,
+    }
+
+
+async def _service_medium_context(service_uuid: str) -> dict[str, Any]:
+    await coolify.get_service(service_uuid)
+    return {
+        "environment": SETTINGS.environment,
+        "healthy_replicas": None,
+        "affects_single_instance": True,
+        "causes_downtime": False,
+        "changes_effective_config": False,
         "active_incident": False,
     }
 
@@ -285,19 +342,30 @@ async def restart_application(application_uuid: str, approval_token: str | None 
 
 
 @mcp.tool()
+async def restart_service(service_uuid: str, approval_token: str | None = None) -> Any:
+    """Restart a Coolify service stack. Medium risk; production ambiguity falls to approval."""
+    params = {"service_uuid": service_uuid}
+    try:
+        context = await _service_medium_context(service_uuid)
+    except UpstreamError as exc:
+        context = {"environment": SETTINGS.environment, "affects_single_instance": True, "causes_downtime": True, "context_error": str(exc)}
+    return await _write_call(tool="restart_service", action="service.restart", params=params, context=context, approval_token=approval_token, operation=lambda: coolify.restart_service(service_uuid))
+
+
+@mcp.tool()
 async def redeploy_application_same_source(application_uuid: str, approval_token: str | None = None) -> Any:
-    """Redeploy the currently configured application source without force rebuild or ref changes. Medium risk and conditionally approval-gated."""
+    """Request a normal redeploy. Until the exact deployed artifact digest is independently proven unchanged, this medium-risk action escalates to approval."""
     params = {"application_uuid": application_uuid, "force": False}
     try:
         context = await _application_medium_context(application_uuid, same_artifact=True)
     except UpstreamError as exc:
-        context = {"environment": SETTINGS.environment, "affects_single_instance": True, "causes_downtime": True, "same_artifact": False, "context_error": str(exc)}
+        context = {"environment": SETTINGS.environment, "affects_single_instance": True, "causes_downtime": True, "same_artifact": False, "artifact_digest_verified": False, "context_error": str(exc)}
     return await _write_call(tool="redeploy_application_same_source", action="service.redeploy_same_commit", params=params, context=context, approval_token=approval_token, operation=lambda: coolify.deploy(application_uuid, force=False))
 
 
 @mcp.tool()
 async def cancel_deployment(deployment_uuid: str, approval_token: str | None = None) -> Any:
-    """Cancel a deployment. Queued work may be autonomous; interrupting an active production deployment falls to approval."""
+    """Cancel a deployment. Queued work may be autonomous; interrupting active production work falls to approval."""
     params = {"deployment_uuid": deployment_uuid}
     try:
         deployment = await coolify.get_deployment(deployment_uuid)
@@ -318,7 +386,7 @@ async def cancel_deployment(deployment_uuid: str, approval_token: str | None = N
 
 @mcp.tool()
 async def stop_application(application_uuid: str, approval_token: str | None = None) -> Any:
-    """Stop an application. High risk in all environments and always requires a one-time external approval."""
+    """Stop an application. High risk and always requires a one-time external approval."""
     params = {"application_uuid": application_uuid}
     return await _write_call(tool="stop_application", action="service.stop", params=params, context={"environment": SETTINGS.environment}, approval_token=approval_token, operation=lambda: coolify.stop_application(application_uuid))
 
@@ -328,3 +396,17 @@ async def start_stopped_application(application_uuid: str, approval_token: str |
     """Start a deliberately stopped application. High risk and always requires a one-time external approval."""
     params = {"application_uuid": application_uuid}
     return await _write_call(tool="start_stopped_application", action="service.start_after_stop", params=params, context={"environment": SETTINGS.environment}, approval_token=approval_token, operation=lambda: coolify.start_application(application_uuid))
+
+
+@mcp.tool()
+async def stop_service(service_uuid: str, approval_token: str | None = None) -> Any:
+    """Stop a Coolify service stack. High risk and always requires a one-time external approval."""
+    params = {"service_uuid": service_uuid}
+    return await _write_call(tool="stop_service", action="service.stop", params=params, context={"environment": SETTINGS.environment}, approval_token=approval_token, operation=lambda: coolify.stop_service(service_uuid))
+
+
+@mcp.tool()
+async def start_stopped_service(service_uuid: str, approval_token: str | None = None) -> Any:
+    """Start a deliberately stopped service stack. High risk and always requires a one-time external approval."""
+    params = {"service_uuid": service_uuid}
+    return await _write_call(tool="start_stopped_service", action="service.start_after_stop", params=params, context={"environment": SETTINGS.environment}, approval_token=approval_token, operation=lambda: coolify.start_service(service_uuid))
