@@ -17,49 +17,103 @@ Every operation is classified before execution:
 
 Examples:
 
-- LOW: health, topology, deployments, resource metadata, redacted logs, DB metadata/backups, evidence verification.
-- MEDIUM: restart, same-source redeploy, cancel deployment, bounded runtime operations.
+- LOW: health, topology, domains, deployments, resource metadata, env-name presence, redacted logs, DB metadata/backups, evidence verification.
+- MEDIUM: application/service restart, exact-artifact redeploy when independently proven, deployment cancellation, bounded runtime operations.
 - HIGH: stop/start-after-stop, source/image/build changes, route changes, non-secret environment changes.
 - FORBIDDEN: database writes/schema mutation, secret-value reads/exports, arbitrary shell, volume destruction, disabling fail-closed/zero-trust/air-gap boundaries.
 
 Unknown actions fail closed.
 
-## Credential separation
+## Coolify credential separation
 
-The service is designed around three independent credentials:
+The service uses purpose-separated credentials:
 
 1. `VEKLOM_MCP_ACCESS_TOKEN` — authenticates the MCP client to this service.
 2. `COOLIFY_READ_TOKEN` — Coolify token with `read` only. Do not grant `read:sensitive`.
-3. `COOLIFY_DEPLOY_TOKEN` — separate Coolify token scoped to deployment/lifecycle operations only.
+3. `COOLIFY_DEPLOY_TOKEN` — separate Coolify token with `deploy` only for lifecycle/deployment operations.
 
-**Never provide this service a Coolify `root` token.**
+The current Coolify `v4.x` API routes require `deploy` for application/service start, restart, stop, `/deploy`, and deployment cancellation, so this MCP does **not** need a Coolify `write` or `root` credential for its operational lifecycle tools.
 
-The MCP never exposes upstream credentials to clients. Responses are recursively redacted before being returned or hashed into audit evidence.
+**Never provide this service a Coolify `root` token. Never mount a Coolify `write` token just to make an operation easier.**
 
-## Approval model
+The MCP never exposes upstream credentials to clients. Resource responses are first projected onto explicit safe fields and then recursively redacted. A new upstream field is invisible until it is deliberately added to a safe projection.
 
-The MCP cannot approve its own high-risk request.
+## Environment-variable presence without values
 
-For a tool call that requires approval, the server returns an `approval_request` containing:
+`get_application_env_presence` returns variable names and non-secret flags only. It structurally discards `value` and `real_value` before a result can leave the server.
 
-- canonical action name;
-- SHA-256 of the exact parameters;
-- approval TTL.
+That lets an operator answer “is `COVENANT_EVIDENCE_SIGNING_KEY` configured?” without ever reading the key.
 
-A human or separately trusted coding-agent environment mints a one-time token outside the MCP:
+## Approval model — asymmetric by design
+
+The MCP is cryptographically unable to approve its own high-risk request.
+
+Approval uses **Ed25519**:
+
+- the MCP server stores only `VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64`;
+- the matching `VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64` stays outside the MCP server with the founder or a separately trusted coding-agent approval environment;
+- the server has a verifier but no signing method/key.
+
+Generate a pair in the trusted approval environment:
 
 ```bash
+veklom-mcp-keygen
+```
+
+Store only the generated public key in Coolify for the MCP service. Store the private key in the separate approval environment/secret store.
+
+When a tool call needs approval, the MCP returns an `approval_request` containing the canonical action, SHA-256 of the exact parameters, and maximum TTL.
+
+The external approver mints a one-time token:
+
+```bash
+export VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64='<private-key-kept-outside-mcp>'
+
 veklom-mcp-approve \
   --action service.stop \
   --params-json '{"application_uuid":"..."}' \
   --approved-by 'founder:chris'
 ```
 
-The token is bound to the action and exact parameters, expires quickly, and is consumed once. Parameter substitution and replay are rejected.
+The signed token is bound to the action and exact parameters, cannot exceed the server's TTL policy, expires quickly, and is consumed once. Wrong-signer tokens, parameter substitution, action substitution, replay, expiry, and excessive TTL are rejected.
 
 ## Database boundary
 
-There is **no arbitrary SQL tool** and no database mutation tool. Database capability is limited to redacted metadata and backup/status inspection. The policy engine also classifies database mutation actions as `FORBIDDEN`, providing defense in depth.
+There is **no arbitrary SQL tool** and no database mutation/lifecycle tool. Database capability is limited to safe-projected metadata and backup/status inspection. The policy engine also classifies database mutation actions as `FORBIDDEN`, providing defense in depth.
+
+The MCP does not expose database start/stop/restart, backup creation/restore/trigger, schema mutation, credentials, connection strings, or direct query execution.
+
+## Current tool surface
+
+### Read / LOW
+
+- operations policy + operation classification
+- infrastructure overview
+- Veklom health matrix
+- Veklom security posture
+- server list/details/resources/domains
+- application list/details/env-name presence/log tail
+- database list/details/backup metadata
+- service list/details/log tail
+- deployment list/details
+- MCP audit-chain verify/tail
+- source-backed Operator Evidence Panel
+
+### MEDIUM / conditional
+
+- application restart
+- service-stack restart
+- normal application redeploy (currently escalates unless exact artifact identity is independently proven)
+- deployment cancellation
+
+### HIGH / approval
+
+- stop application
+- start deliberately stopped application
+- stop service stack
+- start deliberately stopped service stack
+
+No arbitrary command tool exists.
 
 ## Audit evidence
 
@@ -89,7 +143,8 @@ The included deployment runs:
 - no Docker socket;
 - no host filesystem mount;
 - only a small persistent state volume for approval nonces and audit hashes;
-- internal port `8787` only.
+- internal port `8787` only;
+- approval **public key only** — never the signing private key.
 
 ## Configuration
 
@@ -101,13 +156,15 @@ Read-only mode is the deployment default:
 VEKLOM_MCP_WRITES_ENABLED=false
 ```
 
-After the read plane is verified, enabling lifecycle operations requires both a deploy-scoped Coolify credential and approval authority key:
+After the read plane is verified, enabling lifecycle operations requires a deploy-scoped Coolify credential plus the Ed25519 **public** approval key:
 
 ```text
 VEKLOM_MCP_WRITES_ENABLED=true
 COOLIFY_DEPLOY_TOKEN=<deploy-only token>
-VEKLOM_MCP_APPROVAL_HMAC_KEY=<random secret>
+VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64=<public-verification-key>
 ```
+
+Do **not** add the approval private key to the MCP service.
 
 ## ChatGPT / Apps SDK
 
@@ -120,20 +177,23 @@ ChatGPT
   -> Veklom Ops MCP
       -> classify authority
       -> Coolify/Veklom source-of-truth read
+      -> safe-field projection
       -> redact
       -> hash-chain audit
       -> structured result / operator panel
 
 State-changing request
   -> classify LOW/MEDIUM/HIGH/FORBIDDEN
-  -> runtime safety evaluation
-  -> external approval when required
+  -> derive runtime safety facts
+  -> external Ed25519 approval when required
   -> deploy-scoped upstream action
   -> verify result
   -> audit evidence
 ```
 
 ## Local validation
+
+From `mcp_server/`:
 
 ```bash
 python -m pip install -e '.[dev]'
@@ -152,10 +212,12 @@ Then connect an MCP inspector to `http://127.0.0.1:8787/mcp` using the same bear
 ## Production rollout
 
 1. Deploy with `VEKLOM_MCP_WRITES_ENABLED=false`.
-2. Verify `/health`, MCP initialization, tool listing, redaction tests, topology reads, Veklom health, and audit-chain verification.
+2. Verify `/health`, MCP initialization, tool listing, safe projections, redaction tests, topology reads, Veklom health, and audit-chain verification.
 3. Connect ChatGPT Developer Mode to the TLS/tunneled MCP endpoint.
 4. Exercise read tools and the Operator Evidence Panel.
-5. Create separate Coolify `read` and `deploy` tokens; never `root`, never `read:sensitive`.
-6. Enable the lifecycle plane only after policy/approval tests are green.
-7. Verify a medium-risk operation in a safe/sandbox resource before production.
-8. Verify a high-risk operation refuses without an external approval and consumes a valid approval exactly once.
+5. Create separate Coolify `read` and `deploy` tokens; never `root`, never `write`, never `read:sensitive` unless a future reviewed capability explicitly proves it is required.
+6. Generate the Ed25519 approval keypair outside the MCP environment; configure only the public key on the MCP.
+7. Enable the lifecycle plane only after policy/approval tests are green.
+8. Verify a medium-risk operation in a safe/sandbox resource before production.
+9. Verify a high-risk operation refuses without an externally signed approval and consumes a valid approval exactly once.
+10. Confirm the MCP container has no approval private key, Docker socket, host filesystem mount, database mutation credential, or arbitrary shell capability.
