@@ -134,7 +134,7 @@ class VeklomClient:
     async def _get(self, base: str, path: str) -> dict[str, Any]:
         url = urljoin(base.rstrip("/") + "/", path.lstrip("/"))
         try:
-            async with httpx.AsyncClient(timeout=self.settings.request_timeout_seconds, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=self.settings.request_timeout_seconds, follow_redirects=False) as client:
                 response = await client.get(url, headers={"Accept": "application/json"})
             content_type = response.headers.get("content-type", "")
             if "json" in content_type:
@@ -144,11 +144,19 @@ class VeklomClient:
             return {
                 "url": url,
                 "status_code": response.status_code,
-                "ok": 200 <= response.status_code < 400,
+                "ok": 200 <= response.status_code < 300,
+                "reachable": 200 <= response.status_code < 400,
+                "redirect_location": response.headers.get("location") if 300 <= response.status_code < 400 else None,
                 "body": redact(body, max_chars=20_000),
             }
         except Exception as exc:
-            return {"url": url, "status_code": None, "ok": False, "error": type(exc).__name__}
+            return {
+                "url": url,
+                "status_code": None,
+                "ok": False,
+                "reachable": False,
+                "error": type(exc).__name__,
+            }
 
     async def health_matrix(self) -> dict[str, Any]:
         async def check(name: str, base: str, paths: tuple[str, ...]) -> tuple[str, dict[str, Any]]:
@@ -158,7 +166,9 @@ class VeklomClient:
                 attempts.append(result)
                 if result.get("ok"):
                     return name, {"state": "VERIFIED_LIVE", "selected": result, "attempts": attempts}
-            return name, {"state": "UNVERIFIED", "selected": attempts[-1] if attempts else None, "attempts": attempts}
+            selected = attempts[-1] if attempts else None
+            state = "REACHABLE_UNVERIFIED" if any(item.get("reachable") for item in attempts) else "UNVERIFIED"
+            return name, {"state": state, "selected": selected, "attempts": attempts}
 
         rows = await asyncio.gather(
             *(check(name, base, paths) for name, (base, paths) in self.settings.health_targets.items())
