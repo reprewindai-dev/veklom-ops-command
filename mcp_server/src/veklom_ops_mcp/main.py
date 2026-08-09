@@ -9,6 +9,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from .config import SETTINGS
 from .tools import mcp
+from . import app_ui as _app_ui  # noqa: F401  Registers MCP App resource/tools.
 
 
 class InboundSecurityMiddleware:
@@ -44,7 +45,9 @@ class InboundSecurityMiddleware:
             presented = headers.get("authorization", "")
             expected = f"Bearer {SETTINGS.access_token}"
             if not hmac.compare_digest(presented, expected):
-                response = PlainTextResponse("Unauthorized", status_code=401, headers={"WWW-Authenticate": "Bearer"})
+                response = PlainTextResponse(
+                    "Unauthorized", status_code=401, headers={"WWW-Authenticate": "Bearer"}
+                )
                 await response(scope, receive, send)
                 return
 
@@ -61,6 +64,7 @@ async def health(_: Request) -> JSONResponse:
             "writes_enabled": SETTINGS.writes_enabled,
             "database_writes": False,
             "arbitrary_shell": False,
+            "secret_value_reads": False,
         }
     )
 
