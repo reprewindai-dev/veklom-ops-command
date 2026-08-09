@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> **VEKLOM BIBLE — READ FIRST:** [`00_VEKLOM_BIBLE.md`](./00_VEKLOM_BIBLE.md)
+> This is the canonical cross-repo architecture/runtime-truth contract. It supersedes older topology, Golden Bible, deployment-authority, and alignment docs wherever they conflict.
+
 # Veklom Ops Command
 
 Veklom Ops Command is the standalone cross-repository operating control plane for Veklom's Poltergeist-powered DevOps agent teams. It gives every IDE the same source-backed teams, runbooks, verification scripts, reports, and release gates.
