@@ -34,6 +34,16 @@ def _tool_meta() -> dict[str, Any]:
     }
 
 
+def _resource_meta() -> dict[str, Any]:
+    return {
+        "openai/widgetPrefersBorder": True,
+        "openai/widgetDescription": (
+            "Veklom operator evidence plane for runtime truth, security posture, "
+            "authority tiers, service health, and MCP audit-chain state."
+        ),
+    }
+
+
 def _count(value: Any) -> int:
     if isinstance(value, list):
         return len(value)
@@ -97,10 +107,7 @@ async def build_snapshot() -> dict[str, Any]:
         "error": type(security).__name__ if isinstance(security, Exception) else "Unavailable",
     }
 
-    if source_errors:
-        proof_state = "PARTIAL_RUNTIME_OBSERVATION"
-    else:
-        proof_state = "RUNTIME_OBSERVED"
+    proof_state = "PARTIAL_RUNTIME_OBSERVATION" if source_errors else "RUNTIME_OBSERVED"
 
     return redact(
         {
@@ -124,6 +131,7 @@ async def build_snapshot() -> dict[str, Any]:
                 "approval_ttl_seconds": SETTINGS.approval_ttl_seconds,
                 "credential_classes": ["read", "deploy"],
                 "root_credential_present_by_design": False,
+                "approval_signing_key_present_by_design": False,
             },
             "audit": audit.verify(),
             "source_errors": source_errors,
@@ -132,7 +140,12 @@ async def build_snapshot() -> dict[str, Any]:
     )
 
 
-@mcp.resource(TEMPLATE_URI, "Veklom Operator Evidence Plane", mime_type=MIME_TYPE)
+@mcp.resource(
+    TEMPLATE_URI,
+    name="Veklom Operator Evidence Plane",
+    mime_type=MIME_TYPE,
+    meta=_resource_meta(),
+)
 async def operator_panel_template() -> str:
     return ASSET.read_text(encoding="utf-8")
 
