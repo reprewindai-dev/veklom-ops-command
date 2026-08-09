@@ -82,6 +82,12 @@ class CoolifyClient:
     async def restart_application(self, uuid: str) -> Any:
         return await self._request("POST", f"/applications/{uuid}/restart", write=True)
 
+    async def start_application(self, uuid: str) -> Any:
+        return await self._request("POST", f"/applications/{uuid}/start", write=True)
+
+    async def stop_application(self, uuid: str) -> Any:
+        return await self._request("POST", f"/applications/{uuid}/stop", write=True)
+
     async def deploy(self, uuid: str, *, force: bool = False) -> Any:
         return await self._request("POST", "/deploy", write=True, json_body={"uuid": uuid, "force": force})
 
@@ -128,7 +134,7 @@ class VeklomClient:
         return dict(rows)
 
     async def security_posture(self) -> dict[str, Any]:
-        # This route is optional until independently verified in canonical source/runtime.
+        # Optional until independently verified in canonical source/runtime.
         result = await self._get(self.settings.byos_base_url, "/api/v1/security/posture")
         result["proof_state"] = "VERIFIED_LIVE" if result.get("ok") else "UNVERIFIED"
         return result
