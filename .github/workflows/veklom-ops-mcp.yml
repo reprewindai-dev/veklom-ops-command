@@ -1,0 +1,121 @@
+name: Veklom Ops MCP
+
+on:
+  pull_request:
+    paths:
+      - "mcp_server/**"
+      - ".github/workflows/veklom-ops-mcp.yml"
+      - "README.md"
+      - "AUTONOMY_DOCTRINE.md"
+  push:
+    branches:
+      - main
+    paths:
+      - "mcp_server/**"
+      - ".github/workflows/veklom-ops-mcp.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: veklom-ops-mcp-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Policy, security, package
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      VEKLOM_MCP_ACCESS_TOKEN: ci-inbound-token-not-production
+      VEKLOM_MCP_ALLOW_UNAUTHENTICATED: "false"
+      VEKLOM_MCP_WRITES_ENABLED: "false"
+      VEKLOM_MCP_ENVIRONMENT: sandbox
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: mcp_server/pyproject.toml
+
+      - name: Install MCP package
+        run: python -m pip install -e './mcp_server[dev]'
+
+      - name: Compile package
+        run: python -m compileall -q mcp_server/src mcp_server/tests
+
+      - name: Run security and policy tests
+        run: pytest -q mcp_server/tests
+
+      - name: Import ASGI app and enumerate classified tools
+        run: |
+          python - <<'PY'
+          from veklom_ops_mcp.main import app
+          from veklom_ops_mcp.tools import mcp
+          from veklom_ops_mcp.tool_annotations import (
+              READ_ONLY_TOOLS,
+              MEDIUM_WRITE_TOOLS,
+              HIGH_WRITE_TOOLS,
+          )
+
+          tools = {tool.name: tool for tool in mcp._tool_manager.list_tools()}
+          expected = READ_ONLY_TOOLS | MEDIUM_WRITE_TOOLS | HIGH_WRITE_TOOLS
+          assert set(tools) == expected, (set(tools) - expected, expected - set(tools))
+          for name in READ_ONLY_TOOLS:
+              assert tools[name].annotations.readOnlyHint is True, name
+          for name in MEDIUM_WRITE_TOOLS | HIGH_WRITE_TOOLS:
+              assert tools[name].annotations.readOnlyHint is False, name
+          assert app is not None
+          print(f"classified_tools={len(tools)}")
+          PY
+
+  container:
+    name: Hardened container build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build --tag veklom-ops-mcp:ci mcp_server
+
+      - name: Inspect image user
+        run: |
+          test "$(docker image inspect veklom-ops-mcp:ci --format '{{.Config.User}}')" = "veklom"
+
+      - name: Prove container starts read-only mode
+        run: |
+          docker run -d --name veklom-mcp-ci \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,noexec,nosuid,size=32m \
+            -e VEKLOM_MCP_ACCESS_TOKEN=ci-inbound-token-not-production \
+            -e VEKLOM_MCP_ENVIRONMENT=sandbox \
+            -e VEKLOM_MCP_WRITES_ENABLED=false \
+            -p 127.0.0.1:18787:8787 \
+            veklom-ops-mcp:ci
+          trap 'docker rm -f veklom-mcp-ci >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18787/health >/tmp/health.json; then
+              break
+            fi
+            sleep 1
+          done
+          cat /tmp/health.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/health.json'))
+          assert data['mcp'] == 'ready'
+          assert data['writes_enabled'] is False
+          assert data['database_writes'] is False
+          assert data['arbitrary_shell'] is False
+          assert data['secret_value_reads'] is False
+          PY
