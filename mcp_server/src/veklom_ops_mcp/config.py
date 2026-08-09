@@ -45,7 +45,7 @@ class Settings:
     approval_ttl_seconds: int
     approval_store: Path
     audit_store: Path
-    approval_hmac_key: str | None
+    approval_public_key_b64: str | None
     access_token: str | None
     allow_unauthenticated: bool
     allowed_hosts: list[str]
@@ -72,7 +72,7 @@ class Settings:
             approval_ttl_seconds=max(60, min(_int("VEKLOM_MCP_APPROVAL_TTL_SECONDS", 600), 3600)),
             approval_store=Path(os.getenv("VEKLOM_MCP_APPROVAL_STORE", "/data/veklom-mcp/approvals.jsonl")),
             audit_store=Path(os.getenv("VEKLOM_MCP_AUDIT_STORE", "/data/veklom-mcp/audit.jsonl")),
-            approval_hmac_key=os.getenv("VEKLOM_MCP_APPROVAL_HMAC_KEY"),
+            approval_public_key_b64=os.getenv("VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64"),
             access_token=os.getenv("VEKLOM_MCP_ACCESS_TOKEN"),
             allow_unauthenticated=_bool("VEKLOM_MCP_ALLOW_UNAUTHENTICATED", False),
             allowed_hosts=_csv("MCP_ALLOWED_HOSTS"),
@@ -90,7 +90,7 @@ class Settings:
                 name
                 for name, value in (
                     ("COOLIFY_DEPLOY_TOKEN", self.coolify_deploy_token),
-                    ("VEKLOM_MCP_APPROVAL_HMAC_KEY", self.approval_hmac_key),
+                    ("VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64", self.approval_public_key_b64),
                 )
                 if not value
             ]
