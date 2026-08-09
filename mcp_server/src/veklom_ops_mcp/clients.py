@@ -23,13 +23,13 @@ class CoolifyClient:
         method: str,
         path: str,
         *,
-        write: bool = False,
+        deploy: bool = False,
         params: dict[str, Any] | None = None,
         json_body: dict[str, Any] | None = None,
     ) -> Any:
-        token = self.settings.coolify_write_token if write else self.settings.coolify_read_token
+        token = self.settings.coolify_deploy_token if deploy else self.settings.coolify_read_token
         if not token:
-            raise UpstreamError(f"Coolify {'write' if write else 'read'} credential is not configured.")
+            raise UpstreamError(f"Coolify {'deploy' if deploy else 'read'} credential is not configured.")
         url = f"{self.settings.coolify_base_url}/api/v1{path}"
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
         async with httpx.AsyncClient(timeout=self.settings.request_timeout_seconds, follow_redirects=False) as client:
@@ -80,19 +80,19 @@ class CoolifyClient:
         return await self._request("GET", f"/deployments/{uuid}")
 
     async def restart_application(self, uuid: str) -> Any:
-        return await self._request("POST", f"/applications/{uuid}/restart", write=True)
+        return await self._request("POST", f"/applications/{uuid}/restart", deploy=True)
 
     async def start_application(self, uuid: str) -> Any:
-        return await self._request("POST", f"/applications/{uuid}/start", write=True)
+        return await self._request("POST", f"/applications/{uuid}/start", deploy=True)
 
     async def stop_application(self, uuid: str) -> Any:
-        return await self._request("POST", f"/applications/{uuid}/stop", write=True)
+        return await self._request("POST", f"/applications/{uuid}/stop", deploy=True)
 
     async def deploy(self, uuid: str, *, force: bool = False) -> Any:
-        return await self._request("POST", "/deploy", write=True, json_body={"uuid": uuid, "force": force})
+        return await self._request("POST", "/deploy", deploy=True, json_body={"uuid": uuid, "force": force})
 
     async def cancel_deployment(self, uuid: str) -> Any:
-        return await self._request("POST", f"/deployments/{uuid}/cancel", write=True)
+        return await self._request("POST", f"/deployments/{uuid}/cancel", deploy=True)
 
 
 class VeklomClient:
@@ -115,7 +115,7 @@ class VeklomClient:
                 "ok": 200 <= response.status_code < 400,
                 "body": redact(body, max_chars=20_000),
             }
-        except Exception as exc:  # network boundary: return evidence, do not fabricate health
+        except Exception as exc:
             return {"url": url, "status_code": None, "ok": False, "error": type(exc).__name__}
 
     async def health_matrix(self) -> dict[str, Any]:
@@ -134,7 +134,6 @@ class VeklomClient:
         return dict(rows)
 
     async def security_posture(self) -> dict[str, Any]:
-        # Optional until independently verified in canonical source/runtime.
         result = await self._get(self.settings.byos_base_url, "/api/v1/security/posture")
         result["proof_state"] = "VERIFIED_LIVE" if result.get("ok") else "UNVERIFIED"
         return result
