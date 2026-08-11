@@ -1,0 +1,40 @@
+name: "Public Web Surface Hardening v1"
+description: "Governed Nexus plan to resolve Lighthouse, SEO, and Agentic Browsing errors on veklom.com"
+version: "1.0.0"
+
+jobs:
+  - id: "spawn.health_check.web_edge"
+    description: "Continuous 200/502 monitoring for the public edge"
+    type: "probe"
+    targets:
+      - "https://veklom.com/"
+      - "https://veklom.com/llms.txt"
+      - "https://veklom.com/.well-known/agent.json"
+      - "https://veklom.com/.well-known/x402.json"
+    expect: 200
+
+  - id: "spawn.config.robots_txt.clean"
+    description: "Standardize robots.txt to valid directives only"
+    type: "config-enforcement"
+    file: "public/robots.txt"
+    action: "validate-standard-directives"
+
+  - id: "spawn.config.meta_indexing.production"
+    description: "Enforce noindex only on non-prod environments"
+    type: "config-enforcement"
+    file: "app/layout.tsx"
+    action: "remove-noindex"
+    env: "production"
+
+  - id: "spawn.config.llms_txt.markdown"
+    description: "Make llms.txt Markdown+H1, versioned, and served with 200"
+    type: "content-enforcement"
+    file: "public/llms.txt"
+    format: "markdown"
+    require_h1: true
+
+  - id: "spawn.config.assets.cache_compress"
+    description: "Enable Brotli/gzip and long-lived cache headers for static assets"
+    type: "config-enforcement"
+    file: "next.config.mjs"
+    action: "enable-compression-and-caching"

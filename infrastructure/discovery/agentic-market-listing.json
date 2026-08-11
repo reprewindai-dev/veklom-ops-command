@@ -1,0 +1,63 @@
+{
+  "name": "Veklom CAPPO",
+  "description": "Veklom governed capability runtime — nine-phase governance on every action, PGL evidence, x402 monetization. Designed for enterprise agentic workloads requiring cryptographically signed governance evidence.",
+  "category": ["AI Governance", "Agent Infrastructure"],
+  "endpoint": "https://cappo.veklom.com/mcp",
+  "protocol_version": "2026-07-28",
+  "pricing": {
+    "model": ["x402", "USDC on Base"],
+    "tiers": [
+      {
+        "name": "Discovery",
+        "description": "Basic capability discovery and planning",
+        "rate_limit": "100 req/min"
+      },
+      {
+        "name": "Standard",
+        "description": "Standard governance execution with PGL evidence",
+        "rate_limit": "1000 req/min"
+      },
+      {
+        "name": "High-Throughput",
+        "description": "Enterprise scale automated workloads",
+        "rate_limit": "10000 req/min"
+      },
+      {
+        "name": "Sovereign Node",
+        "description": "Dedicated infrastructure isolation",
+        "rate_limit": "Unlimited"
+      }
+    ],
+    "market_context": "Market metrics based on Coinbase April 2026 data: 165M+ x402 transactions, $50M+ volume, 480K+ transacting agents."
+  },
+  "ecosystem_integrations": [
+    "AWS AgentCore Payments (supports x402 agent payments)",
+    "Cloudflare monetization gateway (early access, waitlist open as of 2026-08)"
+  ],
+  "capabilities": [
+    "tools",
+    "resources",
+    "tasks",
+    "nine-phase governance",
+    "cryptographically signed governance evidence"
+  ],
+  "authentication": {
+    "type": "OAuth2"
+  },
+  "pgl_extension": "https://pgl.veklom.com/a2a/v1",
+  "keywords": [
+    "governed execution",
+    "agent governance",
+    "PGL evidence",
+    "x402",
+    "MCP",
+    "A2A",
+    "nine-phase governance",
+    "audit trail",
+    "execution identity"
+  ],
+  "contact": {
+    "support": "https://support.veklom.com",
+    "documentation": "https://docs.veklom.com"
+  }
+}

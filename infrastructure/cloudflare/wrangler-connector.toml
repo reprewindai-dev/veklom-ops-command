@@ -1,0 +1,61 @@
+name = "veklom-origin-connector"
+main = "src/origin-connector-worker.ts"
+compatibility_date = "2024-03-20"
+
+# ── PLACEMENT ────────────────────────────────────────────────────────────────
+# No placement for Phase 4.
+#
+# WHY NOT placement.host:
+#   placement.host probes the target backend over TCP from Cloudflare's public
+#   IP space. This conflicts directly with the origin-protection goal (Hetzner
+#   origin must NOT be publicly reachable after Phase 1). Additionally,
+#   placement.host is currently marked experimental by Cloudflare.
+#
+# WHY NOT Smart Placement yet:
+#   Smart Placement requires traffic data to learn. We haven't measured
+#   actual query patterns yet. Design queries to require ≤1 DB round trip
+#   per request (Cloudflare's own guidance for maximising Hyperdrive benefit).
+#   Evaluate Smart Placement from real latency data once Phase 5 traffic exists.
+# ────────────────────────────────────────────────────────────────────────────
+
+[env.production]
+name = "veklom-origin-connector"
+
+# ── Hyperdrive Bindings ────────────────────────────────────────────────────
+#
+# TWO CONFIGURATIONS — each maps to a separate Hyperdrive resource:
+#
+#   veklom-db-cacheable (HYPERDRIVE_CACHEABLE)
+#     Created with: wrangler hyperdrive create veklom-db-cacheable --connection-string=...
+#     Caching ON (Cloudflare default). Safe for:
+#       - public capability catalogs
+#       - derived Gold statistics
+#       - read-only historical aggregates
+#       - slow-changing non-authoritative metadata
+#
+#   veklom-db-fresh (HYPERDRIVE_FRESH)
+#     Created with: wrangler hyperdrive create veklom-db-fresh --connection-string=... --caching-disabled
+#     Note: caching_disabled is a property of the Hyperdrive CONFIGURATION,
+#     not just the binding. Set it when creating the resource, not just here.
+#     Reserved for: future non-authoritative fresh data only.
+#     NEVER for: authority, revocations, delegation, permissions, budget,
+#                nonce, LAW 0 state, identity, governance decisions.
+#
+# Both configurations connect to the same Workers VPC Service, which routes
+# through Cloudflare Tunnel to private Postgres on Server 0 (5.78.135.11).
+# Configure the VPC Service separately via Cloudflare dashboard or Terraform.
+# ────────────────────────────────────────────────────────────────────────────
+
+[[env.production.hyperdrive]]
+binding = "HYPERDRIVE_CACHEABLE"
+id = "PRODUCTION_HYPERDRIVE_CACHEABLE_ID"   # Replace with: wrangler hyperdrive create output
+
+[[env.production.hyperdrive]]
+binding = "HYPERDRIVE_FRESH"
+id = "PRODUCTION_HYPERDRIVE_FRESH_ID"       # Replace with: wrangler hyperdrive create --caching-disabled output
+
+# Service Binding from Edge Admission Worker (inbound — no public endpoint needed)
+[[env.production.services]]
+binding = "ADMISSION_WORKER"
+service = "veklom-edge-admission"
+environment = "production"

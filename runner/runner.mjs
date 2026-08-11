@@ -6,15 +6,32 @@ import { spawn } from 'node:child_process';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const TEAMS = [
-  'command-desk',
-  'poltergeist-platform',
-  'production-truth',
-  'release-control',
-  'build-devex',
-  'security-secrets',
-  'runtime-governance',
-  'evidence-ledger',
-  'edge-fleet-vnp',
+  'backend-chief',
+  'security-chief',
+  'platform-chief',
+  'runtime-chief',
+  'qa-chief',
+  'release-chief',
+  'frontend-chief',
+  'devex-chief',
+  'protocol-mesh-captain',
+  'abide-governance-engineer',
+  'terminal-nexus-commander',
+  'codebase-architect',
+  'abide-truth-auditor',
+  'cappo-truth-auditor',
+  'byos-truth-auditor',
+  'vnp-truth-auditor',
+  'frontend-truth-auditor',
+  'abide-execution-ops',
+  'byos-execution-ops',
+  'vnp-execution-ops',
+  'cappo-execution-ops',
+  'frontend-execution-ops',
+  'cappo-service-restorer',
+  'byos-service-restorer',
+  'gnomledger-service-restorer',
+  'abide-deployment-monitor'
 ];
 const inboxPath = join(ROOT, 'reports', 'command-desk-inbox.jsonl');
 const reportsDir = join(ROOT, 'reports', 'departments');
@@ -105,7 +122,18 @@ async function main() {
   await mkdir(runsDir, { recursive: true });
 
   const runId = randomUUID();
-  const results = await Promise.all(TEAMS.map((team) => spawnWorker(team, mission, runId)));
+
+  // Concurrency-limited batch runner — prevents OOM on the Ollama 3.2B node.
+  // Default: 3 agents at a time. Override via VEKLOM_AGENT_CONCURRENCY env var.
+  const concurrency = Math.max(1, parseInt(process.env.VEKLOM_AGENT_CONCURRENCY || '3', 10));
+  const results = [];
+  for (let i = 0; i < TEAMS.length; i += concurrency) {
+    const batch = TEAMS.slice(i, i + concurrency);
+    console.log(`[runner] Batch ${Math.floor(i / concurrency) + 1}: spawning ${batch.join(', ')}`);
+    const batchResults = await Promise.all(batch.map((team) => spawnWorker(team, mission, runId)));
+    results.push(...batchResults);
+  }
+
   const all = results.every((r) => r.status === 'reported');
 
   mission.status = all ? 'department_reports_received' : 'partial_department_reports';

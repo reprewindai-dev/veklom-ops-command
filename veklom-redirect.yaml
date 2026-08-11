@@ -1,0 +1,15 @@
+http:
+  routers:
+    veklom-com-forwarder:
+      entryPoints:
+        - http
+        - https
+      rule: "Host(`veklom.com`) || Host(`www.veklom.com`)"
+      service: veklom-com-external
+      tls:
+        certResolver: letsencrypt
+  services:
+    veklom-com-external:
+      loadBalancer:
+        servers:
+          - url: "http://87.99.154.166:80"

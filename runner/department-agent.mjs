@@ -126,8 +126,8 @@ async function main() {
     throw new Error(`mission file invalid: ${missionPath}`);
   }
 
-  const teamDoc = await read(join(ROOT, 'teams', team, 'team.md'));
-  const roster = await read(join(ROOT, 'teams', team, 'agents', 'roster.md'));
+  const teamDoc = await read(join(ROOT, 'agents', team, 'AGENT.md'));
+  const roster = await read(join(ROOT, 'agents', team, 'TOOLS.md'));
   const capability = await resolveCapability('department-alignment', { department: team, mission_id: mission.mission_id, production_mutation: false });
   
   // Phase 1: Alignment Report
@@ -166,6 +166,13 @@ Return JSON only with mission_id, department, captain, mission_understanding, ow
 
   if (report.status !== 'aligned') {
     return; // Stop if not aligned
+  }
+
+  // Skip Phase 2 execution loop for alignment-only missions (e.g. verification, audit)
+  // Set VEKLOM_ALIGNMENT_ONLY=true to collect alignment reports without running bash execution.
+  if (process.env.VEKLOM_ALIGNMENT_ONLY === 'true') {
+    console.log(JSON.stringify({ team, phase: 'alignment_only', msg: 'Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true' }));
+    return;
   }
 
   // Phase 2: Autonomous Execution Loop

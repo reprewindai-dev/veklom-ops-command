@@ -1,0 +1,172 @@
+{
+  "run_id": "9f1b710c-6fd3-4b02-88df-b2b8107dfc1a",
+  "parent": "command-desk",
+  "mission_id": "mission-002",
+  "trigger": {
+    "trigger": "founder_approved",
+    "mission_id": "mission-002",
+    "timestamp": "2026-07-31T10:22:00Z"
+  },
+  "children": [
+    {
+      "team": "backend-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "security-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "platform-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "runtime-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "qa-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "release-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "frontend-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "devex-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "protocol-mesh-captain",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-governance-engineer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "terminal-nexus-commander",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "codebase-architect",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "vnp-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "frontend-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "vnp-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "frontend-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "gnomledger-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-deployment-monitor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    }
+  ],
+  "child_count": 26,
+  "production_mutation": false,
+  "capi_boundary": "required for capabilities",
+  "started_at": "2026-07-31T10:42:06.620Z"
+}

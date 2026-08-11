@@ -1,0 +1,172 @@
+{
+  "run_id": "3ec04a12-d298-4378-88be-4e90256fe650",
+  "parent": "command-desk",
+  "mission_id": "mission-002",
+  "trigger": {
+    "trigger": "founder_approved",
+    "mission_id": "mission-002",
+    "timestamp": "2026-07-31T10:22:00Z"
+  },
+  "children": [
+    {
+      "team": "backend-chief",
+      "status": "reported",
+      "output": "{\"team\":\"backend-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"e3eeaa5e-2812-4bea-aeff-c69de34aceba\"}\n{\"team\":\"backend-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "security-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "platform-chief",
+      "status": "reported",
+      "output": "{\"team\":\"platform-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"13930cc1-b328-4d56-b67d-551912d112c3\"}\n{\"team\":\"platform-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "runtime-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "qa-chief",
+      "status": "reported",
+      "output": "{\"team\":\"qa-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"4a627c0a-1a0e-4d5f-a2ff-d0ada6cd1a70\"}\n{\"team\":\"qa-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "release-chief",
+      "status": "reported",
+      "output": "{\"team\":\"release-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"6947d082-6676-43af-9c7b-617812437e04\"}\n{\"team\":\"release-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "frontend-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "devex-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "protocol-mesh-captain",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-governance-engineer",
+      "status": "reported",
+      "output": "{\"team\":\"abide-governance-engineer\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"b7512137-01aa-43eb-a8d2-339fa5fa552d\"}\n{\"team\":\"abide-governance-engineer\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "terminal-nexus-commander",
+      "status": "reported",
+      "output": "{\"team\":\"terminal-nexus-commander\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"47986ebf-e7dd-42df-81cb-60a7b14ff9fb\"}\n{\"team\":\"terminal-nexus-commander\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "codebase-architect",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-truth-auditor",
+      "status": "reported",
+      "output": "{\"team\":\"abide-truth-auditor\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"0407ad38-bbc0-4198-b68a-b15caa732b5a\"}\n{\"team\":\"abide-truth-auditor\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "cappo-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "vnp-truth-auditor",
+      "status": "reported",
+      "output": "{\"team\":\"vnp-truth-auditor\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"1db02a4a-45bb-48fa-ae51-ade7f58431c3\"}",
+      "error": ""
+    },
+    {
+      "team": "frontend-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"abide-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"f059dcb7-299b-4e21-8c40-deed82ead154\"}\n{\"team\":\"abide-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "byos-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"byos-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"a30dd14d-d9b3-40c1-a658-7831571a31e0\"}\n{\"team\":\"byos-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "vnp-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"cappo-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"8daa253e-a7ef-4ae7-af52-753709d5a356\"}\n{\"team\":\"cappo-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "frontend-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"frontend-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"7a97554f-8ef5-4cb5-99e7-397d82715d43\"}\n{\"team\":\"frontend-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "cappo-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "gnomledger-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-deployment-monitor",
+      "status": "reported",
+      "output": "{\"team\":\"abide-deployment-monitor\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"cc1cd8f1-5dd2-46e2-8595-c7a7a6a26feb\"}",
+      "error": ""
+    }
+  ],
+  "child_count": 26,
+  "production_mutation": false,
+  "capi_boundary": "required for capabilities",
+  "started_at": "2026-07-31T12:12:49.504Z"
+}

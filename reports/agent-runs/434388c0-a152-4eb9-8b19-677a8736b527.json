@@ -1,0 +1,172 @@
+{
+  "run_id": "434388c0-a152-4eb9-8b19-677a8736b527",
+  "parent": "command-desk",
+  "mission_id": "mission-002",
+  "trigger": {
+    "trigger": "founder_approved",
+    "mission_id": "mission-002",
+    "timestamp": "2026-07-31T10:22:00Z"
+  },
+  "children": [
+    {
+      "team": "backend-chief",
+      "status": "reported",
+      "output": "{\"team\":\"backend-chief\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"4c1bdb5d-8490-4836-81ce-8a13f805f836\"}",
+      "error": ""
+    },
+    {
+      "team": "security-chief",
+      "status": "reported",
+      "output": "{\"team\":\"security-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"f8d6ecd6-c890-48e1-b482-47a9bccdddb9\"}\n{\"team\":\"security-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "platform-chief",
+      "status": "reported",
+      "output": "{\"team\":\"platform-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"45de598a-d899-4fc8-9f12-6caff25769b4\"}\n{\"team\":\"platform-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "runtime-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "qa-chief",
+      "status": "reported",
+      "output": "{\"team\":\"qa-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"278f983c-a4d4-4754-b192-6b4a41e23105\"}\n{\"team\":\"qa-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "release-chief",
+      "status": "reported",
+      "output": "{\"team\":\"release-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"d33bd4c5-b9c2-4433-b2c3-af6918e6ab98\"}\n{\"team\":\"release-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "frontend-chief",
+      "status": "reported",
+      "output": "{\"team\":\"frontend-chief\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"cabb8d67-4c45-44d8-84a2-0796e71519e0\"}",
+      "error": ""
+    },
+    {
+      "team": "devex-chief",
+      "status": "reported",
+      "output": "{\"team\":\"devex-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"2070e41d-424e-4bbb-b970-7964faf09bdc\"}\n{\"team\":\"devex-chief\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "protocol-mesh-captain",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-governance-engineer",
+      "status": "reported",
+      "output": "{\"team\":\"abide-governance-engineer\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"05583eb5-a449-488f-8ab2-8bdcd114137f\"}\n{\"team\":\"abide-governance-engineer\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "terminal-nexus-commander",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "codebase-architect",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-truth-auditor",
+      "status": "reported",
+      "output": "{\"team\":\"byos-truth-auditor\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"85b50355-2de8-4c89-9b13-f674a1e5c6a9\"}\n{\"team\":\"byos-truth-auditor\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "vnp-truth-auditor",
+      "status": "reported",
+      "output": "{\"team\":\"vnp-truth-auditor\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"17b4975d-e63a-4185-b4bb-29e34d231d1b\"}\n{\"team\":\"vnp-truth-auditor\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "frontend-truth-auditor",
+      "status": "reported",
+      "output": "{\"team\":\"frontend-truth-auditor\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"1bba5696-90a4-4aff-9be8-a98ef7ed5970\"}\n{\"team\":\"frontend-truth-auditor\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "abide-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"abide-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"cb8114b9-4695-4169-86c5-765adf1b5c91\"}\n{\"team\":\"abide-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "byos-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"byos-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"7f74efcd-710a-43af-a783-3b588b4f4cce\"}\n{\"team\":\"byos-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "vnp-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"vnp-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"8f7546a1-278b-4ffe-b334-bbdf8f53c845\"}\n{\"team\":\"vnp-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "cappo-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"cappo-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"b3fb569b-cee4-42cf-988e-b4637c2d2e9e\"}\n{\"team\":\"cappo-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "frontend-execution-ops",
+      "status": "reported",
+      "output": "{\"team\":\"frontend-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"c24b7168-966c-4654-934c-9084fde1c88d\"}\n{\"team\":\"frontend-execution-ops\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "cappo-service-restorer",
+      "status": "reported",
+      "output": "{\"team\":\"cappo-service-restorer\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"687c8598-3db0-4d54-83f3-7b04f2039196\"}\n{\"team\":\"cappo-service-restorer\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "byos-service-restorer",
+      "status": "reported",
+      "output": "{\"team\":\"byos-service-restorer\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"7b49bf73-6e16-4d06-beab-e6c3cec03f86\"}\n{\"team\":\"byos-service-restorer\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "gnomledger-service-restorer",
+      "status": "reported",
+      "output": "{\"team\":\"gnomledger-service-restorer\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"46e2534c-24e4-488e-adb2-2ebe710a11b5\"}\n{\"team\":\"gnomledger-service-restorer\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    },
+    {
+      "team": "abide-deployment-monitor",
+      "status": "reported",
+      "output": "{\"team\":\"abide-deployment-monitor\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"1e7a8d25-3153-4c82-b62f-c9143dd5c392\"}\n{\"team\":\"abide-deployment-monitor\",\"phase\":\"alignment_only\",\"msg\":\"Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true\"}",
+      "error": ""
+    }
+  ],
+  "child_count": 26,
+  "production_mutation": false,
+  "capi_boundary": "required for capabilities",
+  "started_at": "2026-07-31T13:14:36.435Z"
+}

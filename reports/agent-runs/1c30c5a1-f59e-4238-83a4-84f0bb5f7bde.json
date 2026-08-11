@@ -1,0 +1,172 @@
+{
+  "run_id": "1c30c5a1-f59e-4238-83a4-84f0bb5f7bde",
+  "parent": "command-desk",
+  "mission_id": "mission-002",
+  "trigger": {
+    "trigger": "founder_approved",
+    "mission_id": "mission-002",
+    "timestamp": "2026-07-31T10:22:00Z"
+  },
+  "children": [
+    {
+      "team": "backend-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "security-chief",
+      "status": "failed",
+      "output": "{\"team\":\"security-chief\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"0899275d-f5fd-4044-833f-7f2355ef23bb\"}\n{\"team\":\"security-chief\",\"phase\":\"execution\",\"msg\":\"Beginning autonomous execution loop\"}",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "platform-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "runtime-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "qa-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "release-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "frontend-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "devex-chief",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "protocol-mesh-captain",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-governance-engineer",
+      "status": "failed",
+      "output": "{\"team\":\"abide-governance-engineer\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"3504e24f-2a0d-412f-bbc5-5678cea74e06\"}\n{\"team\":\"abide-governance-engineer\",\"phase\":\"execution\",\"msg\":\"Beginning autonomous execution loop\"}",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "terminal-nexus-commander",
+      "status": "failed",
+      "output": "{\"team\":\"terminal-nexus-commander\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"e772fa2f-3ae4-4700-982a-2d7eb582994f\"}\n{\"team\":\"terminal-nexus-commander\",\"phase\":\"execution\",\"msg\":\"Beginning autonomous execution loop\"}",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "codebase-architect",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-truth-auditor",
+      "status": "failed",
+      "output": "{\"team\":\"abide-truth-auditor\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"e84549f8-2075-4dce-900e-b7f3e3ba44d2\"}\n{\"team\":\"abide-truth-auditor\",\"phase\":\"execution\",\"msg\":\"Beginning autonomous execution loop\"}",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-truth-auditor",
+      "status": "reported",
+      "output": "{\"team\":\"cappo-truth-auditor\",\"phase\":\"aligned\",\"status\":\"needs_clarification\",\"worker_id\":\"bc5c5b90-915d-4131-9794-94c4610a954f\"}",
+      "error": ""
+    },
+    {
+      "team": "byos-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "vnp-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "frontend-truth-auditor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-execution-ops",
+      "status": "failed",
+      "output": "{\"team\":\"byos-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"5624890c-58f0-4062-9c84-e9b1fea1ee58\"}\n{\"team\":\"byos-execution-ops\",\"phase\":\"execution\",\"msg\":\"Beginning autonomous execution loop\"}",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "vnp-execution-ops",
+      "status": "failed",
+      "output": "{\"team\":\"vnp-execution-ops\",\"phase\":\"aligned\",\"status\":\"aligned\",\"worker_id\":\"e4fd1342-bdc1-4f6c-ab83-5d393c1c92dd\"}\n{\"team\":\"vnp-execution-ops\",\"phase\":\"execution\",\"msg\":\"Beginning autonomous execution loop\"}",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "frontend-execution-ops",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "cappo-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "byos-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "gnomledger-service-restorer",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"llama-server process no longer running: unknown \",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    },
+    {
+      "team": "abide-deployment-monitor",
+      "status": "failed",
+      "output": "",
+      "error": "model request failed (500): {\"error\":{\"message\":\"an error was encountered while running the model: unexpected EOF\",\"type\":\"api_error\",\"param\":null,\"code\":null}}"
+    }
+  ],
+  "child_count": 26,
+  "production_mutation": false,
+  "capi_boundary": "required for capabilities",
+  "started_at": "2026-07-31T11:41:46.169Z"
+}

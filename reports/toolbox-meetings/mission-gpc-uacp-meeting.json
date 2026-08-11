@@ -1,0 +1,14 @@
+{
+  "mission_id": "mission-gpc-uacp-meeting",
+  "created_at": "2026-07-30T09:35:00-04:00",
+  "requested_by": "Chris / Founder Operator",
+  "title": "GPC UACP production integration and meeting readiness",
+  "primary_objective": "Execute the supplied UACP v3 GPC integration plan in the writable UACP repository and produce a meeting-ready, evidence-backed result.",
+  "instructions": "All workers must execute work, not merely report. Work only in C:/Users/antho/.windsurf/uacpv3 for source changes. Do not modify veklom-byos-backend, cappo-backend, cAPI, PGL, Genome Ledger/Gnomledger, Locus, Lockerphycer, or any unrelated repository. Backend files are contracts/references only. Build and test UACP GPC frontend behavior: graph editing, identity preservation, full-graph compile requests, tenant/pipeline-preserving execution, honest errors, test/deploy UI, and export route. Use read-only SSH/HTTPS checks for Coolify and existing backend services. Capture exact image/container IDs, redacted environment keys, routes, statuses, response bodies, and rollback evidence. Fix direct UACP integration errors where authorized. Never claim backend or deployment completion from health checks alone. Hand off release readiness only after tests/build and a real GPC lifecycle result are recorded.",
+  "target_repos": ["C:/Users/antho/.windsurf/uacpv3"],
+  "production_impact": false,
+  "security_impact": true,
+  "approval_required": true,
+  "forbidden_actions": ["Modify external backend repositories", "Deploy or restart Coolify containers", "Change routes or environment variables", "Print secrets", "Rewrite backend architecture", "Claim full integration complete without governed end-to-end proof"],
+  "required_response": ["changed_files", "commands", "tests", "live_evidence", "backend_deferred_items", "release_blockers", "status"]
+}

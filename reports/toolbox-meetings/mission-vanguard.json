@@ -1,0 +1,24 @@
+{
+  "mission_id": "mission-vanguard",
+  "title": "Operation Vanguard: Production Health Restoration",
+  "priority": "critical",
+  "objectives": [
+    {
+      "id": "obj-1",
+      "description": "BYOS Backend Sentinel: Ensure n13gp1nhrcdp0hvazvbnlxru-213557155694 is healthy and Sentinel handles missing /app/db/migrations/versions.",
+      "assignee": "backend-chief"
+    },
+    {
+      "id": "obj-2",
+      "description": "VNP JWT Auth Patch: Resolve jose.exceptions.JWTError in BYOS Backend by securely configuring the required VNP_HUB_SECRET_KEY in the Coolify environment.",
+      "assignee": "security-chief"
+    },
+    {
+      "id": "obj-3",
+      "description": "Traefik ACME Recovery: Fix veklom.com Let's Encrypt block on Server 2 (87.99.154.166) by patching /data/coolify/proxy/dynamic/veklom-frontend.yaml to accept Cloudflare SSL.",
+      "assignee": "platform-chief"
+    }
+  ],
+  "context": "The system is currently running but with critical healthcheck, auth, and routing blocks. Deploy fixes locally or to Coolify without exposing secrets.",
+  "deadline": "Immediate"
+}
