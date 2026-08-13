@@ -101,6 +101,12 @@ Historical experiments, duplicate repos, generated prototypes, and old `uacp*` v
 
 ## 5. Operations Rules
 
+### Cloudflare and Perimeter Security
+
+- **Web Bot Auth:** Cloudflare provides the initial perimeter for bot verification via `/.well-known/http-message-signatures-directory` and Ed25519 signed requests.
+- **Authority:** Web Bot Auth proves identity at the perimeter but does *not* grant verified capability execution. CAPPO retains exclusive authority over consequential execution, mount validity, and token generation.
+- **cAPI Role:** cAPI verifies the Cloudflare `Signature` headers and proxies the verified identity to CAPPO. It does not synthesize grants. CAPPO and cAPI configurations must remain separate; never alias `CAPPO_BACKEND_URL` to `CAPI_RUNTIME_URL`.
+
 ### Coolify and GitHub
 
 - **GitHub default branch = source truth.**

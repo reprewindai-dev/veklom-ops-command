@@ -48,14 +48,19 @@ name = "veklom-origin-connector"
 
 [[env.production.hyperdrive]]
 binding = "HYPERDRIVE_CACHEABLE"
-id = "PRODUCTION_HYPERDRIVE_CACHEABLE_ID"   # Replace with: wrangler hyperdrive create output
+id = "f640ae1fd0984c88aea962785af0b873"
 
 [[env.production.hyperdrive]]
 binding = "HYPERDRIVE_FRESH"
-id = "PRODUCTION_HYPERDRIVE_FRESH_ID"       # Replace with: wrangler hyperdrive create --caching-disabled output
+id = "83a694a366144557b1095b369e0b1415"
 
-# Service Binding from Edge Admission Worker (inbound — no public endpoint needed)
-[[env.production.services]]
-binding = "ADMISSION_WORKER"
-service = "veklom-edge-admission"
-environment = "production"
+[env.canary]
+name = "veklom-origin-connector-canary"
+
+[[env.canary.hyperdrive]]
+binding = "HYPERDRIVE_CACHEABLE"
+id = "f640ae1fd0984c88aea962785af0b873"
+
+[[env.canary.hyperdrive]]
+binding = "HYPERDRIVE_FRESH"
+id = "83a694a366144557b1095b369e0b1415"

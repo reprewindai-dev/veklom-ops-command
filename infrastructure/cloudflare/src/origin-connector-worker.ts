@@ -64,8 +64,31 @@ export default {
     // catalog acceleration. Until then, all requests proxy to CAPPO origin.
 
     const originUrl = new URL(request.url);
-    originUrl.hostname = 'api.veklom.com'; // Routes through Tunnel after Phase 1
 
+    // Allowed origin routes according to the Golden Bible
+    const allowedHosts = new Set([
+      'apex.veklom.com',
+      'bingo.veklom.com',
+      'capi.veklom.com',
+      'cappo.veklom.com',
+      'discovery.veklom.com',
+      'duel.veklom.com',
+      'id.veklom.com',
+      'interlink.veklom.com',
+      'ledger.veklom.com',
+      'lockerphycer.veklom.com',
+      'pgl.veklom.com',
+      'repogate.veklom.com',
+      'api.veklom.com',
+      'control.veklom.com',
+      'app.veklom.com',
+    ]);
+
+    if (!allowedHosts.has(originUrl.hostname)) {
+      return new Response("Unknown backend route", { status: 404 });
+    }
+    // No default backend fallback; hostname remains the explicitly allowed requested host
+    // which Traefik on Server 0 will route.
     // Attach internal connector identity header so CAPPO can verify
     // the request arrived through the private path (for audit + rate-limiting)
     const modifiedHeaders = new Headers(request.headers);

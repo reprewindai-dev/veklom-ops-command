@@ -15,4 +15,46 @@ binding = "REFINERY_QUEUE"
 # KV Namespace for immutable capabilities, discovery docs, and public schemas
 [[env.production.kv_namespaces]]
 binding = "VEKLOM_IMMUTABLE_CACHE"
-id = "PRODUCTION_KV_ID_PLACEHOLDER"
+id = "9c9c67000f47427d875bbcbbbe16ac69"
+
+# Service Binding to Origin Connector
+[[env.production.services]]
+binding = "ORIGIN_CONNECTOR"
+service = "veklom-origin-connector"
+environment = "production"
+
+# Hyperdrive — cacheable reads (SELECT queries)
+[[env.production.hyperdrive]]
+binding = "DB_CACHEABLE"
+id = "f640ae1fd0984c88aea962785af0b873"
+
+# Hyperdrive — fresh reads (writes, mutations, auth)
+[[env.production.hyperdrive]]
+binding = "DB_FRESH"
+id = "83a694a366144557b1095b369e0b1415"
+
+[env.canary]
+name = "veklom-edge-admission-canary"
+
+[[env.canary.queues.producers]]
+queue = "veklom-async-refinery-canary"
+binding = "REFINERY_QUEUE"
+
+[[env.canary.kv_namespaces]]
+binding = "VEKLOM_IMMUTABLE_CACHE"
+id = "ec37f896ba5049c1afe2777bb1c5b42c"
+
+[[env.canary.services]]
+binding = "ORIGIN_CONNECTOR"
+service = "veklom-origin-connector-canary"
+
+
+# Hyperdrive — cacheable reads (canary uses same config, prod-safe)
+[[env.canary.hyperdrive]]
+binding = "DB_CACHEABLE"
+id = "f640ae1fd0984c88aea962785af0b873"
+
+# Hyperdrive — fresh reads (canary)
+[[env.canary.hyperdrive]]
+binding = "DB_FRESH"
+id = "83a694a366144557b1095b369e0b1415"

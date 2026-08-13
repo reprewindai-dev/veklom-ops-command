@@ -10,7 +10,7 @@ Veklom Ops Command is the standalone cross-repository operating control plane fo
 
 - GitHub `main` is source truth.
 - Coolify on Hetzner is runtime deployment truth.
-- Cloudflare is DNS/WAF/cache and Apex static hosting only.
+- Cloudflare handles DNS/WAF/Cache, Edge Admission Workers, Tunnel (cloudflared), VPC, Hyperdrive, and Queue responsibilities.
 - Poltergeist is the local watcher, build queue, status, and evidence trigger.
 - Jean, Windsurf, Cursor, VS Code, Codex, Claude Code, and GitHub MCP are interchangeable interfaces.
 - Local success is not production success.
