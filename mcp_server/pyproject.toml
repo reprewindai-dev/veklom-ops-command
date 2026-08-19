@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "veklom-ops-mcp"
+version = "0.1.0"
+description = "Least-authority MCP operations and evidence plane for Veklom."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp>=1.27,<2",
+  "httpx>=0.28,<1",
+  "starlette>=0.46,<1",
+  "uvicorn[standard]>=0.34,<1",
+  "filelock>=3.15,<4",
+  "cryptography>=45,<47",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+veklom-mcp-approve = "veklom_ops_mcp.approval:main"
+veklom-mcp-keygen = "veklom_ops_mcp.approval:keygen_main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+veklom_ops_mcp = ["assets/*.html"]
