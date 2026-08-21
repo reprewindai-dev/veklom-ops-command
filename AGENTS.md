@@ -10,6 +10,24 @@ The Bible is the sole cross-repo architecture/runtime/topology/port authority. D
 
 Before implementing any planned capability, search the relevant Veklom repositories and git history for an existing implementation. Task-list checkboxes, stale implementation plans, and prior agent prose are never source of truth. Existing runtime code and verified production behavior supersede them.
 
+## Mandatory portable-work-order rule
+
+When any Veklom implementation plan, repair plan, architecture task, or work order is copied/pasted into a frontier model, IDE agent, or coding agent that may not already have this repository context, the plan **must carry the repository-first bootstrap rules with it**.
+
+Read and use [`PORTABLE_AGENT_WORK_ORDER_CONTRACT.md`](./PORTABLE_AGENT_WORK_ORDER_CONTRACT.md).
+
+At minimum, every portable work order must state all of the following before implementation instructions:
+
+- this is an **existing multi-repository Veklom system, not a greenfield build**;
+- every named component must be mapped to its existing canonical repository before code is created;
+- existing components are extended/wired, never recreated, unless explicitly marked `NEW / BUILD`;
+- the evidence system must be introduced as **GnomLedger / PGL** at first use;
+- SEKED policy, CAPPO authority, GnomLedger/PGL evidence, Lockerphycer security, cAPI connection/discovery, BYOS execution, and x402 settlement are distinct responsibilities;
+- if a canonical component cannot be found, return `CANONICAL_COMPONENT_NOT_FOUND` and stop instead of inventing a substitute;
+- “done” requires repository/runtime proof appropriate to the task, not merely generated files and unit tests.
+
+If an agent receives only a pasted plan and not this repository, the plan itself must contain the short-form preamble from `PORTABLE_AGENT_WORK_ORDER_CONTRACT.md` so the rule survives loss of repository context.
+
 ## Mandatory review gate for existing work
 
 When asked to review, verify, audit, continue, or approve another agent's work, do not review only the agent's prose. Perform a repository-level change audit first:
