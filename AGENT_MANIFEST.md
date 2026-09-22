@@ -8,14 +8,14 @@ This file is the entrypoint for the Veklom Ops Command engineering organization.
 
 ## Mandatory truth rules for every operator
 
-- GitHub default branch is source truth.
-- Coolify is deployment/runtime configuration truth.
-- Live endpoint behavior is required for final production verification.
-- Use Coolify UI/API/MCP for Coolify management; reserve SSH for direct host/container verification or operations.
-- Never infer ports, container IDs, server placement, or service health from an old manifest.
-- Host port `8000` is currently reserved by Coolify; internal Docker port `8000` may still be used behind Traefik.
-- Host port `3000` must not be allocated until its present host reservation is explicitly reverified.
-- No synthetic/mock evidence may be represented as production evidence.
+- Read `CURRENT_ARCHITECTURE_LOCK.md` and the continuum manifest/agent contract before implementation.
+- The accepted proof-and-seal continuum is the Capability OS architecture anchor; RC1 is not accepted and is downstream packaging.
+- Current Core V1 infrastructure is owned/local hardware + Docker + Cloudflare Tunnels unless the architecture lock is explicitly changed.
+- GitHub default branch is source truth for source; live runtime/consequence evidence governs runtime claims.
+- CAPPO is the sole consequence authority. V-Chip mechanisms must integrate through CAPPO, never beside it as a second gate.
+- GnomLedger / PGL owns canonical evidence/provenance/lineage closure.
+- Every cross-repo task must identify the continuum invariant/program it preserves or extends.
+- No synthetic/mock evidence may be represented as physical/production evidence.
 - No secrets or private keys in Git, reports, issues, or chat.
 
 ## Engineering roles
