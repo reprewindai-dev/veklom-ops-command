@@ -1,0 +1,220 @@
+{
+  "schema_version": "1.0.0",
+  "updated_at": "2026-09-27T03:20:00Z",
+  "agents": {
+    "codex": {
+      "role": "integrator_release_owner",
+      "primary": [
+        "authoritative backend paths",
+        "combined canary",
+        "production promotion and rollback"
+      ]
+    },
+    "antigravity": {
+      "role": "secondary_executor",
+      "primary": [
+        "claimed bulk implementation",
+        "isolated canary stress and readback",
+        "minimal patch handoffs"
+      ]
+    },
+    "devin": {
+      "role": "helper_validator",
+      "primary": [
+        "user journey validation and frontend fixes",
+        "cross-agent review",
+        "public browser trace"
+      ]
+    }
+  },
+  "policy": {
+    "max_active_total": 2,
+    "max_active_per_runtime": 1,
+    "production_change_actor": "codex",
+    "branch_model": "task_scoped_from_recorded_base_sha",
+    "promotion_mode": "exact_tested_digest",
+    "production_secrets_in_manifest": false,
+    "allowed_surfaces": [
+      "cloudflare_pages",
+      "cloudflare_tunnel",
+      "docker",
+      "self_owned_hardware"
+    ],
+    "excluded_systems": [
+      "vercel",
+      "hetzner",
+      "coolify",
+      "byos",
+      "veklom-byos-backend"
+    ]
+  },
+  "baseline": {
+    "runtimes": [
+      {
+        "runtime_id": "production-unknown-until-inventory",
+        "environment": "production",
+        "hardware_node": null,
+        "services": [],
+        "pages": {
+          "project": "UNVERIFIED",
+          "deployment_id": null,
+          "commit_sha": null,
+          "health": "UNKNOWN",
+          "observed_at": null,
+          "deployment_platform": "cloudflare_pages"
+        },
+        "tunnels": [
+          {
+            "hostname": "veklom.com",
+            "connector_id": null,
+            "origin_service": null,
+            "health": "UNKNOWN",
+            "observed_at": null,
+            "deployment_platform": "cloudflare_tunnel"
+          }
+        ],
+        "observed_at": null,
+        "hardware_ownership": "self_owned"
+      },
+      {
+        "runtime_id": "canary-unknown-until-inventory",
+        "environment": "canary",
+        "hardware_node": null,
+        "services": [],
+        "pages": {
+          "project": "UNVERIFIED",
+          "deployment_id": null,
+          "commit_sha": null,
+          "health": "UNKNOWN",
+          "observed_at": null,
+          "deployment_platform": "cloudflare_pages"
+        },
+        "tunnels": [
+          {
+            "hostname": "UNVERIFIED",
+            "connector_id": null,
+            "origin_service": null,
+            "health": "UNKNOWN",
+            "observed_at": null,
+            "deployment_platform": "cloudflare_tunnel"
+          }
+        ],
+        "observed_at": null,
+        "hardware_ownership": "self_owned"
+      }
+    ],
+    "observed_at": null
+  },
+  "work_items": [
+    {
+      "id": "PROD-001",
+      "lane": "prod_user_journey",
+      "priority": 1,
+      "owner": "codex",
+      "reviewer": "devin",
+      "status": "UNCLAIMED",
+      "outcome": "Inventory running SHA, image digest, public route and first failing fresh-user step",
+      "runtime_id": "production-unknown-until-inventory",
+      "branch": null,
+      "base_sha": null,
+      "paths": [],
+      "depends_on": [],
+      "evidence_ids": [],
+      "blocker": null,
+      "handoff": null,
+      "updated_at": "2026-09-27T03:20:00Z",
+      "priority_override_reason": null,
+      "return_to_work_id": null
+    },
+    {
+      "lane": "prod_user_journey",
+      "priority": 1,
+      "status": "UNCLAIMED",
+      "runtime_id": "production-unknown-until-inventory",
+      "branch": null,
+      "base_sha": null,
+      "paths": [],
+      "evidence_ids": [],
+      "blocker": null,
+      "handoff": null,
+      "updated_at": "2026-09-27T03:20:00Z",
+      "priority_override_reason": null,
+      "return_to_work_id": null,
+      "id": "PROD-LOGIN-001",
+      "owner": "devin",
+      "reviewer": "codex",
+      "outcome": "Identify and repair the first failing fresh-user sign-in or registration step on veklom.com; capture the public browser trace and runtime response",
+      "depends_on": [
+        "PROD-001"
+      ]
+    },
+    {
+      "lane": "prod_user_journey",
+      "priority": 1,
+      "status": "UNCLAIMED",
+      "runtime_id": "production-unknown-until-inventory",
+      "branch": null,
+      "base_sha": null,
+      "paths": [],
+      "evidence_ids": [],
+      "blocker": null,
+      "handoff": null,
+      "updated_at": "2026-09-27T03:20:00Z",
+      "priority_override_reason": null,
+      "return_to_work_id": null,
+      "id": "PROD-PAYMENT-001",
+      "owner": "codex",
+      "reviewer": "devin",
+      "outcome": "Inventory the current payment or entitlement path; implement and verify the first failing user-visible payment step only after the live route and consequence contract are recorded",
+      "depends_on": [
+        "PROD-001"
+      ]
+    },
+    {
+      "lane": "prod_user_journey",
+      "priority": 1,
+      "status": "UNCLAIMED",
+      "runtime_id": "production-unknown-until-inventory",
+      "branch": null,
+      "base_sha": null,
+      "paths": [],
+      "evidence_ids": [],
+      "blocker": null,
+      "handoff": null,
+      "updated_at": "2026-09-27T03:20:00Z",
+      "priority_override_reason": null,
+      "return_to_work_id": null,
+      "id": "PROD-JOURNEY-001",
+      "owner": "devin",
+      "reviewer": "codex",
+      "outcome": "Verify a fresh user can complete login, discover a capability, approve, execute, read back the result and inspect evidence on the deployed candidate",
+      "depends_on": [
+        "PROD-LOGIN-001",
+        "PROD-PAYMENT-001"
+      ]
+    },
+    {
+      "id": "ANCHOR-001",
+      "lane": "anchor",
+      "priority": 2,
+      "owner": "antigravity",
+      "reviewer": "codex",
+      "status": "BLOCKED",
+      "outcome": "Connect one approved Anchor browser action to CAPPO and independent target readback",
+      "runtime_id": "canary-unknown-until-inventory",
+      "branch": null,
+      "base_sha": null,
+      "paths": [],
+      "depends_on": [],
+      "evidence_ids": [],
+      "blocker": "Actual Anchor task, controlled target contract and canary runtime not recorded",
+      "handoff": null,
+      "updated_at": "2026-09-27T03:20:00Z",
+      "priority_override_reason": null,
+      "return_to_work_id": null
+    }
+  ],
+  "evidence": [],
+  "release_candidates": [],
+  "change_events": []
+}
