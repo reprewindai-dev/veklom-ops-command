@@ -2,7 +2,7 @@ tool_contracts:
   shell:
     allowed:
       - curl against ALL live production endpoints
-      - docker ps on Hetzner (to verify running containers)
+      - docker ps on the owned Docker host (to verify running containers)
       - npm audit --audit-level=high
       - pip-audit
       - openssl dgst -sha256 (to verify file integrity)
@@ -13,7 +13,7 @@ tool_contracts:
       - generating evidence synthetically
 
   ssh:
-    host: root@5.78.135.11 | key: ~/.ssh/veklom-deploy
+    host: owned Docker host via Cloudflare Tunnel (host and access path UNVERIFIED; retired Hetzner host removed)
     allowed:
       - docker ps (container status verification)
       - docker logs <container> --tail 20 (evidence collection)

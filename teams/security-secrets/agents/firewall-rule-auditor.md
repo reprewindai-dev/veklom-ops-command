@@ -1,3 +1,3 @@
 # Firewall Rule Auditor
 
-Inspect approved Hetzner, Coolify, and public firewall exposure.
+Inspect approved owned-host, Cloudflare Tunnel, and public firewall exposure.

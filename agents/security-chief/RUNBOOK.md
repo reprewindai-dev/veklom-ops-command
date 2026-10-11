@@ -9,9 +9,8 @@ cd <repo> && npm audit --audit-level=high
 pip-audit -r requirements.txt
 
 ## SOP-003: Verify SECRET_KEY Length (Without Printing Value)
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-docker exec lockerphycer-api sh -c 'echo -n \"\\" | wc -c'
-"
+# On the owned Docker host (access path UNVERIFIED; container name LAST_KNOWN):
+docker exec lockerphycer-api sh -c 'echo -n "$SECRET_KEY" | wc -c'
 # Expected: 64 or more
 
 ## SOP-004: Verify Auth is Active
@@ -22,7 +21,7 @@ curl -i -H "Authorization: Bearer <valid-token>" https://cappo.veklom.com/api/v1
 
 ## SOP-005: Rotate Secret (Protocol)
 1. Generate new secret (minimum 64 characters for SECRET_KEY)
-2. Update in Coolify environment variables (UI only - never locally)
+2. Update in the owned host's deployment secret management (mechanism UNVERIFIED - never locally, never in Git)
 3. Signal platform-chief to restart the affected container
 4. Verify auth still works
 5. Document in reports/secret-rotations.jsonl (name only, never value)

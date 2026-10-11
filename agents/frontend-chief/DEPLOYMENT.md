@@ -1,19 +1,18 @@
 # Deployment - frontend-chief
 
-## Control Plane (Vercel)
-git push origin main
-# Vercel deploys automatically from main branch
-# Verify: curl https://control.veklom.com -> 200
+Deployment target: owned/local Docker hosts reached via Cloudflare Tunnels ([CURRENT_ARCHITECTURE_LOCK.md](../../CURRENT_ARCHITECTURE_LOCK.md)). Procedure (deploy and rollback): [runbooks/release-deploy.md](../../runbooks/release-deploy.md).
 
-## Manual Vercel Deploy
-cd C:\Users\antho\.windsurf\veklom-control-plane
-npx vercel deploy --prod
+The former Vercel deployment of the legacy Control Plane (`veklom-control-plane`) is retired; history remains in Git.
+
+## veklom-FRONTEND (Capability OS)
+1. Merge the reviewed change to main (CI green).
+2. Deploy per runbooks/release-deploy.md. Host, compose project, and public domain: UNVERIFIED - observe before acting.
+3. Verify the live domain returns 200 and renders the change.
 
 ## Rollback
-# In Vercel dashboard: select previous deployment and promote to production
-# OR: git revert <bad-commit> && git push origin main
+Redeploy the previous known-good SHA per runbooks/release-deploy.md
+OR: git revert <bad-commit> && git push origin main, then redeploy
 
-## Credentials Required (Vercel environment variables)
-- NEXT_PUBLIC_API_URL = https://api.veklom.com
-- NEXT_PUBLIC_CAPI_URL = https://capi.veklom.com
+## Credentials Required (injected by owned-host deployment secret management; mechanism UNVERIFIED)
+- Public API base URLs (e.g. api.veklom.com, capi.veklom.com) - variable names: UNVERIFIED, read from the veklom-FRONTEND repo
 - Never expose secret API keys in frontend code (use server-side API routes)

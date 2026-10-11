@@ -11,7 +11,7 @@ truth-chief's job is to verify that OTHER engineers' Definitions of Done are act
 - [ ] No synthetic data in the response
 
 ### For Any Deployment
-- [ ] docker ps on Hetzner confirms container is Up (not Exited, not Restarting)
+- [ ] docker ps on the owned Docker host confirms container is Up (not Exited, not Restarting)
 - [ ] Deployed SHA matches the git commit that was reviewed
 - [ ] Live HTTPS response body matches the deployed code's behavior
 

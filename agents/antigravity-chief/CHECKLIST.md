@@ -18,7 +18,7 @@ Nothing is marked complete until every applicable checkbox is checked.
 - [ ] Production Truth Engineer has signed off
 
 ### Deployment
-- [ ] Release Engineer has run `deploy_all.sh` (or equivalent scoped deploy)
+- [ ] Release Engineer has deployed per `runbooks/release-deploy.md` (owned Docker hosts)
 - [ ] Deployment SHA recorded in `reports/`
 - [ ] Live HTTPS verification completed for every changed service
 

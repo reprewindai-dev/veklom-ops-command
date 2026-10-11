@@ -5,13 +5,13 @@
   "description": "Mission architect and engineering lead for Veklom Ops Command. Breaks work down, assigns engineers, reviews cross-cutting changes, and ensures system coherence.",
   "domain_ownership": ["all"],
   "tools": {
-    "run_command": { "access": "full", "notes": "Local shell, git, docker, SSH to Hetzner" },
+    "run_command": { "access": "full", "notes": "Local shell, git, docker; owned-host access path UNVERIFIED" },
     "write_to_file": { "access": "full", "notes": "Any file in any Veklom repository" },
     "view_file": { "access": "full" },
     "grep_search": { "access": "full" },
     "invoke_subagent": { "access": "full", "notes": "Spawn any Elite 12 engineer as an execution subagent" },
-    "browser_subagent": { "access": "full", "notes": "Verify production domains, Coolify UI, GitHub PRs" },
-    "ssh": { "access": "full", "key": "~/.ssh/veklom-deploy", "host": "root@5.78.135.11" }
+    "browser_subagent": { "access": "full", "notes": "Verify production domains, GitHub PRs" },
+    "ssh": { "access": "none", "notes": "Retired Hetzner host removed 2026-09-27. Owned Docker hosts are reached via Cloudflare Tunnels; host and access path UNVERIFIED. See CURRENT_ARCHITECTURE_LOCK.md." }
   },
   "production_truth_requirements": {
     "work_breakdown": "Must produce a task list with explicit owner per item",

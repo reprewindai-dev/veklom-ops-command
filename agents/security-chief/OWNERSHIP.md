@@ -1,8 +1,8 @@
 # Ownership - security-chief
 
 ## Lockerphycer
-- Container: lockerphycer-api | Port: 8092 (INTERNAL ONLY - no public domain)
-- Server: /data/coolify/applications/lockerphycer/
+- Container: lockerphycer-api (LAST_KNOWN) | Port: 8092 (LAST_KNOWN; INTERNAL ONLY - no public domain)
+- Deploy target: owned Docker host (UNVERIFIED; see runbooks/release-deploy.md)
 - CRITICAL: SECRET_KEY MUST be >= 64 characters. This is the absolute security backbone.
 
 ## RepoGate

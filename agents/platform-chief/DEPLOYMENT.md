@@ -1,22 +1,13 @@
 # Deployment - platform-chief
 
-## Platform-chief owns deployment of ALL services via deploy_all.sh
+## Platform-chief owns deployment of all services to owned Docker hosts
 
-## Full Stack Deploy
- = Get-Content -Raw C:\Users\antho\.windsurf\deploy_all.sh
-ssh -i C:\Users\antho\.ssh\veklom-deploy -o StrictHostKeyChecking=no root@5.78.135.11 
+Deployment target: owned/local Docker hosts reached via Cloudflare Tunnels ([CURRENT_ARCHITECTURE_LOCK.md](../../CURRENT_ARCHITECTURE_LOCK.md)).
+Procedure (deploy and rollback): [runbooks/release-deploy.md](../../runbooks/release-deploy.md).
 
-## Individual Service Deploy
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-cd /data/coolify/applications/<app-dir>
-git stash && git fetch origin && git reset --hard origin/<branch> && git stash pop || true
-docker compose up -d --build
-"
+## Facts not recorded here (UNVERIFIED)
+Host identity, access path, compose project directories, and tunnel names must be observed on the owned host at deploy time.
+The retired Hetzner host, `/data/coolify/...` paths, and `deploy_all.sh` must not be used.
 
-## Rollback
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-git -C /data/coolify/applications/<app-dir> log --oneline -5
-git -C /data/coolify/applications/<app-dir> reset --hard <previous-sha>
-docker compose -f /data/coolify/applications/<app-dir>/docker-compose.yml up -d --build
-"
+## Verify
 curl https://<domain>/health

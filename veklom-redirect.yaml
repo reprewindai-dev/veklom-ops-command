@@ -1,15 +1,10 @@
-http:
-  routers:
-    veklom-com-forwarder:
-      entryPoints:
-        - http
-        - https
-      rule: "Host(`veklom.com`) || Host(`www.veklom.com`)"
-      service: veklom-com-external
-      tls:
-        certResolver: letsencrypt
-  services:
-    veklom-com-external:
-      loadBalancer:
-        servers:
-          - url: "http://87.99.154.166:80"
+# Retired 2026-09-27. Do not use this file for deployment, runtime, or architecture decisions.
+#
+# The former content was a Coolify/Traefik dynamic-proxy route forwarding
+# veklom.com / www.veklom.com to a Hetzner address. That infrastructure is
+# superseded and must not be treated as current. Its versioned history remains
+# available in Git.
+#
+# Current Core V1 infrastructure is defined in CURRENT_ARCHITECTURE_LOCK.md.
+# The current origin for veklom.com is UNVERIFIED; establish it from fresh
+# observation before acting.

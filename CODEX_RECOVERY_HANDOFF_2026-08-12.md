@@ -1,5 +1,7 @@
 # Veklom Recovery Handoff — 2026-08-12
 
+> **Infrastructure note (2026-10-11):** Coolify references in this handoff were replaced to match [`CURRENT_ARCHITECTURE_LOCK.md`](CURRENT_ARCHITECTURE_LOCK.md) (owned/local hardware + Docker + Cloudflare Tunnels). Original text remains in Git history.
+
 Purpose: give the next coding agent a verified starting state after multiple agents confused stale task artifacts, local-only changes, merged source, and deployed production.
 
 ## Non-negotiable truth rules
@@ -13,7 +15,7 @@ Purpose: give the next coding agent a verified starting state after multiple age
    - SPINE_JOINED
 4. Never reactivate mock/demo/in-memory state to make a production UI appear functional.
 5. Never claim "done" from a local file, commit, merge, or prose report. Production completion is:
-   repo change -> pushed commit -> Coolify deployment -> live endpoint/UI verification -> evidence/report.
+   repo change -> pushed commit -> deployment to an owned Docker host -> live endpoint/UI verification -> evidence/report.
 6. Existing runtime code and verified production behavior supersede stale plans and checklists.
 
 ## Verified current frontend state
@@ -25,7 +27,7 @@ Repository: `reprewindai-dev/veklom-FRONTEND`
 - The new root landing page exists in `app/page.tsx`.
 - The new developer portal exists in `app/dev/page.tsx`; middleware is intended to rewrite `veklom.dev /` to `/dev`.
 - Production deployment of `add110a` is NOT verified. The GitHub CI job failed before runner execution and the deploy job was skipped.
-- Current production behavior must therefore be treated independently from GitHub source until Coolify is verified.
+- Current production behavior must therefore be treated independently from GitHub source until the deployed runtime is verified by fresh observation.
 
 ### Local-only frontend change that must NOT be pushed
 
@@ -102,7 +104,7 @@ legacy page -> invented route -> local mock handler -> "verified" badge.
 1. Freeze Antigravity writes. Preserve its local work but make no pushes from the local `d5c2bbc` or newly-created `veklom-uch` files.
 2. On the Windows machine, record exact local state for `veklom-control-plane` and `veklom-uch` using `git status`, `git log --all`, `git reflog`, and diffs. Do not clean/reset until copied into the handoff.
 3. Inventory cAPI/Covenant and ABIDE against the intended UCH responsibilities before writing new UCH code.
-4. Treat `veklom-FRONTEND` source and Coolify runtime separately. Determine what commit Coolify is actually running.
+4. Treat `veklom-FRONTEND` source and deployed runtime separately. Determine by fresh observation what commit the owned Docker host is actually running.
 5. Deploy only after source build succeeds and then verify live:
    - `control.veklom.com/` serves the intended new landing page
    - `veklom.dev/` serves the intended developer portal
@@ -121,7 +123,7 @@ For every claimed fix, report exactly:
 - current route/contract used
 - local tests/build result
 - pushed? yes/no
-- deployed to Coolify? yes/no
+- deployed to the owned Docker host? yes/no
 - live verified? yes/no
 - evidence proving live behavior
 
