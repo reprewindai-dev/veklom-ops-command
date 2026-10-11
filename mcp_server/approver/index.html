@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https: http://localhost:* http://127.0.0.1:*; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
+  <title>Veklom Gate Approver</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2311151d'/%3E%3Cpath d='M9 9h4v14H9zM19 9h4v14h-4z' fill='%2378e0b4'/%3E%3Cpath d='M13 15h6v2h-6z' fill='%2378e0b4' opacity='.55'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M9 9h4v14H9zM19 9h4v14h-4z"/><path class="bar" d="M13 15h6v2h-6z"/></svg>
+      <span class="word">Veklom <b>Gate</b></span>
+      <span class="sub">Approver</span>
+    </div>
+    <button class="device" id="device-chip" type="button" aria-haspopup="dialog" hidden>
+      <span class="dot" aria-hidden="true"></span><span id="device-name">This device</span>
+    </button>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <div id="view" aria-live="polite"></div>
+  </main>
+
+  <footer class="foot">
+    <span>Signing keys are created in this browser and cannot be exported. Nothing is sent anywhere until you approve.</span>
+  </footer>
+
+  <dialog id="settings" aria-labelledby="settings-title">
+    <form method="dialog" class="sheet">
+      <div class="sheet-head">
+        <h2 id="settings-title">This device</h2>
+        <button class="icon" value="close" aria-label="Close">&times;</button>
+      </div>
+      <div id="settings-body"></div>
+    </form>
+  </dialog>
+
+  <noscript><p class="noscript">The approver needs JavaScript to sign approvals on this device.</p></noscript>
+  <script src="app.js"></script>
+</body>
+</html>

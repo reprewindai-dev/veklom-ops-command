@@ -7,7 +7,7 @@ import pytest
 
 from fake_docker import FakeDocker, container
 from veklom_ops_mcp import tools
-from veklom_ops_mcp.approval import ApprovalAuthority, ApprovalSigner, generate_keypair
+from veklom_ops_mcp.approval import ApprovalAuthority, ApprovalInbox, ApprovalSigner, generate_keypair
 from veklom_ops_mcp.audit import AuditLedger
 from veklom_ops_mcp.clients import DockerGateClient
 from veklom_ops_mcp.config import SETTINGS
@@ -43,8 +43,11 @@ def stack(tmp_path, monkeypatch):
         audit_store=tmp_path / "audit.jsonl",
         audit_anchor_url=None,
     )
+    settings = replace(settings, approver_url="https://approve.example.com/", public_url="https://ops.example.com")
+    authority = ApprovalAuthority(settings)
     monkeypatch.setattr(tools, "SETTINGS", settings)
-    monkeypatch.setattr(tools, "approvals", ApprovalAuthority(settings))
+    monkeypatch.setattr(tools, "approvals", authority)
+    monkeypatch.setattr(tools, "inbox", ApprovalInbox(settings, authority))
     monkeypatch.setattr(tools, "audit", AuditLedger(settings))
     monkeypatch.setattr(tools, "docker", DockerGateClient(settings, transport=httpx.ASGITransport(app=gate)))
     return fake, ApprovalSigner(private_key)
@@ -140,3 +143,28 @@ def test_every_decision_is_audited(stack):
     assert [e["outcome"] for e in events] == ["approval_required", "success"]
     assert events[-1]["approved_by"] == "founder"
     assert tools.audit.verify()["valid"] is True
+
+
+def test_tap_to_approve_flow_runs_the_exact_call_once(stack):
+    fake, signer = stack
+    first = run(tools.stop_container("shop-api-1"))
+    request = first["approval_request"]
+    assert request["approve_url"].startswith("https://approve.example.com/#r=")
+    assert request["deliver_to"] == "https://ops.example.com/approvals/deliver"
+    assert run(tools.wait_for_approval(request["request_id"], timeout_seconds=1))["state"] == "waiting"
+
+    # The human's device signs and delivers; the agent never sees or handles the token.
+    tools.inbox.deliver(approve(signer, "stop_container", "shop-api-1", "service.stop"))
+    assert run(tools.wait_for_approval(request["request_id"], timeout_seconds=1))["state"] == "approved"
+
+    assert run(tools.stop_container("shop-api-1"))["status"] == "executed"
+    assert run(tools.stop_container("shop-api-1"))["status"] == "approval_required"
+    assert posts(fake) == [f"/containers/{API1}/stop"]
+
+
+def test_delivered_approval_never_runs_a_different_call(stack):
+    fake, signer = stack
+    tools.inbox.deliver(approve(signer, "stop_container", "shop-api-1", "service.stop"))
+    assert run(tools.stop_container("shop-web-1"))["status"] == "approval_required"
+    assert run(tools.start_stopped_container("shop-api-1"))["status"] == "approval_required"
+    assert posts(fake) == []

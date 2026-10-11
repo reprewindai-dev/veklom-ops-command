@@ -23,6 +23,7 @@ dev = ["pytest>=8,<9"]
 [project.scripts]
 veklom-mcp-approve = "veklom_ops_mcp.approval:main"
 veklom-mcp-keygen = "veklom_ops_mcp.approval:keygen_main"
+veklom-gate-init = "veklom_ops_mcp.setup_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

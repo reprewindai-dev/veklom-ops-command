@@ -118,9 +118,23 @@ class ApprovalAuthority:
         return Ed25519PublicKey.from_public_bytes(raw)
 
     def verify_and_consume(self, token: str, *, tool: str, action: str, params: dict[str, Any]) -> ApprovalClaims:
+        claims = self.verify_signed(token)
+        if claims.tool != tool:
+            raise ApprovalError("Approval token is bound to a different tool.")
+        if claims.action != action:
+            raise ApprovalError("Approval token is bound to a different action.")
+        if not hmac.compare_digest(claims.params_sha256, params_hash(params)):
+            raise ApprovalError("Approval token is bound to different parameters.")
+        self._consume_nonce(claims.nonce, claims.expires_at)
+        return claims
+
+    def verify_signed(self, token: str) -> ApprovalClaims:
+        """Signature, version, time and audience checks only. Does not bind to a call or consume the nonce."""
         audience = self.settings.approval_audience
         if not audience:
             raise ApprovalError("Approval audience is not configured; approvals cannot be verified.")
+        if len(token) > 4096:
+            raise ApprovalError("Approval token is too large.")
         try:
             version, payload_b64, sig_b64 = token.split(".", 2)
             payload = _b64decode(payload_b64)
@@ -148,13 +162,6 @@ class ApprovalAuthority:
             raise ApprovalError("Approval token issued in the future.")
         if not hmac.compare_digest(claims.aud, audience):
             raise ApprovalError("Approval token is bound to a different deployment (audience).")
-        if claims.tool != tool:
-            raise ApprovalError("Approval token is bound to a different tool.")
-        if claims.action != action:
-            raise ApprovalError("Approval token is bound to a different action.")
-        if not hmac.compare_digest(claims.params_sha256, params_hash(params)):
-            raise ApprovalError("Approval token is bound to different parameters.")
-        self._consume_nonce(claims.nonce, claims.expires_at)
         return claims
 
     def _consume_nonce(self, nonce: str, expires_at: int) -> None:
@@ -181,21 +188,121 @@ class ApprovalAuthority:
             temporary.replace(path)
 
 
-def build_approval_request(*, audience: str, tool: str, action: str, params: dict[str, Any], ttl_seconds: int) -> dict[str, Any]:
-    """What the agent relays to a human. The approver re-hashes params, so the agent cannot swap them."""
-    return {
+def request_id(*, audience: str, tool: str, action: str, params_sha256: str) -> str:
+    """Deterministic id of one exact call. A delivered approval can only ever match the call it was signed for."""
+    return hashlib.sha256(canonical_json([audience, tool, action, params_sha256]).encode()).hexdigest()[:32]
+
+
+def build_approval_request(
+    *,
+    audience: str,
+    tool: str,
+    action: str,
+    params: dict[str, Any],
+    ttl_seconds: int,
+    risk_tier: str | None = None,
+    reason: str | None = None,
+    approver_url: str | None = None,
+    deliver_url: str | None = None,
+) -> dict[str, Any]:
+    """What the agent relays to a human. Every approver re-hashes params, so the agent cannot swap them."""
+    digest = params_hash(params)
+    rid = request_id(audience=audience, tool=tool, action=action, params_sha256=digest)
+    request: dict[str, Any] = {
+        "request_id": rid,
         "aud": audience,
         "tool": tool,
         "action": action,
         "params": params,
-        "params_sha256": params_hash(params),
+        "params_sha256": digest,
+        "risk_tier": risk_tier,
+        "reason": reason,
         "expires_after_seconds": ttl_seconds,
-        "how_to_approve": (
+    }
+    if deliver_url:
+        request["deliver_to"] = deliver_url
+    if approver_url:
+        fragment = _b64encode(canonical_json(request).encode())
+        request["approve_url"] = f"{approver_url.split('#', 1)[0]}#r={fragment}"
+        request["how_to_approve"] = (
+            "Show the human approve_url. They review the exact call on their own device and approve it once. "
+            "Then call wait_for_approval with request_id and, once approved, repeat this exact tool call."
+        )
+    else:
+        request["how_to_approve"] = (
             "A human (or separately trusted environment holding the approval private key) runs: "
             "veklom-mcp-approve --approved-by <you> --request-json '<this approval_request object>' "
             "and returns the printed token to the agent as approval_token."
-        ),
-    }
+        )
+    return request
+
+
+class ApprovalInbox:
+    """Approvals delivered by an approver device, waiting for the agent to repeat the exact call.
+
+    Holding a token here grants nothing by itself: it is still fully verified and its nonce consumed
+    when the matching call runs. Entries expire with their token and the inbox is bounded.
+    """
+
+    MAX_ENTRIES = 500
+
+    def __init__(self, settings: Settings = SETTINGS, authority: ApprovalAuthority | None = None):
+        self.settings = settings
+        self.authority = authority or ApprovalAuthority(settings)
+
+    @property
+    def path(self):
+        return self.settings.approval_store.with_name("delivered.jsonl")
+
+    def _rows(self, now: int) -> list[dict[str, Any]]:
+        if not self.path.exists():
+            return []
+        rows = []
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if int(row.get("expires_at", 0)) >= now:
+                rows.append(row)
+        return rows
+
+    def _write(self, rows: list[dict[str, Any]]) -> None:
+        temporary = self.path.with_suffix(".tmp")
+        temporary.write_text("".join(canonical_json(row) + "\n" for row in rows), encoding="utf-8")
+        temporary.replace(self.path)
+
+    def deliver(self, token: str) -> dict[str, Any]:
+        claims = self.authority.verify_signed(token)
+        rid = request_id(audience=claims.aud, tool=claims.tool, action=claims.action, params_sha256=claims.params_sha256)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        now = int(time.time())
+        with FileLock(str(self.path) + ".lock", timeout=5):
+            rows = [row for row in self._rows(now) if row.get("request_id") != rid]
+            if len(rows) >= self.MAX_ENTRIES:
+                raise ApprovalError("Approval inbox is full.")
+            rows.append({"request_id": rid, "token": token, "expires_at": claims.expires_at, "approved_by": claims.approved_by})
+            self._write(rows)
+        return {"delivered": True, "request_id": rid, "approved_by": claims.approved_by, "expires_at": claims.expires_at}
+
+    def take(self, rid: str) -> str | None:
+        if not self.path.exists():
+            return None
+        now = int(time.time())
+        with FileLock(str(self.path) + ".lock", timeout=5):
+            rows = self._rows(now)
+            match = next((row for row in rows if row.get("request_id") == rid), None)
+            if match is None:
+                return None
+            self._write([row for row in rows if row is not match])
+        return str(match["token"])
+
+    def status(self, rid: str) -> dict[str, Any]:
+        now = int(time.time())
+        row = next((row for row in self._rows(now) if row.get("request_id") == rid), None)
+        if row is None:
+            return {"request_id": rid, "state": "waiting"}
+        return {"request_id": rid, "state": "approved", "approved_by": row.get("approved_by"), "expires_at": row.get("expires_at")}
 
 
 def generate_keypair() -> tuple[str, str]:

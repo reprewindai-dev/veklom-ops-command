@@ -1,18 +1,22 @@
 from __future__ import annotations
 
+import hashlib
 import hmac
+import json
 from typing import Any
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from .approval import ApprovalError
 from .config import SETTINGS
-from .tools import mcp
+from .tools import audit, inbox, mcp
 from . import app_ui as _app_ui  # noqa: F401  Registers MCP App resource/tools.
 from .tool_annotations import apply_tool_annotations
 
 MAX_REQUEST_BYTES = 1_048_576
+DELIVER_PATH = "/approvals/deliver"
 
 
 def _host_without_port(host: str) -> str:
@@ -41,6 +45,21 @@ class InboundSecurityMiddleware:
             return
 
         headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
+
+        if path == DELIVER_PATH:
+            # Self-authenticating: only a token signed by the approver's key is accepted, so no bearer
+            # is required. Browser access is limited to the configured approver origin.
+            origin = headers.get("origin")
+            if origin and origin.lower() != (SETTINGS.approver_origin or ""):
+                response = PlainTextResponse("Origin not allowed", status_code=403)
+                await response(scope, receive, send)
+                return
+            if SETTINGS.allowed_hosts and _host_without_port(headers.get("host", "")) not in {h.lower() for h in SETTINGS.allowed_hosts}:
+                response = PlainTextResponse("Host not allowed", status_code=403)
+                await response(scope, receive, send)
+                return
+            await self.app(scope, receive, send)
+            return
         # Do not trust X-Forwarded-Host supplied by an arbitrary client. Traefik
         # preserves the external Host header for the upstream application.
         host = _host_without_port(headers.get("host", ""))
@@ -78,6 +97,39 @@ class InboundSecurityMiddleware:
                 return
 
         await self.app(scope, receive, send)
+
+
+def _cors_headers() -> dict[str, str]:
+    if not SETTINGS.approver_origin:
+        return {}
+    return {
+        "Access-Control-Allow-Origin": SETTINGS.approver_origin,
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "600",
+        "Vary": "Origin",
+    }
+
+
+@mcp.custom_route(DELIVER_PATH, methods=["POST", "OPTIONS"])
+async def deliver_approval(request: Request) -> JSONResponse:
+    """Accept an approval signed on a human's device and hold it for the exact call it names."""
+    if request.method == "OPTIONS":
+        return JSONResponse({}, headers=_cors_headers())
+    body = await request.body()
+    if len(body) > 8192:
+        return JSONResponse({"delivered": False, "error": "Request too large."}, status_code=413, headers=_cors_headers())
+    try:
+        token = str(json.loads(body).get("token", ""))
+    except (ValueError, AttributeError):
+        return JSONResponse({"delivered": False, "error": "Body must be JSON with a token."}, status_code=400, headers=_cors_headers())
+    try:
+        result = inbox.deliver(token)
+    except ApprovalError as exc:
+        audit.append(tool="deliver_approval", action="approval.deliver", risk_tier="high", outcome="denied", request={"token_sha256": hashlib.sha256(token.encode()).hexdigest()}, reason=str(exc))
+        return JSONResponse({"delivered": False, "error": str(exc)}, status_code=400, headers=_cors_headers())
+    audit.append(tool="deliver_approval", action="approval.deliver", risk_tier="high", outcome="success", request={"request_id": result["request_id"]}, approved_by=result["approved_by"])
+    return JSONResponse(result, headers=_cors_headers())
 
 
 @mcp.custom_route("/health", methods=["GET"])

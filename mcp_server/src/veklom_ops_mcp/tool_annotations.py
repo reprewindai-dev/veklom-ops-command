@@ -16,6 +16,7 @@ READ_ONLY_TOOLS = {
     "get_container_logs",
     "verify_mcp_audit_chain",
     "recent_mcp_audit_events",
+    "wait_for_approval",
     "operator_snapshot",
     "render_operator_evidence_plane",
 }

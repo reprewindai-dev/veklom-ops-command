@@ -1,0 +1,20 @@
+# Optional: expose the MCP through a Cloudflare Tunnel instead of opening a port.
+#   docker compose -f docker-compose.yml -f cloudflare-tunnel.yml up -d
+# In the Cloudflare dashboard (Zero Trust > Networks > Tunnels), create a tunnel, copy its token into
+# CLOUDFLARE_TUNNEL_TOKEN in .env, and add a public hostname (e.g. ops.example.com) pointing to
+#   http://veklom-ops-mcp:8787
+# The Docker gate is NOT reachable from the tunnel: it lives only on the internal `gate` network.
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2025.9.1
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: "${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env}"
+    networks:
+      - default
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

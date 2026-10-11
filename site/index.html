@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veklom Gate</title>
+<meta name="description" content="Veklom Gate is an open-core MCP server that lets AI agents operate Docker and Compose hosts without being able to exec, delete volumes or read secrets. Signed single-use approvals, redundancy-aware restarts, hash-chained audit.">
+<meta property="og:title" content="Veklom Gate">
+<meta property="og:description" content="Let AI agents run your Docker servers without the keys to destroy them.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='6' width='4' height='22' fill='%2312161C'/%3E%3Crect x='25' y='6' width='4' height='22' fill='%2312161C'/%3E%3Crect x='7' y='12' width='18' height='6' fill='%23F2C230'/%3E%3Cpath d='M9 12h4l-4 6zM16 12h4l-4 6z' fill='%2312161C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: an inspection plate for a gate. Condensed industrial headlines, engineering-paper ground,
+   one dark "live run" terminal as the centrepiece, hazard striping used only where a real boundary exists. */
+:root {
+  --paper: #F1F2EE;        /* cool stone, faintly green-grey */
+  --surface: #FAFAF7;
+  --sunken: #E7E9E3;
+  --ink: #13171D;
+  --muted: #4F5864;
+  --line: #CDD1CA;
+  --accent: #2337C6;       /* cobalt: links, focus, the "gate" */
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DFE3FA;
+  --signal: #F2C230;       /* hazard yellow, always behind dark ink */
+  --on-signal: #13171D;
+  --low: #1D7348;
+  --med: #8F5200;
+  --high: #B42318;
+  --forbid: #13171D;
+  --low-bg: #DCEFE3;
+  --med-bg: #F7E9CF;
+  --high-bg: #F8DEDA;
+  --grid: rgba(35, 55, 198, 0.06);
+  /* terminal: deliberately dark in both themes */
+  --term-bg: #0C1016;
+  --term-bar: #141A22;
+  --term-line: #262E39;
+  --term-fg: #D8DDE4;
+  --term-dim: #8590A0;
+  --term-key: #A9B7FF;
+  --term-str: #F3CD85;
+  --term-lit: #7FD6B0;
+  --term-agent: #9DAEFF;
+  --term-human: #F2C230;
+  --v-ok: #5CD69C;
+  --v-warn: #F2C230;
+  --v-bad: #FF8A7C;
+
+  --f-display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --step-3: clamp(2.25rem, 1.6rem + 2.8vw, 3.5rem);
+  --step-4: clamp(2.6rem, 1.7rem + 3.4vw, 4.4rem);
+  --gutter: clamp(16px, 4vw, 40px);
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E1116;
+    --surface: #151A21;
+    --sunken: #1B212A;
+    --ink: #E8EAE5;
+    --muted: #A2AAB5;
+    --line: #2B323C;
+    --accent: #95A4FF;
+    --accent-ink: #0E1116;
+    --accent-soft: #1F2647;
+    --low: #5CD69C;
+    --med: #F0B04A;
+    --high: #FF8A7C;
+    --forbid: #E8EAE5;
+    --low-bg: #12291F;
+    --med-bg: #2E2410;
+    --high-bg: #321816;
+    --grid: rgba(149, 164, 255, 0.05);
+    --term-bg: #080B0F;
+    --term-bar: #10151C;
+    --term-line: #252C36;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0E1116;
+  --surface: #151A21;
+  --sunken: #1B212A;
+  --ink: #E8EAE5;
+  --muted: #A2AAB5;
+  --line: #2B323C;
+  --accent: #95A4FF;
+  --accent-ink: #0E1116;
+  --accent-soft: #1F2647;
+  --low: #5CD69C;
+  --med: #F0B04A;
+  --high: #FF8A7C;
+  --forbid: #E8EAE5;
+  --low-bg: #12291F;
+  --med-bg: #2E2410;
+  --high-bg: #321816;
+  --grid: rgba(149, 164, 255, 0.05);
+  --term-bg: #080B0F;
+  --term-bar: #10151C;
+  --term-line: #252C36;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 76px; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+img, svg { max-width: 100%; }
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code, pre, kbd { font-family: var(--f-mono); }
+p code, li code, td code, dd code, summary code {
+  font-size: 0.88em; background: var(--sunken); padding: 0.08em 0.35em; border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h2 {
+  font-family: var(--f-display); font-weight: 800; font-size: var(--step-3);
+  line-height: 0.98; letter-spacing: 0.005em;
+}
+h3 { font-size: var(--step-1); line-height: 1.3; font-weight: 600; }
+p { margin: 0; }
+.skip {
+  position: absolute; left: 16px; top: -60px; z-index: 100; background: var(--accent); color: var(--accent-ink);
+  padding: 10px 14px; border-radius: 6px; font-weight: 600; text-decoration: none;
+}
+.skip:focus { top: 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.wrap { max-width: 1180px; margin-inline: auto; padding-inline: var(--gutter); }
+.section { padding-block: clamp(64px, 9vw, 120px); border-top: 1px solid var(--line); }
+.eyebrow {
+  font-family: var(--f-mono); font-size: var(--step--1); font-weight: 500; letter-spacing: 0.06em;
+  color: var(--muted); display: inline-flex; align-items: center; gap: 10px; text-transform: lowercase;
+}
+.eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--accent); }
+.section-head { display: grid; gap: 18px; max-width: 760px; margin-bottom: clamp(32px, 5vw, 56px); }
+.lede { font-size: var(--step-1); color: var(--muted); max-width: 64ch; }
+.mono { font-family: var(--f-mono); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font: 600 1rem/1 var(--f-body); text-decoration: none; padding: 15px 20px; border-radius: 8px;
+  border: 1.5px solid transparent; cursor: pointer; transition: transform .15s ease, background-color .15s ease;
+  min-height: 48px;
+}
+.btn:hover { transform: translateY(-1px); text-decoration: none; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-ghost { border-color: var(--ink); color: var(--ink); background: transparent; }
+.btn-ghost:hover { background: var(--sunken); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+
+/* Header */
+.site-header {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.brand-mark { width: 30px; height: 30px; flex: none; }
+.brand-name { font-family: var(--f-display); font-weight: 800; font-size: 1.6rem; letter-spacing: 0.01em; line-height: 1; }
+.nav { display: flex; align-items: center; gap: clamp(12px, 2.4vw, 28px); }
+.nav a.navlink { color: var(--ink); text-decoration: none; font-weight: 500; font-size: 0.95rem; }
+.nav a.navlink:hover { color: var(--accent); }
+.nav .btn { padding: 11px 16px; min-height: 42px; font-size: 0.95rem; }
+@media (max-width: 860px) { .nav a.navlink { display: none; } }
+@media (max-width: 400px) { .nav .btn { padding: 10px 12px; font-size: 0.9rem; } .brand-name { font-size: 1.4rem; } }
+
+/* Hero */
+.hero {
+  position: relative; padding-block: clamp(40px, 7vw, 88px) clamp(56px, 8vw, 104px);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+}
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 64px); align-items: start; }
+@media (max-width: 980px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
+.hero-copy { display: grid; gap: 26px; min-width: 0; padding-top: clamp(0px, 2vw, 24px); }
+.kicker {
+  justify-self: start; display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-mono);
+  font-size: var(--step--1); color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  padding: 6px 12px 6px 6px; border-radius: 999px;
+}
+.kicker b { white-space: nowrap; background: var(--signal); color: var(--on-signal); font-weight: 600; padding: 3px 8px; border-radius: 999px; letter-spacing: 0.04em; }
+.hero h1 {
+  font-family: var(--f-display); font-weight: 800; font-size: var(--step-4); line-height: 0.92; letter-spacing: 0.002em;
+}
+.hero h1 .line2 { display: block; color: var(--accent); }
+.hero-sub { font-size: clamp(1.06rem, 1rem + 0.35vw, 1.25rem); color: var(--muted); max-width: 54ch; }
+.hero-sub strong { color: var(--ink); font-weight: 600; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.proof-strip { list-style: none; margin: 0; padding: 18px 0 0; border-top: 1px dashed var(--line); display: grid; gap: 8px; font-family: var(--f-mono); font-size: var(--step--1); color: var(--muted); }
+.proof-strip li { display: flex; gap: 10px; align-items: baseline; }
+.proof-strip li::before { content: "✓"; color: var(--low); font-weight: 600; }
+
+/* Replay */
+.replay { min-width: 0; display: grid; gap: 14px; }
+.replay-caption { min-height: 3.2em; display: grid; gap: 4px; }
+.replay-caption .scene-label { font-family: var(--f-mono); font-size: var(--step--1); color: var(--muted); letter-spacing: 0.04em; }
+.replay-caption p { font-size: 1.05rem; font-weight: 500; }
+.term {
+  background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius); border: 1px solid var(--term-line);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 24px 60px -28px rgba(10, 16, 40, 0.55);
+  overflow: hidden; min-width: 0;
+}
+.term-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px;
+  background: var(--term-bar); border-bottom: 1px solid var(--term-line);
+  font-family: var(--f-mono); font-size: 0.75rem; color: var(--term-dim);
+}
+.term-bar .rec { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.term-bar .rec::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--v-ok); box-shadow: 0 0 0 3px rgba(92, 214, 156, 0.18); flex: none; }
+.term-bar .count { font-variant-numeric: tabular-nums; flex: none; }
+.term-body {
+  margin: 0; padding: 18px 18px 8px; min-height: 19.5em; font-family: var(--f-mono); font-size: 0.84rem; line-height: 1.6;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.term-body .ln { display: block; }
+.term-body.anim .ln { animation: lnIn .32s ease both; animation-delay: calc(var(--i) * 140ms); }
+@keyframes lnIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.ln-note { color: var(--term-dim); }
+.ln-cmd .p, .ln-human .p { user-select: none; }
+.ln-cmd .p { color: var(--term-agent); font-weight: 600; }
+.ln-human .p { color: var(--term-human); font-weight: 600; }
+.ln-cmd .c, .ln-human .c { color: #FFFFFF; }
+.ln-out { color: var(--term-fg); padding-left: 1.2em; border-left: 2px solid var(--term-line); margin: 6px 0 10px 0.2em; }
+.ln-out .k { color: var(--term-key); }
+.ln-out .s { color: var(--term-str); }
+.ln-out .l { color: var(--term-lit); }
+.term-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 10px 14px 12px; border-top: 1px solid var(--term-line);
+}
+.verdict {
+  font-family: var(--f-mono); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 6px; border: 1px solid currentColor;
+}
+.verdict::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.verdict.ok { color: var(--v-ok); }
+.verdict.warn { color: var(--v-warn); }
+.verdict.bad { color: var(--v-bad); }
+.controls { display: inline-flex; gap: 6px; }
+.controls button {
+  font: 500 0.78rem/1 var(--f-mono); color: var(--term-fg); background: transparent; border: 1px solid var(--term-line);
+  border-radius: 6px; padding: 8px 10px; cursor: pointer; min-height: 34px;
+}
+.controls button:hover { border-color: var(--term-dim); }
+.controls button:focus-visible { outline-color: var(--term-agent); }
+.scenes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 520px) { .scenes { grid-template-columns: minmax(0, 1fr); } }
+.scenes button {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer;
+  font: 500 0.875rem/1.3 var(--f-body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; min-height: 44px;
+}
+.scenes button:hover { border-color: var(--muted); }
+.scenes button[aria-current="step"] { border-color: var(--accent); background: var(--accent-soft); }
+.scenes .n { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.scenes .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-left: auto; }
+.dot.ok { background: var(--low); } .dot.warn { background: var(--med); } .dot.bad { background: var(--high); }
+.replay-note { font-size: 0.8rem; color: var(--muted); }
+
+/* Problem */
+.incidents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+@media (max-width: 860px) { .incidents { grid-template-columns: minmax(0, 1fr); } }
+.incident { padding: 26px 24px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.incident + .incident { border-left: 1px solid var(--line); }
+@media (max-width: 860px) { .incident + .incident { border-left: 0; border-top: 1px solid var(--line); } }
+.incident time { font-family: var(--f-mono); font-size: var(--step--1); color: var(--high); font-weight: 600; letter-spacing: 0.04em; }
+.incident h3 { font-size: 1.15rem; }
+.incident .big { font-family: var(--f-display); font-weight: 800; font-size: 3rem; line-height: 0.9; color: var(--ink); }
+.incident p { color: var(--muted); }
+.sources { font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.sources span { color: var(--muted); }
+.thesis {
+  margin-top: clamp(32px, 5vw, 56px); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px 28px; align-items: center;
+  padding: clamp(22px, 3vw, 32px); border-radius: var(--radius); background: var(--term-bg); color: var(--term-fg); border: 1px solid var(--term-line);
+}
+.thesis p { font-size: clamp(1.1rem, 1rem + 0.6vw, 1.45rem); line-height: 1.45; max-width: 60ch; }
+.thesis p code { background: rgba(127,127,127,0.22); color: inherit; }
+.thesis .stamp {
+  font-family: var(--f-display); font-weight: 800; font-size: 1.5rem; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 10px 16px; color: var(--on-signal); line-height: 1;
+  background: repeating-linear-gradient(-45deg, var(--signal) 0 12px, #E0AE14 12px 24px);
+  border-radius: 4px;
+}
+@media (max-width: 640px) { .thesis { grid-template-columns: minmax(0, 1fr); } .thesis .stamp { justify-self: start; } }
+
+/* Guarantees */
+.guarantees { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 2.4vw, 28px); }
+@media (max-width: 900px) { .guarantees { grid-template-columns: minmax(0, 1fr); } }
+.guarantee { display: grid; gap: 14px; align-content: start; min-width: 0; padding-top: 22px; border-top: 3px solid var(--ink); }
+.guarantee h3 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 1.4rem + 1vw, 2.2rem); line-height: 1; }
+.guarantee p { color: var(--muted); }
+.evidence {
+  font-family: var(--f-mono); font-size: 0.8rem; line-height: 1.55; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px 14px; overflow-wrap: anywhere; color: var(--ink);
+}
+.evidence .tag { display: block; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.evidence .r { color: var(--high); font-weight: 600; }
+.evidence .g { color: var(--low); font-weight: 600; }
+.evidence .a { color: var(--med); font-weight: 600; }
+
+/* Architecture */
+.arch-figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(14px, 2.4vw, 28px); }
+.arch-figure figcaption { margin-top: 16px; color: var(--muted); font-size: 0.92rem; max-width: 80ch; }
+.arch-wide { display: block; width: 100%; height: auto; }
+.arch-tall { display: none; width: 100%; max-width: 420px; height: auto; margin-inline: auto; }
+@media (max-width: 820px) { .arch-wide { display: none; } .arch-tall { display: block; } }
+svg .node { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+svg .node-key { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.5; }
+svg .node-off { fill: var(--paper); stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 6 5; }
+svg .t-title { font-family: var(--f-body); font-weight: 600; font-size: 16px; fill: var(--ink); }
+svg .t-body { font-family: var(--f-body); font-size: 12.5px; fill: var(--muted); }
+svg .t-mono { font-family: var(--f-mono); font-size: 11.5px; fill: var(--ink); }
+svg .t-ok { font-family: var(--f-mono); font-size: 11.5px; fill: var(--low); font-weight: 600; }
+svg .t-no { font-family: var(--f-mono); font-size: 11.5px; fill: var(--high); font-weight: 600; }
+svg .t-cap { font-family: var(--f-mono); font-size: 11px; fill: var(--muted); letter-spacing: 0.06em; }
+svg .t-acc { font-family: var(--f-mono); font-size: 11px; fill: var(--accent); font-weight: 600; letter-spacing: 0.04em; }
+svg .wire { stroke: var(--ink); stroke-width: 1.6; fill: none; }
+svg .wire-off { stroke: var(--muted); stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+svg .arrowhead { fill: var(--ink); }
+svg .arrowhead-off { fill: var(--muted); }
+svg .rule { stroke: var(--line); stroke-width: 1; }
+svg .stripe-a { fill: var(--signal); }
+svg .stripe-b { fill: #13171D; }
+
+/* Tiers */
+.tiers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1020px) { .tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .tiers { grid-template-columns: minmax(0, 1fr); } }
+.tier { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.tier-head { padding: 14px 18px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tier-head .name { font-family: var(--f-display); font-weight: 800; font-size: 1.9rem; line-height: 1; letter-spacing: 0.03em; }
+.tier-head .mode { font-family: var(--f-mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; }
+.tier.low .tier-head { background: var(--low-bg); color: var(--low); }
+.tier.med .tier-head { background: var(--med-bg); color: var(--med); }
+.tier.high .tier-head { background: var(--high-bg); color: var(--high); }
+.tier.forbid .tier-head {
+  color: var(--on-signal);
+  background: repeating-linear-gradient(-45deg, var(--signal) 0 14px, #E0AE14 14px 28px);
+}
+.tier-body { padding: 16px 18px 20px; display: grid; gap: 12px; align-content: start; }
+.tier-body .what { font-weight: 600; }
+.tier-body p { color: var(--muted); font-size: 0.95rem; }
+.tier-body ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.tier-body li { font-family: var(--f-mono); font-size: 0.75rem; background: var(--sunken); border-radius: 4px; padding: 3px 7px; overflow-wrap: anywhere; }
+.tier.forbid li { text-decoration: line-through; text-decoration-color: var(--high); text-decoration-thickness: 1.5px; }
+.policy-row { margin-top: 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+@media (max-width: 820px) { .policy-row { grid-template-columns: minmax(0, 1fr); } }
+.policy-row p { color: var(--muted); max-width: 56ch; }
+.policy-row strong { color: var(--ink); }
+
+/* Code blocks */
+.code { position: relative; background: var(--term-bg); color: var(--term-fg); border-radius: 8px; border: 1px solid var(--term-line); min-width: 0; }
+.code code { background: none; padding: 0; border-radius: 0; font-size: inherit; color: inherit; overflow-wrap: normal; }
+.code pre { margin: 0; padding: 16px 18px; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; tab-size: 2; }
+.code .cm { color: var(--term-dim); }
+.code .k { color: var(--term-key); }
+.code .s { color: var(--term-str); }
+.code .pr { color: var(--term-agent); user-select: none; }
+.code-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border-bottom: 1px solid var(--term-line); font-family: var(--f-mono); font-size: 0.75rem; color: var(--term-dim); }
+.copy { font: 500 0.75rem/1 var(--f-mono); color: var(--term-fg); background: transparent; border: 1px solid var(--term-line); border-radius: 6px; padding: 7px 10px; cursor: pointer; min-height: 32px; }
+.copy:hover { border-color: var(--term-dim); }
+.copy:focus-visible { outline-color: var(--term-agent); }
+
+/* Approvals */
+.approve-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+@media (max-width: 900px) { .approve-grid { grid-template-columns: minmax(0, 1fr); } }
+.badge {
+  display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--med); background: var(--med-bg); padding: 5px 10px; border-radius: 999px;
+  justify-self: start;
+}
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 16px; padding: 18px 0; border-top: 1px solid var(--line); }
+.steps li:last-child { border-bottom: 1px solid var(--line); }
+.steps li::before {
+  content: counter(step); font-family: var(--f-display); font-weight: 800; font-size: 2rem; line-height: 1; color: var(--accent);
+}
+.steps b { display: block; margin-bottom: 2px; }
+.steps span { color: var(--muted); }
+.today { margin-top: 20px; font-size: 0.95rem; color: var(--muted); }
+.phone {
+  justify-self: center; width: min(100%, 320px); border-radius: 36px; padding: 12px; background: var(--term-bg); border: 1px solid var(--line);
+  box-shadow: 0 30px 60px -30px rgba(10, 16, 40, 0.6);
+}
+.phone-screen { border-radius: 26px; background: var(--surface); color: var(--ink); padding: 22px 18px 20px; display: grid; gap: 14px; }
+.phone-notch { width: 90px; height: 6px; border-radius: 6px; background: var(--line); justify-self: center; margin-bottom: 4px; }
+.phone .ph-title { font-family: var(--f-display); font-weight: 800; font-size: 1.6rem; line-height: 1; }
+.phone .ph-sub { font-size: 0.85rem; color: var(--muted); }
+.phone dl { margin: 0; display: grid; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.phone dl div { display: grid; gap: 2px; padding: 9px 12px; }
+.phone dl div + div { border-top: 1px solid var(--line); }
+.phone dt { font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.phone dd { margin: 0; font-family: var(--f-mono); font-size: 0.86rem; font-weight: 500; overflow-wrap: anywhere; }
+.phone .ph-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+.phone .ph-btn { border-radius: 10px; padding: 12px; text-align: center; font-weight: 600; font-size: 0.95rem; }
+.phone .ph-decline { border: 1.5px solid var(--line); color: var(--ink); }
+.phone .ph-approve { background: var(--accent); color: var(--accent-ink); }
+.phone .ph-foot { font-size: 0.75rem; color: var(--muted); text-align: center; }
+.mock-note { text-align: center; font-size: 0.8rem; color: var(--muted); margin-top: 12px; font-family: var(--f-mono); }
+
+/* Compare */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table.compare { border-collapse: collapse; width: 100%; min-width: 820px; font-size: 0.92rem; }
+.compare th, .compare td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.compare tbody tr:last-child th, .compare tbody tr:last-child td { border-bottom: 0; }
+.compare thead th { font-size: 0.85rem; font-weight: 600; background: var(--sunken); }
+.compare thead th small { display: block; font-weight: 400; color: var(--muted); font-size: 0.78rem; margin-top: 4px; line-height: 1.4; }
+.compare tbody th { font-weight: 600; width: 19%; }
+.compare .us { background: var(--accent-soft); }
+.compare thead .us { color: var(--accent); }
+.compare td.us { font-weight: 500; }
+.compare td { color: var(--muted); }
+.compare td.us { color: var(--ink); }
+.scroll-hint { display: none; font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+@media (max-width: 900px) { .scroll-hint { display: block; } }
+.compare-notes { margin-top: 24px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 860px) { .compare-notes { grid-template-columns: minmax(0, 1fr); } }
+.compare-notes p { color: var(--muted); font-size: 0.95rem; }
+.compare-notes strong { color: var(--ink); }
+
+/* Quick start */
+.start-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: clamp(24px, 4vw, 48px); align-items: start; }
+@media (max-width: 960px) { .start-grid { grid-template-columns: minmax(0, 1fr); } }
+.qs { list-style: none; margin: 0; padding: 0; display: grid; gap: 28px; counter-reset: qs; }
+.qs > li { display: grid; gap: 12px; min-width: 0; counter-increment: qs; }
+.qs h3 { display: flex; gap: 12px; align-items: baseline; }
+.qs h3::before { content: counter(qs); font-family: var(--f-mono); font-size: 0.8rem; color: var(--accent-ink); background: var(--accent); border-radius: 5px; padding: 2px 7px; font-weight: 600; flex: none; transform: translateY(-2px); }
+.qs p { color: var(--muted); }
+.limits { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 84px); }
+.limits h3 { font-family: var(--f-display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
+.limits ul { margin: 0; padding-left: 1.1em; display: grid; gap: 10px; color: var(--muted); font-size: 0.94rem; }
+.limits li::marker { color: var(--med); }
+@media (max-width: 960px) { .limits { position: static; } }
+
+/* Pricing */
+.price-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1060px) { .price-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .price-grid { grid-template-columns: minmax(0, 1fr); } }
+.plan { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 22px; display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 14px; min-width: 0; }
+.plan.free { background: var(--term-bg); color: var(--term-fg); border-color: var(--term-line); }
+.plan.free .plan-desc, .plan.free li { color: var(--term-dim); }
+.plan.free .btn-ghost { border-color: var(--term-fg); color: var(--term-fg); }
+.plan.free .btn-ghost:hover { background: rgba(127,127,127,0.2); }
+.plan.free li::before { background: var(--signal); }
+.plan-name { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.plan-name h3 { font-family: var(--f-display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
+.plan .chip { font-family: var(--f-mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--med); background: var(--med-bg); padding: 3px 8px; border-radius: 999px; }
+.plan .chip.open { color: var(--on-signal); background: var(--signal); }
+.price { font-family: var(--f-display); font-weight: 800; font-size: 3rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.price small { font-family: var(--f-body); font-size: 0.9rem; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.plan.free .price small { color: inherit; opacity: 0.8; }
+.plan-desc { font-size: 0.9rem; color: var(--muted); min-height: 2.8em; }
+.plan ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; align-content: start; font-size: 0.92rem; }
+.plan li { position: relative; padding-left: 18px; color: var(--muted); }
+.plan li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 8px; height: 2px; background: var(--accent); }
+.plan .btn { width: 100%; }
+.pricing-note { margin-top: 22px; display: flex; gap: 12px; align-items: flex-start; font-size: 0.92rem; color: var(--muted); max-width: 90ch; }
+.pricing-note strong { color: var(--ink); }
+
+/* FAQ */
+.faq { display: grid; gap: 0; border-top: 1px solid var(--line); max-width: 900px; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary {
+  cursor: pointer; list-style: none; padding: 20px 40px 20px 0; position: relative; font-weight: 600; font-size: 1.08rem;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "+"; position: absolute; right: 6px; top: 50%; transform: translateY(-52%); font-family: var(--f-mono); font-size: 1.4rem; color: var(--accent);
+}
+.faq details[open] summary::after { content: "−"; }
+.faq .answer { padding: 0 0 22px; color: var(--muted); display: grid; gap: 10px; max-width: 72ch; }
+.faq .answer strong { color: var(--ink); }
+
+/* Final CTA + footer */
+.final { background: var(--term-bg); color: var(--term-fg); border-top: 0; }
+.final .wrap { display: grid; gap: 28px; }
+.final :focus-visible, .thesis :focus-visible, .plan.free :focus-visible { outline-color: var(--signal); }
+.final h2 { font-size: var(--step-4); line-height: 0.92; max-width: 16ch; }
+.final h2 span { color: var(--signal); }
+.final p { color: var(--term-dim); font-size: var(--step-1); max-width: 60ch; }
+.final .btn-primary { background: var(--signal); color: var(--on-signal); }
+.final .btn-ghost { border-color: var(--term-fg); color: var(--term-fg); }
+.final .btn-ghost:hover { background: rgba(127,127,127,0.2); }
+.final .addr { font-family: var(--f-mono); font-size: 0.9rem; color: var(--term-dim); user-select: all; overflow-wrap: anywhere; }
+.final a:not(.btn) { color: var(--signal); }
+footer.site-footer { padding-block: 32px 40px; font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--line); }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
+footer a { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!--
+  OWNER: early-access contact. Every "Request early access" link below uses
+  mailto:anthonymillwater2@gmail.com with a prefilled subject. Search this file for
+  "mailto:" to change the address or subjects in one pass.
+-->
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Veklom Gate, back to top">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="3" y="5" width="4" height="23" rx="1" fill="currentColor"/>
+        <rect x="25" y="5" width="4" height="23" rx="1" fill="currentColor"/>
+        <rect x="7" y="11" width="18" height="7" fill="#F2C230"/>
+        <path d="M9 11h4l-4 7zM16 11h4l-4 7zM23 11h2v3.5L23 18h-2z" fill="#13171D"/>
+      </svg>
+      <span class="brand-name">Veklom Gate</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="navlink" href="#how">How it works</a>
+      <a class="navlink" href="#compare">Compare</a>
+      <a class="navlink" href="#start">Quick start</a>
+      <a class="navlink" href="#pricing">Pricing</a>
+      <a class="navlink" href="https://github.com/reprewindai-dev/veklom-ops-command">GitHub</a>
+      <a class="btn btn-primary" href="mailto:anthonymillwater2@gmail.com?subject=Veklom%20Gate%20early%20access">Early access</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <!-- HERO -->
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <span class="kicker"><b>OPEN CORE</b> MCP server for Docker &amp; Compose hosts</span>
+        <h1 id="hero-title">Let AI agents run your Docker servers. <span class="line2">Without the keys to destroy them.</span></h1>
+        <p class="hero-sub">Veklom Gate sits between your agent and the Docker socket. Claude Code, Cursor or ChatGPT can read logs, inspect containers and restart a sick replica. <strong>They cannot exec, delete a volume or read a secret, because the gate has no route for any of it.</strong></p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="mailto:anthonymillwater2@gmail.com?subject=Veklom%20Gate%20early%20access">Request early access</a>
+          <a class="btn btn-ghost" href="https://github.com/reprewindai-dev/veklom-ops-command">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            View on GitHub
+          </a>
+        </div>
+        <ul class="proof-strip" aria-label="What has been verified">
+          <li>Run end to end on 2026-10-11 against Docker Engine 29.8 with a real MCP client</li>
+          <li>137 automated tests, including replay, substitution and secret-leak cases</li>
+          <li>The safety core is open source</li>
+        </ul>
+      </div>
+
+      <div class="replay" id="replay" aria-labelledby="replay-title">
+        <h2 class="sr-only" id="replay-title">Replay of the live run</h2>
+        <div class="replay-caption">
+          <span class="scene-label" id="scene-label">Scene 1 of 10</span>
+          <p id="scene-caption">The agent restarts one replica of a service that has a second healthy replica. No human needed.</p>
+        </div>
+        <div class="term">
+          <div class="term-bar">
+            <span class="rec">live run · Docker Engine 29.8 · 2026-10-11</span>
+            <span class="count" id="scene-count">01 / 10</span>
+          </div>
+          <pre class="term-body" id="term-body" aria-live="off"><span class="ln ln-note"># shop-web runs 2 replicas, both passing their health check</span><span class="ln ln-cmd"><span class="p">agent ▸ </span><span class="c">restart_container({"container": "shop-web-1"})</span></span><span class="ln ln-out">{
+  <span class="k">"status"</span>: <span class="s">"executed"</span>,
+  <span class="k">"policy"</span>: {
+    <span class="k">"reason"</span>: <span class="s">"Guardrails satisfied; medium-risk action may execute autonomously."</span>
+  },
+  …
+}</span></pre>
+          <div class="term-foot">
+            <span class="verdict ok" id="verdict">Executed on its own</span>
+            <span class="controls">
+              <button type="button" id="prev" aria-label="Previous scene">◂ prev</button>
+              <button type="button" id="play" aria-label="Pause the replay">pause</button>
+              <button type="button" id="next" aria-label="Next scene">next ▸</button>
+            </span>
+          </div>
+        </div>
+        <ol class="scenes" id="scenes" aria-label="Scenes from the live run"></ol>
+        <p class="replay-note">Excerpts from the recorded transcript. Fields marked … are omitted; nothing is added. Tokens are elided.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="section" id="problem" aria-labelledby="problem-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">the problem</span>
+        <h2 id="problem-title">Agents already hold the keys. Sometimes they use them.</h2>
+        <p class="lede">Most Docker MCP servers hand the agent the whole Engine API. If the agent can reach a destructive call, a confused plan or a stray token is all it takes.</p>
+      </div>
+      <div class="incidents">
+        <article class="incident">
+          <time datetime="2026-04">April 2026 · PocketOS</time>
+          <h3>Production database and backups, gone in seconds</h3>
+          <p>A Cursor agent running Claude found an unrelated Railway API token and called <code>volumeDelete</code>.</p>
+          <div class="sources"><span>Sources:</span>
+            <a href="https://www.euronews.com/2026/04/28/an-ai-agent-deleted-a-companys-entire-database-in-9-seconds-then-wrote-an-apology">Euronews</a>
+            <a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/claude-powered-ai-coding-agent-deletes-entire-company-database-in-9-seconds-backups-zapped-after-cursor-tool-powered-by-anthropics-claude-goes-rogue">Tom's Hardware</a>
+          </div>
+        </article>
+        <article class="incident">
+          <time datetime="2025-07">July 2025 · Replit / SaaStr</time>
+          <h3>A production database deleted during a code freeze</h3>
+          <p>The agent had been told not to change anything. It had the access to do it anyway.</p>
+          <div class="sources"><span>Source:</span>
+            <a href="https://www.eweek.com/news/replit-ai-coding-assistant-failure/">eWeek</a>
+          </div>
+        </article>
+        <article class="incident">
+          <time datetime="2026-02">February 2026 · Gravitee survey, n&gt;900</time>
+          <span class="big">88%</span>
+          <p>of organizations report confirmed or suspected AI agent security incidents.</p>
+          <div class="sources"><span>Source:</span>
+            <a href="https://www.gravitee.io/blog/state-of-ai-agent-security-2026-report-when-adoption-outpaces-control">Gravitee, State of AI Agent Security 2026</a>
+          </div>
+        </article>
+      </div>
+      <div class="thesis">
+        <span class="stamp" aria-hidden="true">No route</span>
+        <p>In Veklom Gate, deleting a volume is not a rule the agent is asked to follow. No code path reaches it. The agent never holds the Docker socket, and the one process that does has no volume route.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GUARANTEES -->
+  <section class="section" id="guarantees" aria-labelledby="guarantees-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">three guarantees</span>
+        <h2 id="guarantees-title">Useful at 3am. Harmless on its worst night.</h2>
+      </div>
+      <div class="guarantees">
+        <article class="guarantee">
+          <h3>No route to destroy</h3>
+          <p>The gate is the only process with the Docker socket, and it answers seven requests: list, inspect, env-var names, logs, restart, stop and start. Exec, create, remove, volumes, images and archive are not there to call, so no prompt, policy bug or approval can reach them.</p>
+          <div class="evidence"><span class="tag">From the live run</span>evaluate_operation docker.exec, approved: true<br>→ risk_tier <span class="r">"forbidden"</span>, allowed <span class="r">false</span></div>
+        </article>
+        <article class="guarantee">
+          <h3>Approvals the agent can't forge</h3>
+          <p>Stop and start need an Ed25519 signature made off the server. Each approval names one deployment, one tool and the exact parameters. It expires quickly and works once. The server holds only the public key.</p>
+          <div class="evidence"><span class="tag">From the live run</span>same approval, second use<br>→ <span class="r">"Approval token has already been consumed."</span></div>
+        </article>
+        <article class="guarantee">
+          <h3>Autonomy only with proven redundancy</h3>
+          <p>A restart runs on its own only when at least two replicas of the same Compose service are running and passing their health checks. A container with no health check never counts as healthy.</p>
+          <div class="evidence"><span class="tag">From the live run</span>shop-web-1, 2 healthy replicas → <span class="g">"executed"</span><br>shop-api-1, 1 replica → <span class="a">"approval_required"</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="section" id="how" aria-labelledby="how-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">docker-compose.yml · docker_gate.py</span>
+        <h2 id="how-title">Two containers, and only one of them touches Docker.</h2>
+        <p class="lede">The MCP server decides <em>whether</em> an action may run. The gate decides what can run <em>at all</em>. Splitting them means a compromised or confused MCP process can still only do what the gate's routes allow.</p>
+      </div>
+      <figure class="arch-figure">
+        <svg class="arch-wide" viewBox="0 0 1100 560" role="img" aria-labelledby="arch-wide-title arch-wide-desc">
+          <title id="arch-wide-title">Veklom Gate architecture</title>
+          <desc id="arch-wide-desc">The AI agent talks MCP to the Veklom Gate MCP server, which holds no Docker socket. Across the socket boundary, the Docker gate sidecar is the only holder of the socket, sits on an internal network with no egress, and exposes routes only for list, inspect, env names, logs, restart, stop and start. It talks to Docker Engine over the unix socket. Off the server, the approver's device holds the Ed25519 private key and sends signed single-use approvals, and audit event hashes stream to an off-box anchor.</desc>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="arrowhead" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="ah-off" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="arrowhead-off" d="M0 0L10 5L0 10z"/></marker>
+            <pattern id="hazard-v" width="10" height="20" patternUnits="userSpaceOnUse" patternTransform="skewY(-40)">
+              <rect class="stripe-a" width="10" height="10"/><rect class="stripe-b" y="10" width="10" height="10"/>
+            </pattern>
+          </defs>
+
+          <!-- Agent -->
+          <rect class="node" x="20" y="175" width="200" height="140" rx="10"/>
+          <text class="t-cap" x="38" y="203">YOUR AGENT</text>
+          <text class="t-title" x="38" y="230">AI agent</text>
+          <text class="t-body" x="38" y="254">Claude Code · Cursor</text>
+          <text class="t-body" x="38" y="273">ChatGPT · any MCP client</text>
+          <text class="t-mono" x="38" y="298">holds: MCP bearer</text>
+
+          <!-- Agent -> MCP -->
+          <line class="wire" x1="220" y1="245" x2="296" y2="245" marker-end="url(#ah)"/>
+          <text class="t-cap" x="258" y="234" text-anchor="middle">MCP</text>
+          <text class="t-cap" x="258" y="264" text-anchor="middle">HTTPS</text>
+
+          <!-- MCP server -->
+          <rect class="node" x="300" y="130" width="250" height="230" rx="10"/>
+          <text class="t-cap" x="318" y="158">VEKLOM GATE</text>
+          <text class="t-title" x="318" y="184">MCP server</text>
+          <text class="t-body" x="318" y="210">risk tiers · tighten-only policy</text>
+          <text class="t-body" x="318" y="230">redundancy from live health</text>
+          <text class="t-body" x="318" y="250">Ed25519 verify, public key only</text>
+          <text class="t-body" x="318" y="270">hash-chained audit log</text>
+          <line class="rule" x1="318" y1="290" x2="532" y2="290"/>
+          <text class="t-no" x="318" y="314">no Docker socket</text>
+          <text class="t-no" x="318" y="334">no private key</text>
+
+          <!-- Socket boundary stripe -->
+          <text class="t-acc" x="585" y="84" text-anchor="middle">SOCKET BOUNDARY</text>
+          <rect x="580" y="96" width="10" height="316" fill="url(#hazard-v)"/>
+
+          <!-- MCP -> Gate -->
+          <line class="wire" x1="550" y1="245" x2="616" y2="245" marker-end="url(#ah)"/>
+
+          <!-- Gate -->
+          <rect class="node-key" x="620" y="110" width="270" height="270" rx="10"/>
+          <text class="t-acc" x="638" y="138">ONLY HOLDER OF THE SOCKET</text>
+          <text class="t-title" x="638" y="164">Docker gate sidecar</text>
+          <text class="t-body" x="638" y="186">labelled containers only · 2 tokens</text>
+          <text class="t-cap" x="638" y="216">ROUTES THAT EXIST</text>
+          <text class="t-ok" x="638" y="236">list · inspect · env names</text>
+          <text class="t-ok" x="638" y="254">logs · restart · stop · start</text>
+          <text class="t-cap" x="638" y="286">NO ROUTE FOR</text>
+          <text class="t-no" x="638" y="306">exec · create · rm · volumes</text>
+          <text class="t-no" x="638" y="324">images · archive · env values</text>
+          <line class="rule" x1="638" y1="342" x2="872" y2="342"/>
+          <text class="t-mono" x="638" y="364">internal network · no egress</text>
+          <text class="t-cap" x="755" y="404" text-anchor="middle">NO PUBLISHED PORT · READ-ONLY · NON-ROOT</text>
+
+          <!-- Gate -> Engine -->
+          <line class="wire" x1="890" y1="245" x2="926" y2="245" marker-end="url(#ah)"/>
+          <text class="t-cap" x="910" y="234" text-anchor="middle">sock</text>
+
+          <!-- Engine -->
+          <rect class="node" x="930" y="180" width="150" height="130" rx="10"/>
+          <text class="t-cap" x="946" y="208">HOST</text>
+          <text class="t-title" x="946" y="234">Docker Engine</text>
+          <text class="t-body" x="946" y="258">your containers</text>
+          <text class="t-mono" x="946" y="284">veklom.ops.</text>
+          <text class="t-mono" x="946" y="300">managed: "true"</text>
+
+          <!-- Off the server -->
+          <line class="rule" x1="20" y1="436" x2="550" y2="436"/>
+          <text class="t-cap" x="20" y="428">OFF THE SERVER</text>
+
+          <!-- Anchor -->
+          <rect class="node-off" x="20" y="452" width="220" height="92" rx="10"/>
+          <text class="t-title" x="38" y="480">Audit anchor</text>
+          <text class="t-body" x="38" y="502">event hashes, streamed</text>
+          <text class="t-body" x="38" y="520">as each one is written</text>
+          <path class="wire-off" d="M300 340 H268 V498 H244" marker-end="url(#ah-off)"/>
+
+          <!-- Approver -->
+          <rect class="node-off" x="300" y="452" width="250" height="92" rx="10"/>
+          <text class="t-title" x="318" y="480">Approver's device</text>
+          <text class="t-body" x="318" y="502">Ed25519 private key lives here</text>
+          <text class="t-body" x="318" y="520">signs one exact call, once</text>
+          <line class="wire-off" x1="425" y1="452" x2="425" y2="364" marker-end="url(#ah-off)"/>
+          <text class="t-cap" x="434" y="414">signed approval</text>
+        </svg>
+
+        <svg class="arch-tall" viewBox="0 0 380 930" role="img" aria-labelledby="arch-tall-title arch-tall-desc">
+          <title id="arch-tall-title">Veklom Gate architecture</title>
+          <desc id="arch-tall-desc">Top to bottom: the AI agent talks MCP to the Veklom Gate MCP server, which has no Docker socket. Below the socket boundary, the Docker gate sidecar is the only holder of the socket and exposes routes only for list, inspect, env names, logs, restart, stop and start, then Docker Engine. Off the server: the approver's device with the private key, and the audit anchor.</desc>
+          <defs>
+            <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="arrowhead" d="M0 0L10 5L0 10z"/></marker>
+            <pattern id="hazard-h" width="20" height="10" patternUnits="userSpaceOnUse" patternTransform="skewX(-40)">
+              <rect class="stripe-a" width="10" height="10"/><rect class="stripe-b" x="10" width="10" height="10"/>
+            </pattern>
+          </defs>
+          <rect class="node" x="10" y="10" width="360" height="88" rx="10"/>
+          <text class="t-cap" x="28" y="36">YOUR AGENT</text>
+          <text class="t-title" x="28" y="60">AI agent</text>
+          <text class="t-body" x="28" y="82">Claude Code · Cursor · ChatGPT · MCP</text>
+
+          <line class="wire" x1="190" y1="98" x2="190" y2="136" marker-end="url(#ah2)"/>
+          <text class="t-cap" x="202" y="122">MCP over HTTPS</text>
+
+          <rect class="node" x="10" y="140" width="360" height="172" rx="10"/>
+          <text class="t-cap" x="28" y="166">VEKLOM GATE</text>
+          <text class="t-title" x="28" y="190">MCP server</text>
+          <text class="t-body" x="28" y="214">risk tiers · tighten-only policy</text>
+          <text class="t-body" x="28" y="234">redundancy from live health</text>
+          <text class="t-body" x="28" y="254">Ed25519 verify, public key only</text>
+          <text class="t-body" x="28" y="274">hash-chained audit log</text>
+          <text class="t-no" x="28" y="298">no Docker socket · no private key</text>
+
+          <text class="t-acc" x="10" y="338">SOCKET BOUNDARY</text>
+          <rect x="10" y="346" width="360" height="10" fill="url(#hazard-h)"/>
+          <line class="wire" x1="190" y1="312" x2="190" y2="384" marker-end="url(#ah2)"/>
+
+          <rect class="node-key" x="10" y="388" width="360" height="236" rx="10"/>
+          <text class="t-acc" x="28" y="414">ONLY HOLDER OF THE SOCKET</text>
+          <text class="t-title" x="28" y="438">Docker gate sidecar</text>
+          <text class="t-body" x="28" y="460">labelled containers only · 2 tokens</text>
+          <text class="t-cap" x="28" y="486">ROUTES THAT EXIST</text>
+          <text class="t-ok" x="28" y="504">list · inspect · env names</text>
+          <text class="t-ok" x="28" y="522">logs · restart · stop · start</text>
+          <text class="t-cap" x="28" y="548">NO ROUTE FOR</text>
+          <text class="t-no" x="28" y="566">exec · create · rm · volumes</text>
+          <text class="t-no" x="28" y="584">images · archive · env values</text>
+          <text class="t-mono" x="28" y="610">internal network · no egress</text>
+
+          <line class="wire" x1="190" y1="624" x2="190" y2="662" marker-end="url(#ah2)"/>
+          <text class="t-cap" x="202" y="648">unix socket</text>
+
+          <rect class="node" x="10" y="666" width="360" height="80" rx="10"/>
+          <text class="t-title" x="28" y="696">Docker Engine</text>
+          <text class="t-mono" x="28" y="722">label veklom.ops.managed: "true"</text>
+
+          <line class="rule" x1="10" y1="790" x2="370" y2="790"/>
+          <text class="t-cap" x="10" y="780">OFF THE SERVER</text>
+          <rect class="node-off" x="10" y="804" width="174" height="116" rx="10"/>
+          <text class="t-title" x="24" y="830">Approver</text>
+          <text class="t-body" x="24" y="852">private key stays</text>
+          <text class="t-body" x="24" y="870">on this device</text>
+          <text class="t-mono" x="24" y="900">→ signed, once</text>
+          <rect class="node-off" x="196" y="804" width="174" height="116" rx="10"/>
+          <text class="t-title" x="210" y="830">Audit anchor</text>
+          <text class="t-body" x="210" y="852">event hashes from</text>
+          <text class="t-body" x="210" y="870">the MCP server</text>
+          <text class="t-mono" x="210" y="900">← as written</text>
+        </svg>
+        <figcaption>Both containers run non-root with read-only filesystems, all capabilities dropped and no published host ports. Reads and lifecycle calls use different gate tokens, and lifecycle also needs the gate's own <code>DOCKER_GATE_ALLOW_ACT</code> switch. Containers you have not labelled, including your database, look exactly like containers that don't exist.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- TIERS -->
+  <section class="section" id="tiers" aria-labelledby="tiers-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">policy.py · four tiers</span>
+        <h2 id="tiers-title">Every action has a tier. Unknown actions fail closed.</h2>
+      </div>
+      <div class="tiers">
+        <article class="tier low">
+          <div class="tier-head"><span class="name">LOW</span><span class="mode">AUTONOMOUS</span></div>
+          <div class="tier-body">
+            <p class="what">Read-only</p>
+            <p>Runs without asking.</p>
+            <ul><li>host info</li><li>list / inspect</li><li>env-var names</li><li>redacted log tail</li><li>health probes</li><li>audit verify</li></ul>
+          </div>
+        </article>
+        <article class="tier med">
+          <div class="tier-head"><span class="name">MEDIUM</span><span class="mode">IF PROVEN SAFE</span></div>
+          <div class="tier-body">
+            <p class="what">Reversible mutation</p>
+            <p>Autonomous only when 2 or more replicas of the same Compose service are running and healthy. Otherwise it asks for approval.</p>
+            <ul><li>restart_container</li></ul>
+          </div>
+        </article>
+        <article class="tier high">
+          <div class="tier-head"><span class="name">HIGH</span><span class="mode">SIGNED APPROVAL</span></div>
+          <div class="tier-body">
+            <p class="what">Consequential mutation</p>
+            <p>Needs a one-time Ed25519 approval bound to this deployment, this tool and these exact parameters.</p>
+            <ul><li>stop_container</li><li>start_stopped_container</li></ul>
+          </div>
+        </article>
+        <article class="tier forbid">
+          <div class="tier-head"><span class="name">FORBIDDEN</span><span class="mode">NEVER</span></div>
+          <div class="tier-body">
+            <p class="what">Crosses a trust boundary</p>
+            <p>Refused even with a valid approval.</p>
+            <ul><li>exec</li><li>create / remove</li><li>delete volume</li><li>prune</li><li>read filesystems</li><li>raw socket</li><li>secret values</li><li>database writes</li><li>shell</li></ul>
+          </div>
+        </article>
+      </div>
+      <div class="policy-row">
+        <p>Your policy file can only make the model stricter. <strong>Forbid more, require approval more, or raise the replica floor.</strong> There is no key that allows, downgrades or un-forbids anything, and a file that tries fails at startup.</p>
+        <div class="code">
+          <div class="code-head"><span>policy.json · tighten only</span></div>
+          <pre><code>{
+  <span class="k">"forbid"</span>: [<span class="s">"service.stop"</span>, <span class="s">"infra.logs.read"</span>],
+  <span class="k">"require_approval"</span>: [<span class="s">"service.restart"</span>],
+  <span class="k">"min_healthy_replicas"</span>: 3
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPROVALS -->
+  <section class="section" id="approvals" aria-labelledby="approvals-title">
+    <div class="wrap approve-grid">
+      <div style="display:grid;gap:22px;min-width:0">
+        <span class="badge">Available now · open source</span>
+        <h2 id="approvals-title">Approve from your phone. The key stays on it.</h2>
+        <p class="lede">The approver page ships in the open-source release. Host it on its own address, open it on your phone once, and it becomes your key.</p>
+        <ol class="steps">
+          <li><div><b>The agent hits a high-risk action.</b><span>The server answers <code>approval_required</code> with the exact request, and the agent sends you a link.</span></div></li>
+          <li><div><b>You see exactly what will run.</b><span>Deployment, tool, action and parameters. Nothing is summarized away.</span></div></li>
+          <li><div><b>Hold to approve once.</b><span>The request is signed on your device by a key the browser cannot export.</span></div></li>
+          <li><div><b>The agent's retry runs, once.</b><span>The approval can't be used again, or for any other call.</span></div></li>
+        </ol>
+        <p class="today">Verified live on 2026-10-11: a browser-held key approved <code>stop_container</code> on <code>shop-api-1</code>, the agent's waiting retry ran once, and a third attempt needed a new approval. Scripted approvers can use the <code>veklom-mcp-approve</code> command-line tool instead.</p>
+      </div>
+      <div>
+        <div class="phone" role="img" aria-label="Mock-up of the shipped approval page showing deployment live-test-box, tool stop_container, action service.stop, params container shop-api-1, with Decline and Approve buttons.">
+          <div class="phone-screen" aria-hidden="true">
+            <span class="phone-notch"></span>
+            <span class="ph-title">Approve one call?</span>
+            <span class="ph-sub">Your agent is asking to run this exact call, once.</span>
+            <dl>
+              <div><dt>Deployment</dt><dd>live-test-box</dd></div>
+              <div><dt>Tool</dt><dd>stop_container</dd></div>
+              <div><dt>Action</dt><dd>service.stop</dd></div>
+              <div><dt>Params</dt><dd>{"container": "shop-api-1"}</dd></div>
+            </dl>
+            <div class="ph-actions"><span class="ph-btn ph-decline">Decline</span><span class="ph-btn ph-approve">Hold to approve once</span></div>
+            <span class="ph-foot">Signed on this device · single use</span>
+          </div>
+        </div>
+        <p class="mock-note">Mock-up of the shipped approver page, with values from the live run.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="section" id="compare" aria-labelledby="compare-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">how it compares</span>
+        <h2 id="compare-title">Most Docker MCP servers hand over the whole Engine API.</h2>
+        <p class="lede">Socket proxies narrow it by API section, and MCP gateways add a click in Slack. None of them combine a socket-holding gate, label scoping, off-box approvals and redundancy-aware restarts for self-hosted Docker.</p>
+      </div>
+      <p class="scroll-hint" aria-hidden="true">Swipe the table sideways to compare →</p>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Comparison table, scrolls sideways on small screens">
+        <table class="compare">
+          <thead>
+            <tr>
+              <th scope="col"><span class="sr-only">Capability</span></th>
+              <th scope="col" class="us">Veklom Gate</th>
+              <th scope="col">Typical Docker MCP servers<small>e.g. <a href="https://github.com/ckreiling/mcp-server-docker">ckreiling</a>, <a href="https://github.com/QuantGeekDev/docker-mcp">QuantGeekDev</a></small></th>
+              <th scope="col">Docker socket proxies<small>e.g. <a href="https://github.com/Tecnativa/docker-socket-proxy">Tecnativa</a>, linuxserver, <a href="https://github.com/wollomatic/socket-proxy">wollomatic</a></small></th>
+              <th scope="col">Generic MCP gateways<small>e.g. Preloop, PolicyLayer, Runlayer</small></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Exec, create, remove, volumes</th><td class="us">No route exists</td><td>Exposed</td><td>Allowed per API section</td><td>Depends on the wrapped server</td></tr>
+            <tr><th scope="row">Env values, container filesystems</th><td class="us">Never leave the gate</td><td>Exposed</td><td>Allowing container GETs exposes inspect env and archive/export (<a href="https://www.vulncheck.com/advisories/docker-socket-proxy-through-insufficient-access-control-granularity-exposes-container-filesystems">reported as CVE-2026-78122</a>)</td><td>Depends</td></tr>
+            <tr><th scope="row">Scope</th><td class="us">Opt-in label per container</td><td>Whole host</td><td>Whole host</td><td>Tool names</td></tr>
+            <tr><th scope="row">Restart autonomy from live health</th><td class="us">Only with 2+ healthy replicas of the Compose service</td><td>No</td><td>No</td><td>No</td></tr>
+            <tr><th scope="row">Approval the agent can't forge</th><td class="us">Ed25519, minted off the server, bound to deployment, tool and exact params, single use</td><td>None, or a prompt-level plan-then-apply</td><td>n/a</td><td>A click in Slack or a console</td></tr>
+            <tr><th scope="row">Tamper-evident audit</th><td class="us">Hash chain, off-box anchor, anchored verify</td><td>No</td><td>No</td><td>Varies</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="compare-notes">
+        <p><strong>What is not new.</strong> Signed approvals on their own are not novel. A Kubernetes MCP server and a paid service describe Ed25519-signed approvals, and another ops MCP server uses a one-time confirm token. What Veklom Gate claims is the combination, for self-hosted Docker. Portainer, the incumbent with a paid product, has marked its own <a href="https://github.com/portainer/portainer-mcp">MCP server</a> unsupported.</p>
+        <p><strong>Gateways are complementary.</strong> If you already run Runlayer, Preloop or Teleport in front of your agents, Veklom Gate can sit behind them as the infrastructure-aware layer. Comparison based on public docs and repositories as of October 2026; check current versions.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUICK START -->
+  <section class="section" id="start" aria-labelledby="start-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">mcp_server/ · quick start</span>
+        <h2 id="start-title">One host, about five minutes.</h2>
+        <p class="lede">It starts read-only. Lifecycle actions stay off until you turn on two separate switches and give the server an approval public key.</p>
+      </div>
+      <div class="start-grid">
+        <ol class="qs">
+          <li>
+            <h3>Opt a service in</h3>
+            <p>Only labelled containers are visible. Add a health check, and two replicas if you want restarts without a human.</p>
+            <div class="code">
+              <div class="code-head"><span>your docker-compose.yml</span><button class="copy" type="button" data-copy="c1">Copy</button></div>
+              <pre id="c1"><code>services:
+  web:
+    image: example/web:1.4.2
+    labels:
+      <span class="k">veklom.ops.managed</span>: <span class="s">"true"</span>
+    healthcheck:            <span class="cm"># required for autonomous restarts</span>
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    deploy:
+      replicas: 2           <span class="cm"># two healthy replicas: restarts need no human</span></code></pre>
+            </div>
+          </li>
+          <li>
+            <h3>Start the gate and the MCP server</h3>
+            <p>Fill in <code>.env</code>: an MCP access token, two different gate tokens, and the group id that owns the Docker socket.</p>
+            <div class="code">
+              <div class="code-head"><span>shell, on the Docker host</span><button class="copy" type="button" data-copy="c2">Copy</button></div>
+              <pre id="c2"><code>git clone https://github.com/reprewindai-dev/veklom-ops-command
+cd veklom-ops-command/mcp_server
+cp .env.example .env
+<span class="cm"># VEKLOM_MCP_ACCESS_TOKEN, DOCKER_GATE_READ_TOKEN, DOCKER_GATE_ACT_TOKEN</span>
+<span class="cm"># (e.g. openssl rand -hex 32, a different value for each)</span>
+<span class="cm"># DOCKER_SOCKET_GID=$(stat -c %g /var/run/docker.sock)</span>
+docker compose up -d --build</code></pre>
+            </div>
+          </li>
+          <li>
+            <h3>Connect your agent</h3>
+            <p>Expose the MCP through your TLS tunnel (Cloudflare Tunnel, for example) and set <code>MCP_ALLOWED_HOSTS</code> to that hostname. Then add it to your client.</p>
+            <div class="code">
+              <div class="code-head"><span>Claude Code</span><button class="copy" type="button" data-copy="c3">Copy</button></div>
+              <pre id="c3"><code>claude mcp add --transport http veklom-gate https://ops.example.com/mcp \
+  --header "Authorization: Bearer $VEKLOM_MCP_ACCESS_TOKEN"</code></pre>
+            </div>
+          </li>
+          <li>
+            <h3>Turn on approvals, when you're ready</h3>
+            <p>Generate the keypair somewhere other than the server. Only the public key and a unique deployment name go on the MCP.</p>
+            <div class="code">
+              <div class="code-head"><span>on your own machine, then the server's .env</span><button class="copy" type="button" data-copy="c4">Copy</button></div>
+              <pre id="c4"><code>veklom-mcp-keygen        <span class="cm"># keep the PRIVATE key off the server</span>
+
+<span class="cm"># server .env</span>
+VEKLOM_MCP_WRITES_ENABLED=true
+VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64=&lt;public key&gt;
+VEKLOM_MCP_APPROVAL_AUDIENCE=acme-prod
+DOCKER_GATE_ALLOW_ACT=true</code></pre>
+            </div>
+          </li>
+        </ol>
+        <aside class="limits" aria-labelledby="limits-title">
+          <h3 id="limits-title">Know before you run it</h3>
+          <ul>
+            <li>No production user yet. It has been verified end to end against a real Docker Engine, not run in anyone's production.</li>
+            <li>No external security review of the gate yet.</li>
+            <li>Inbound auth is a single static bearer token. Fine for one operator, not for a team.</li>
+            <li>Run one MCP replica per deployment. Approval nonces live on a local volume.</li>
+            <li>One gate per Docker host. Multi-host fleets need one stack per host for now.</li>
+            <li>The approver page is self-hosted. Push notifications and multi-person approval are not built yet.</li>
+            <li>Log redaction is best effort. For sensitive workloads, forbid log reads in the policy file.</li>
+          </ul>
+          <a href="https://github.com/reprewindai-dev/veklom-ops-command/blob/main/mcp_server/SECURITY.md">Read the threat model</a>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="section" id="pricing" aria-labelledby="pricing-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">early-access pricing</span>
+        <h2 id="pricing-title">The safety core and the approver are free. You pay for hosted approvals, push, teams and evidence.</h2>
+      </div>
+      <div class="price-grid">
+        <article class="plan free">
+          <div class="plan-name"><h3>Open source</h3><span class="chip open">Available</span></div>
+          <div class="price">$0</div>
+          <p class="plan-desc">Everything in the repository, self-hosted.</p>
+          <ul>
+            <li>Socket-holding gate and label scoping</li>
+            <li>Four risk tiers and the forbidden floor</li>
+            <li>Signed single-use approvals: phone approver page and CLI</li>
+            <li>Hash-chained audit with off-box anchoring</li>
+            <li>Tighten-only policy file</li>
+          </ul>
+          <a class="btn btn-ghost" href="https://github.com/reprewindai-dev/veklom-ops-command">View on GitHub</a>
+        </article>
+        <article class="plan">
+          <div class="plan-name"><h3>Team</h3><span class="chip">Early access</span></div>
+          <div class="price">$29<small>per host / month</small></div>
+          <p class="plan-desc">or $149/month for up to 10 hosts.</p>
+          <ul>
+            <li>Hosted approver with phone push: no page to host yourself</li>
+            <li>Signing key in the approver's passkey or secure enclave, never held by us</li>
+            <li>Multi-approver quorum for chosen actions</li>
+            <li>Hosted audit anchor with retention and export</li>
+            <li>Policy packs</li>
+          </ul>
+          <a class="btn btn-primary" href="mailto:anthonymillwater2@gmail.com?subject=Veklom%20Gate%20early%20access%20(Team)">Request early access</a>
+        </article>
+        <article class="plan">
+          <div class="plan-name"><h3>Agency</h3><span class="chip">Early access</span></div>
+          <div class="price">$399<small>/ month</small></div>
+          <p class="plan-desc">Up to 50 hosts across your clients.</p>
+          <ul>
+            <li>Everything in Team</li>
+            <li>Per-client audit reports</li>
+            <li>Approver groups per client</li>
+          </ul>
+          <a class="btn btn-primary" href="mailto:anthonymillwater2@gmail.com?subject=Veklom%20Gate%20early%20access%20(Agency)">Request early access</a>
+        </article>
+        <article class="plan">
+          <div class="plan-name"><h3>Enterprise</h3><span class="chip">Planned</span></div>
+          <div class="price">Quote</div>
+          <p class="plan-desc">For larger fleets and stricter identity requirements.</p>
+          <ul>
+            <li>OAuth / OIDC inbound auth</li>
+            <li>Shared nonce store for high availability</li>
+            <li>Kubernetes adapter</li>
+            <li>SLA</li>
+          </ul>
+          <a class="btn btn-ghost" href="mailto:anthonymillwater2@gmail.com?subject=Veklom%20Gate%20(Enterprise)">Talk to us</a>
+        </article>
+      </div>
+      <p class="pricing-note"><span><strong>The paid tiers are in early access and still being built.</strong> Prices are our starting point and may change before general availability. Nothing on the paid tiers is for sale yet: early access means you try it with us and tell us what it's worth.</span></p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq" aria-labelledby="faq-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">questions</span>
+        <h2 id="faq-title">Straight answers.</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>What if the gate itself is compromised?</summary>
+          <div class="answer">
+            <p>Then the attacker holds the Docker socket, which is root-equivalent on the host. That is the residual risk of this design, and we don't hide it.</p>
+            <p>The mitigations are about size and reach. The gate is one small module. It runs non-root with a read-only filesystem and every capability dropped, sits on an internal network with no outbound route, publishes no port, and only answers token-authenticated routes. Treat every change to <code>docker_gate.py</code> as a privileged-code change. There has been no external security review yet.</p>
+          </div>
+        </details>
+        <details>
+          <summary>And if the MCP server is compromised?</summary>
+          <div class="answer">
+            <p>It can call the gate routes its tokens allow, on labelled containers. At worst that means restarting, stopping or starting them, and lifecycle calls also need the gate's own <code>DOCKER_GATE_ALLOW_ACT</code> switch. It can't exec, delete volumes, read env values or reach unlabelled containers, and it never holds the private key that mints approvals.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Can the agent approve its own request?</summary>
+          <div class="answer">
+            <p>No. The server stores only the Ed25519 public key; the private key stays with you. Each approval is bound to one deployment, one tool, one action and the SHA-256 of the exact parameters. It expires quickly and is consumed on first use. In the live run, reusing an approval was refused, and presenting it for a different tool was refused too.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Will my agent see secrets?</summary>
+          <div class="answer">
+            <p>Env values never leave the gate; the agent sees variable names only. Mounts, command arguments, health-check output and non-allowlisted labels are dropped too.</p>
+            <p>Logs are capped and redacted, but redaction of free text is best effort: no regex catches every secret an application might print. For sensitive workloads, add <code>"infra.logs.read"</code> to <code>forbid</code> in your policy file.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Is it ready for production?</summary>
+          <div class="answer">
+            <p>It has been verified end to end against Docker Engine 29.8 with a real MCP client, and has 137 automated tests. It has no production users yet and no external security review. Start read-only, on one host, and read the known limits above before enabling lifecycle actions.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Which agents does it work with?</summary>
+          <div class="answer">
+            <p>It speaks MCP over Streamable HTTP and is built for Claude Code, Cursor, ChatGPT and other MCP clients. It also ships an Operator Evidence Panel that ChatGPT can render as an MCP App.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Do I need Kubernetes or Swarm?</summary>
+          <div class="answer">
+            <p>No. It targets plain Docker and Docker Compose hosts. Today it is one gate per Docker host. Multi-host support and a Kubernetes adapter are planned, not built.</p>
+          </div>
+        </details>
+        <details>
+          <summary>What happens after an approved stop?</summary>
+          <div class="answer">
+            <p>Docker accepts a restart, stop or start before the container is healthy again, so the server reports what Docker accepted. Re-read the container with <code>get_container</code> and check its health probe before calling the change done. If the upstream call fails after the approval is verified, the approval is still spent and the response says so.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="section final" aria-labelledby="final-title">
+    <div class="wrap">
+      <h2 id="final-title">Give your agent the pager. <span>Keep the keys.</span></h2>
+      <p>We're looking for agencies and small teams running Compose in production who will try Veklom Gate on real servers and tell us where it falls short. Early-access users shape the approval inbox.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="mailto:anthonymillwater2@gmail.com?subject=Veklom%20Gate%20early%20access">Request early access</a>
+        <a class="btn btn-ghost" href="https://github.com/reprewindai-dev/veklom-ops-command">View on GitHub</a>
+      </div>
+      <p class="addr">anthonymillwater2@gmail.com</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>Veklom Gate · open-core MCP server for Docker hosts · © 2026 Veklom</span>
+    <span>Status: pre-release. Verified 2026-10-11. <a href="https://github.com/reprewindai-dev/veklom-ops-command/blob/main/mcp_server/SECURITY.md">Security model</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  // Every output below is an excerpt of the 2026-10-11 live run. "…" marks omitted fields.
+  var SCENES = [
+    {
+      label: "Restart, 2 healthy replicas", v: "ok", verdict: "Executed on its own",
+      caption: "The agent restarts one replica of a service that has a second healthy replica. No human needed.",
+      lines: [
+        ["note", "# shop-web runs 2 replicas, both passing their health check"],
+        ["cmd", 'restart_container({"container": "shop-web-1"})'],
+        ["out", '{\n  "status": "executed",\n  "policy": {\n    "reason": "Guardrails satisfied; medium-risk action may execute autonomously."\n  },\n  …\n}']
+      ]
+    },
+    {
+      label: "Restart, single replica", v: "warn", verdict: "Approval required",
+      caption: "Same tool, but shop-api has only one replica. Restarting it means downtime, so the server asks for a human.",
+      lines: [
+        ["note", "# shop-api runs 1 replica"],
+        ["cmd", 'restart_container({"container": "shop-api-1"})'],
+        ["out", '{\n  "status": "approval_required",\n  …\n}']
+      ]
+    },
+    {
+      label: "Stop, no approval", v: "warn", verdict: "Waiting for a human",
+      caption: "Stopping is high risk. The server returns the exact request a human has to sign.",
+      lines: [
+        ["cmd", 'stop_container({"container": "shop-api-1"})'],
+        ["out", '{\n  "status": "approval_required",\n  "approval_request": {\n    "aud": "live-test-box",\n    "tool": "stop_container",\n    "action": "service.stop",\n    "params": {"container": "shop-api-1"},\n    …\n  }\n}']
+      ]
+    },
+    {
+      label: "Stop, signed approval", v: "ok", verdict: "Executed with approval",
+      caption: "A human signs that exact request off the server. The agent retries with the token and the stop runs.",
+      lines: [
+        ["note", "# on the approver's machine; the private key never touches the server"],
+        ["human", "veklom-mcp-approve --approved-by 'founder:live-test' --request-json '…'"],
+        ["cmd", 'stop_container({"container": "shop-api-1", "approval_token": "…"})'],
+        ["out", '{\n  "status": "executed",\n  "approved_by": "founder:live-test",\n  …\n}']
+      ]
+    },
+    {
+      label: "Replay the approval", v: "bad", verdict: "Rejected, single use",
+      caption: "The agent tries the same approval a second time.",
+      lines: [
+        ["cmd", 'stop_container({"container": "shop-api-1", "approval_token": "<same token>"})'],
+        ["out", '{\n  "status": "approval_rejected",\n  "error": "Approval token has already been consumed.",\n  …\n}']
+      ]
+    },
+    {
+      label: "Reuse on another tool", v: "bad", verdict: "Rejected, bound to tool",
+      caption: "The same approval, presented for a different call on a different container.",
+      lines: [
+        ["cmd", 'start_stopped_container({"container": "shop-web-2", "approval_token": "<same token>"})'],
+        ["out", '{\n  "status": "approval_rejected",\n  "error": "Approval token is bound to a different tool.",\n  …\n}']
+      ]
+    },
+    {
+      label: "Unlabelled database", v: "bad", verdict: "Invisible, 404",
+      caption: "shop-db-1 never opted in with the label. To the agent it doesn't exist.",
+      lines: [
+        ["cmd", 'get_container({"container": "shop-db-1"})'],
+        ["out", '{\n  "status": "upstream_error",\n  "error": "… (404): … Container not found or not managed."\n}']
+      ]
+    },
+    {
+      label: "Env names, no values", v: "ok", verdict: "Names only",
+      caption: "The agent can see which variables are set. The values are discarded inside the gate.",
+      lines: [
+        ["cmd", 'get_container_env_presence({"container": "…"})'],
+        ["out", '{\n  "env_names": ["API_SIGNING_KEY", …],\n  …\n}'],
+        ["note", "# no values anywhere in the response"]
+      ]
+    },
+    {
+      label: "Exec, claimed approved", v: "bad", verdict: "Forbidden",
+      caption: "The agent asks to exec into a container and claims the action is already approved.",
+      lines: [
+        ["cmd", 'evaluate_operation({"action": "docker.exec", "context": {"approved": true}})'],
+        ["out", '{\n  "action": "docker.exec",\n  "risk_tier": "forbidden",\n  "allowed": false,\n  …\n}'],
+        ["note", "# and there is no exec tool or gate route to call anyway"]
+      ]
+    },
+    {
+      label: "Verify the audit chain", v: "ok", verdict: "Chain valid",
+      caption: "Reads, refusals, approvals and mutations all land in a hash-chained log. It verifies.",
+      lines: [
+        ["cmd", "verify_mcp_audit_chain()"],
+        ["out", '{\n  "valid": true,\n  …\n}']
+      ]
+    }
+  ];
+
+  var body = document.getElementById("term-body");
+  var list = document.getElementById("scenes");
+  var cap = document.getElementById("scene-caption");
+  var lab = document.getElementById("scene-label");
+  var cnt = document.getElementById("scene-count");
+  var ver = document.getElementById("verdict");
+  var playBtn = document.getElementById("play");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var current = 0, timer = null, playing = !reduce, visible = true;
+  var DWELL = 6500;
+
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function hl(src) {
+    var re = /"(?:[^"\\]|\\.)*"(\s*:)?|\b(true|false|null)\b/g, out = "", last = 0, m;
+    while ((m = re.exec(src))) {
+      out += esc(src.slice(last, m.index));
+      if (m[2]) out += '<span class="l">' + m[2] + "</span>";
+      else if (m[1]) out += '<span class="k">' + esc(m[0].slice(0, m[0].length - m[1].length)) + "</span>" + m[1];
+      else out += '<span class="s">' + esc(m[0]) + "</span>";
+      last = re.lastIndex;
+    }
+    return out + esc(src.slice(last));
+  }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  SCENES.forEach(function (s, i) {
+    var li = document.createElement("li");
+    var b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = '<span class="n">' + pad(i + 1) + '</span><span>' + esc(s.label) + '</span><span class="dot ' + s.v + '" aria-hidden="true"></span>';
+    b.addEventListener("click", function () { userMove(i); });
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+  var buttons = list.querySelectorAll("button");
+
+  function render(i, animate) {
+    current = (i + SCENES.length) % SCENES.length;
+    var s = SCENES[current];
+    var html = "";
+    s.lines.forEach(function (ln, k) {
+      var t = ln[0], txt = ln[1], style = ' style="--i:' + k + '"';
+      if (t === "note") html += '<span class="ln ln-note"' + style + ">" + esc(txt) + "</span>";
+      else if (t === "cmd") html += '<span class="ln ln-cmd"' + style + '><span class="p">agent ▸ </span><span class="c">' + esc(txt) + "</span></span>";
+      else if (t === "human") html += '<span class="ln ln-human"' + style + '><span class="p">you $ </span><span class="c">' + esc(txt) + "</span></span>";
+      else html += '<span class="ln ln-out"' + style + ">" + hl(txt) + "</span>";
+    });
+    body.classList.remove("anim");
+    body.innerHTML = html;
+    if (animate && !reduce) { void body.offsetWidth; body.classList.add("anim"); }
+    cap.textContent = s.caption;
+    lab.textContent = "Scene " + (current + 1) + " of " + SCENES.length + " · " + s.label;
+    cnt.textContent = pad(current + 1) + " / " + pad(SCENES.length);
+    ver.className = "verdict " + s.v;
+    ver.textContent = s.verdict;
+    for (var j = 0; j < buttons.length; j++) {
+      if (j === current) buttons[j].setAttribute("aria-current", "step");
+      else buttons[j].removeAttribute("aria-current");
+    }
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    if (playing && visible && !document.hidden) {
+      timer = setTimeout(function () { render(current + 1, true); schedule(); }, DWELL);
+    }
+  }
+  function setPlaying(p) {
+    playing = p;
+    playBtn.textContent = p ? "pause" : "play";
+    playBtn.setAttribute("aria-label", p ? "Pause the replay" : "Play the replay");
+    schedule();
+  }
+  function userMove(i) {
+    body.setAttribute("aria-live", "polite");
+    setPlaying(false);
+    render(i, true);
+  }
+
+  document.getElementById("prev").addEventListener("click", function () { userMove(current - 1); });
+  document.getElementById("next").addEventListener("click", function () { userMove(current + 1); });
+  playBtn.addEventListener("click", function () {
+    if (!playing) { body.setAttribute("aria-live", "off"); render(current + 1, true); }
+    setPlaying(!playing);
+  });
+  document.addEventListener("visibilitychange", schedule);
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (entries) {
+      visible = entries[0].isIntersecting; schedule();
+    }, { threshold: 0.25 }).observe(document.getElementById("replay"));
+  }
+
+  render(0, false);
+  setPlaying(playing);
+
+  // Copy buttons
+  Array.prototype.forEach.call(document.querySelectorAll(".copy"), function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = document.getElementById(btn.getAttribute("data-copy"));
+      var text = pre.innerText;
+      function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = "Copy"; }, 1600); }
+      function fallback() {
+        var r = document.createRange(); r.selectNodeContents(pre);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        done("Selected");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done("Copied"); }, fallback);
+      } else { fallback(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

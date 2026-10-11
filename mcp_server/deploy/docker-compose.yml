@@ -1,0 +1,79 @@
+# Veklom Gate — production compose using the published image (no build needed).
+# Quick start: deploy/INSTALL.md. Generate .env with:  docker run --rm -v "$PWD:/out" -w /out \
+#   ghcr.io/reprewindai-dev/veklom-gate:latest veklom-gate-init --socket-gid "$(stat -c %g /var/run/docker.sock)"
+services:
+  veklom-ops-mcp:
+    image: ghcr.io/reprewindai-dev/veklom-gate:${VEKLOM_GATE_VERSION:-latest}
+    restart: unless-stopped
+    expose:
+      - "8787"
+    # Explicit list: the MCP never receives the gate's switches or the tunnel token.
+    environment:
+      VEKLOM_MCP_ENVIRONMENT: "${VEKLOM_MCP_ENVIRONMENT:-production}"
+      VEKLOM_MCP_ACCESS_TOKEN: "${VEKLOM_MCP_ACCESS_TOKEN:?run veklom-gate-init first}"
+      VEKLOM_MCP_WRITES_ENABLED: "${VEKLOM_MCP_WRITES_ENABLED:-false}"
+      VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64: "${VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64:-}"
+      VEKLOM_MCP_APPROVAL_AUDIENCE: "${VEKLOM_MCP_APPROVAL_AUDIENCE:-}"
+      VEKLOM_MCP_APPROVER_URL: "${VEKLOM_MCP_APPROVER_URL:-}"
+      VEKLOM_MCP_PUBLIC_URL: "${VEKLOM_MCP_PUBLIC_URL:-}"
+      VEKLOM_MCP_PROFILE: "${VEKLOM_MCP_PROFILE:-generic}"
+      VEKLOM_MCP_HEALTH_TARGETS: "${VEKLOM_MCP_HEALTH_TARGETS:-}"
+      VEKLOM_MCP_SECURITY_POSTURE_URL: "${VEKLOM_MCP_SECURITY_POSTURE_URL:-}"
+      VEKLOM_MCP_AUDIT_ANCHOR_URL: "${VEKLOM_MCP_AUDIT_ANCHOR_URL:-}"
+      VEKLOM_MCP_AUDIT_ANCHOR_TOKEN: "${VEKLOM_MCP_AUDIT_ANCHOR_TOKEN:-}"
+      VEKLOM_MCP_POLICY_FILE: "${VEKLOM_MCP_POLICY_FILE:-}"
+      MCP_ALLOWED_HOSTS: "${MCP_ALLOWED_HOSTS:-}"
+      MCP_ALLOWED_ORIGINS: "${MCP_ALLOWED_ORIGINS:-}"
+      DOCKER_GATE_URL: "http://docker-gate:8788"
+      DOCKER_GATE_READ_TOKEN: "${DOCKER_GATE_READ_TOKEN:-}"
+      DOCKER_GATE_ACT_TOKEN: "${DOCKER_GATE_ACT_TOKEN:-}"
+    volumes:
+      - veklom_gate_state:/data/veklom-mcp
+    networks:
+      - default
+      - gate
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # The only container with the Docker socket. No internet route, no published port.
+  docker-gate:
+    image: ghcr.io/reprewindai-dev/veklom-gate:${VEKLOM_GATE_VERSION:-latest}
+    restart: unless-stopped
+    command: ["uvicorn", "veklom_ops_mcp.docker_gate:app", "--host", "0.0.0.0", "--port", "8788"]
+    expose:
+      - "8788"
+    environment:
+      DOCKER_GATE_READ_TOKEN: "${DOCKER_GATE_READ_TOKEN:-}"
+      DOCKER_GATE_ACT_TOKEN: "${DOCKER_GATE_ACT_TOKEN:-}"
+      DOCKER_GATE_ALLOW_ACT: "${DOCKER_GATE_ALLOW_ACT:-false}"
+      DOCKER_GATE_MANAGED_LABEL: "${DOCKER_GATE_MANAGED_LABEL:-veklom.ops.managed=true}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "${DOCKER_SOCKET_GID:-999}"
+    networks:
+      - gate
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8788/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  gate:
+    internal: true
+
+volumes:
+  veklom_gate_state:

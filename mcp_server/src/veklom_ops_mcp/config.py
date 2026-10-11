@@ -58,6 +58,8 @@ class Settings:
     audit_anchor_token: str | None = None
     health_targets_json: str | None = None
     security_posture_url: str | None = None
+    approver_url: str | None = None
+    public_url: str | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -92,6 +94,8 @@ class Settings:
             audit_anchor_token=os.getenv("VEKLOM_MCP_AUDIT_ANCHOR_TOKEN") or None,
             health_targets_json=os.getenv("VEKLOM_MCP_HEALTH_TARGETS") or None,
             security_posture_url=(os.getenv("VEKLOM_MCP_SECURITY_POSTURE_URL") or "").strip() or None,
+            approver_url=(os.getenv("VEKLOM_MCP_APPROVER_URL") or "").strip() or None,
+            public_url=(os.getenv("VEKLOM_MCP_PUBLIC_URL") or "").strip().rstrip("/") or None,
         )
 
     def validate(self) -> None:
@@ -134,10 +138,21 @@ class Settings:
         for label, url in (
             ("VEKLOM_MCP_AUDIT_ANCHOR_URL", self.audit_anchor_url),
             ("VEKLOM_MCP_SECURITY_POSTURE_URL", self.security_posture_url),
+            ("VEKLOM_MCP_APPROVER_URL", self.approver_url),
+            ("VEKLOM_MCP_PUBLIC_URL", self.public_url),
         ):
             if url and urlparse(url).scheme not in {"http", "https"}:
                 raise RuntimeError(f"{label} must use HTTP(S).")
+        if self.approver_url and self.public_url and self.approver_origin == _origin(self.public_url):
+            raise RuntimeError(
+                "VEKLOM_MCP_APPROVER_URL must be a different origin from the MCP: a page served by the MCP "
+                "could use the approver's signing key if the MCP were compromised."
+            )
         _ = self.health_targets  # Fail at startup on a malformed VEKLOM_MCP_HEALTH_TARGETS.
+
+    @property
+    def approver_origin(self) -> str | None:
+        return _origin(self.approver_url) if self.approver_url else None
 
     @property
     def posture_url(self) -> str | None:
@@ -161,6 +176,11 @@ class Settings:
             "capi": (self.capi_base_url, ("/health",)),
             # The legacy Control Plane is not a Core V1 surface (CURRENT_ARCHITECTURE_LOCK.md); it is not probed.
         }
+
+
+def _origin(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}".lower()
 
 
 def parse_health_targets(raw: str) -> dict[str, tuple[str, tuple[str, ...]]]:

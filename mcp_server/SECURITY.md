@@ -107,6 +107,16 @@ An approval token binds:
 
 The MCP verifies Ed25519 signature, local maximum TTL, audience, tool, action, parameters, time validity, and nonce uniqueness.
 
+### Approver device and delivery endpoint
+
+The browser approver (`approver/`) generates the Ed25519 key with WebCrypto as non-extractable and stores it in IndexedDB. JavaScript on the approver's origin can **use** the key but not read it out, so the approver page must be served from an origin the MCP does not control; the server refuses configuration where `VEKLOM_MCP_APPROVER_URL` shares the MCP's origin, and the page ships with a strict CSP (`script-src 'self'`, no third-party requests). Anyone who controls the approver origin can induce signatures, so treat its hosting account as a key-holder.
+
+Approval links carry the call in the URL fragment. The page recomputes the parameter fingerprint and refuses to sign on mismatch, shows the full call, requires a deliberate press-and-hold, and delivers only to the server address pinned when the deployment was first trusted (a link cannot redirect delivery). A hostile link can therefore at most ask the human to approve something; it cannot misrepresent what is signed.
+
+`POST /approvals/deliver` accepts unauthenticated requests by design: a body is accepted only if it carries a valid signature from the configured key, for this audience, within TTL. Browser requests are limited to the approver origin; bodies are capped at 8 KB; the inbox is bounded and entries expire with their token. Holding a delivered token grants nothing until the identical call is repeated, when it is verified and its nonce consumed exactly as a token passed directly. Every delivery attempt is audited (token hash only on rejection).
+
+Residual risk: a lost or shared device holds a usable key. Delete it from the device (Settings › Delete signing key) and replace `VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64` on the server; old approvals stop verifying immediately.
+
 Audience binding closes cross-deployment replay: when staging and production share an approval key, a staging approval is rejected by production even though each keeps its own nonce store. The approver CLI can pin the audiences it will sign for (`VEKLOM_MCP_APPROVER_AUDIENCES`) and re-hashes the parameters it displays, so a relayed request cannot show one target while obtaining a token for another.
 
 Replay state uses a file lock and atomic replacement. This design is safe for a **single MCP replica**.

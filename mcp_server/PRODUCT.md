@@ -45,8 +45,8 @@ Benchmarks: Preloop $12–350/mo cloud, $6k/yr self-hosted business; Infisical $
 
 | Tier | Price (hypothesis) | What is in it |
 |---|---|---|
-| Open source | Free | Everything in this repo: gate, tiers, forbidden floor, signed single-use approvals, CLI approver, hash-chain audit, tighten-only policy |
-| Team | $29 per protected host / month, or $149/mo up to 10 | Approval inbox (web + phone push, one-tap approve with the signing key in the approver's own passkey/secure enclave — never held by us), multi-approver quorum for chosen actions, hosted audit anchor with retention and export, policy packs |
+| Open source | Free | Everything in this repo: gate, tiers, forbidden floor, signed single-use approvals, self-hosted phone approver page and CLI, hash-chain audit, tighten-only policy |
+| Team | $29 per protected host / month, or $149/mo up to 10 | Hosted approver with phone push (no page to host; the signing key stays in the approver's device — never held by us), multi-approver quorum for chosen actions, hosted audit anchor with retention and export, policy packs |
 | Agency | $399/mo up to 50 hosts | Team + per-client audit reports and approver groups |
 | Enterprise | Quote | OAuth/OIDC inbound auth, shared nonce store for HA, Kubernetes adapter, SLA |
 
@@ -54,7 +54,7 @@ The paid line is the **approval experience and the evidence**, not the safety co
 
 ## What has to be true before charging anyone
 
-1. **Approval UX is a command-line tool.** Nobody pays to paste JSON into a terminal at 3am. The approval inbox is the product.
+1. **Approvals need a self-hosted page and the agent has to share the link.** The open-source approver works end to end (verified 2026-10-11) but has no push notifications, no multi-person approval, and the approver page must be hosted on its own origin. The hosted version with push is the paid product.
 2. **No production user yet.** Veklom's own Core V1 hosts are the natural first deployment; nobody outside Veklom has run it, and there has been no external security review of the gate.
 3. **Inbound auth is a single static bearer token.** Fine for one operator; not for a team.
 4. **One MCP replica per deployment**, because approval nonces live on the local volume.
@@ -71,7 +71,7 @@ The paid line is the **approval experience and the evidence**, not the safety co
 
 ## Build order after validation
 
-1. Approval inbox (web + push) with passkey-held signing keys.
+1. Hosted approver with push notifications and two-person approval (the self-hosted approver page already ships).
 2. Hosted audit anchor endpoint (the server already streams to `VEKLOM_MCP_AUDIT_ANCHOR_URL`).
 3. Multi-host: one gate per host behind one MCP, with per-host audiences.
 4. OAuth/OIDC inbound auth and a shared nonce store for HA.

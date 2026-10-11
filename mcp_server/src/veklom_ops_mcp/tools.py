@@ -7,7 +7,7 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
-from .approval import ApprovalAuthority, ApprovalError, build_approval_request
+from .approval import ApprovalAuthority, ApprovalError, ApprovalInbox, build_approval_request, params_hash, request_id
 from .audit import AuditLedger
 from .clients import DockerGateClient, UpstreamError, VeklomClient
 from .config import SETTINGS
@@ -54,6 +54,7 @@ docker = DockerGateClient()
 veklom = VeklomClient()
 audit = AuditLedger()
 approvals = ApprovalAuthority()
+inbox = ApprovalInbox(authority=approvals)
 
 
 def _decision_dict(decision: PolicyDecision) -> dict[str, Any]:
@@ -111,6 +112,10 @@ async def _write_call(
     approved_by: str | None = None
     if decision.requires_approval:
         if not approval_token:
+            # An approver device may already have delivered a signed approval for exactly this call.
+            rid = request_id(audience=SETTINGS.approval_audience or "", tool=tool, action=action, params_sha256=params_hash(params))
+            approval_token = inbox.take(rid)
+        if not approval_token:
             result = {
                 "status": "approval_required",
                 "policy": policy,
@@ -120,6 +125,10 @@ async def _write_call(
                     action=action,
                     params=params,
                     ttl_seconds=SETTINGS.approval_ttl_seconds,
+                    risk_tier=decision.risk_tier.value,
+                    reason=decision.reason,
+                    approver_url=SETTINGS.approver_url,
+                    deliver_url=f"{SETTINGS.public_url}/approvals/deliver" if SETTINGS.public_url else None,
                 ),
             }
             audit.append(tool=tool, action=action, risk_tier=decision.risk_tier.value, outcome="approval_required", request=params, result=result, reason=decision.reason)
@@ -249,6 +258,23 @@ def verify_mcp_audit_chain(anchor_head: str | None = None) -> dict[str, Any]:
     deleted and the ledger was not replaced.
     """
     return audit.verify(anchor_head=anchor_head)
+
+
+@mcp.tool()
+async def wait_for_approval(request_id: str, timeout_seconds: int = 90) -> dict[str, Any]:
+    """Wait for a human to approve a pending call on their approver device (up to 120 s).
+
+    When state is "approved", repeat the exact same tool call with the same arguments; it runs once.
+    Approving happens only on the human's device; this tool cannot approve anything.
+    """
+    deadline = asyncio.get_running_loop().time() + max(1, min(timeout_seconds, 120))
+    while True:
+        status = inbox.status(request_id)
+        if status["state"] == "approved":
+            return {**status, "next": "Repeat the exact same tool call now; it will run once."}
+        if asyncio.get_running_loop().time() >= deadline:
+            return {**status, "next": "Still waiting. Ask the human to open approve_url, then call wait_for_approval again."}
+        await asyncio.sleep(1)
 
 
 @mcp.tool()
