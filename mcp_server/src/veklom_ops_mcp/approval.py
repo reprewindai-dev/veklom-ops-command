@@ -7,6 +7,7 @@ import hmac
 import json
 import os
 import secrets
+import sys
 import time
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -17,6 +18,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 from filelock import FileLock
 
 from .config import SETTINGS, Settings
+
+TOKEN_VERSION = "v2"
 
 
 def canonical_json(value: Any) -> str:
@@ -40,8 +43,12 @@ def _b64decode(value: str) -> bytes:
 
 @dataclass(frozen=True)
 class ApprovalClaims:
+    """Everything an approval is bound to. A token is valid for exactly one (aud, tool, action, params) call."""
+
     v: int
     nonce: str
+    aud: str
+    tool: str
     action: str
     params_sha256: str
     approved_by: str
@@ -63,16 +70,27 @@ class ApprovalSigner:
         self.private_key = Ed25519PrivateKey.from_private_bytes(raw)
         self.max_ttl_seconds = max(1, min(max_ttl_seconds, 3600))
 
-    def issue(self, action: str, params: dict[str, Any], approved_by: str, ttl_seconds: int | None = None) -> str:
-        if not action or not approved_by:
-            raise ApprovalError("Action and approver identity are required.")
+    def issue(
+        self,
+        *,
+        audience: str,
+        tool: str,
+        action: str,
+        params: dict[str, Any],
+        approved_by: str,
+        ttl_seconds: int | None = None,
+    ) -> str:
+        if not audience or not tool or not action or not approved_by:
+            raise ApprovalError("Audience, tool, action and approver identity are required.")
         ttl = min(ttl_seconds or self.max_ttl_seconds, self.max_ttl_seconds)
         if ttl < 1:
             raise ApprovalError("Approval TTL must be positive.")
         now = int(time.time())
         claims = ApprovalClaims(
-            v=1,
+            v=2,
             nonce=secrets.token_urlsafe(18),
+            aud=audience,
+            tool=tool,
             action=action,
             params_sha256=params_hash(params),
             approved_by=approved_by,
@@ -81,7 +99,7 @@ class ApprovalSigner:
         )
         payload = canonical_json(asdict(claims)).encode()
         signature = self.private_key.sign(payload)
-        return f"v1.{_b64encode(payload)}.{_b64encode(signature)}"
+        return f"{TOKEN_VERSION}.{_b64encode(payload)}.{_b64encode(signature)}"
 
 
 class ApprovalAuthority:
@@ -99,15 +117,18 @@ class ApprovalAuthority:
             raise ApprovalError("Ed25519 approval public key must be exactly 32 raw bytes.")
         return Ed25519PublicKey.from_public_bytes(raw)
 
-    def verify_and_consume(self, token: str, action: str, params: dict[str, Any]) -> ApprovalClaims:
+    def verify_and_consume(self, token: str, *, tool: str, action: str, params: dict[str, Any]) -> ApprovalClaims:
+        audience = self.settings.approval_audience
+        if not audience:
+            raise ApprovalError("Approval audience is not configured; approvals cannot be verified.")
         try:
             version, payload_b64, sig_b64 = token.split(".", 2)
             payload = _b64decode(payload_b64)
             supplied_sig = _b64decode(sig_b64)
         except ValueError as exc:
             raise ApprovalError("Malformed approval token.") from exc
-        if version != "v1":
-            raise ApprovalError("Unsupported approval token version.")
+        if version != TOKEN_VERSION:
+            raise ApprovalError("Unsupported approval token version; mint a v2 (audience-bound) approval.")
         try:
             self._public_key().verify(supplied_sig, payload)
         except InvalidSignature as exc:
@@ -117,7 +138,7 @@ class ApprovalAuthority:
         except (TypeError, json.JSONDecodeError) as exc:
             raise ApprovalError("Approval payload is invalid.") from exc
         now = int(time.time())
-        if claims.v != 1:
+        if claims.v != 2:
             raise ApprovalError("Unsupported approval claims version.")
         if claims.expires_at < now:
             raise ApprovalError("Approval token expired.")
@@ -125,6 +146,10 @@ class ApprovalAuthority:
             raise ApprovalError("Approval token TTL exceeds server policy.")
         if claims.issued_at > now + 30:
             raise ApprovalError("Approval token issued in the future.")
+        if not hmac.compare_digest(claims.aud, audience):
+            raise ApprovalError("Approval token is bound to a different deployment (audience).")
+        if claims.tool != tool:
+            raise ApprovalError("Approval token is bound to a different tool.")
         if claims.action != action:
             raise ApprovalError("Approval token is bound to a different action.")
         if not hmac.compare_digest(claims.params_sha256, params_hash(params)):
@@ -156,6 +181,23 @@ class ApprovalAuthority:
             temporary.replace(path)
 
 
+def build_approval_request(*, audience: str, tool: str, action: str, params: dict[str, Any], ttl_seconds: int) -> dict[str, Any]:
+    """What the agent relays to a human. The approver re-hashes params, so the agent cannot swap them."""
+    return {
+        "aud": audience,
+        "tool": tool,
+        "action": action,
+        "params": params,
+        "params_sha256": params_hash(params),
+        "expires_after_seconds": ttl_seconds,
+        "how_to_approve": (
+            "A human (or separately trusted environment holding the approval private key) runs: "
+            "veklom-mcp-approve --approved-by <you> --request-json '<this approval_request object>' "
+            "and returns the printed token to the agent as approval_token."
+        ),
+    }
+
+
 def generate_keypair() -> tuple[str, str]:
     """Return (public_b64, private_b64) using raw Ed25519 key material."""
     private_key = Ed25519PrivateKey.generate()
@@ -171,22 +213,74 @@ def generate_keypair() -> tuple[str, str]:
     return _b64encode(public_raw), _b64encode(private_raw)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Mint a one-time Ed25519 Veklom MCP approval outside ChatGPT.")
-    parser.add_argument("--action", required=True)
-    parser.add_argument("--params-json", required=True, help="Exact JSON object the approved action will receive.")
+def resolve_request(args: argparse.Namespace, pinned_audiences: list[str]) -> tuple[str, str, str, dict[str, Any]]:
+    """Return (audience, tool, action, params) from either a relayed approval_request or explicit flags."""
+    if args.request_json:
+        try:
+            request = json.loads(args.request_json)
+        except json.JSONDecodeError as exc:
+            raise ApprovalError("--request-json is not valid JSON.") from exc
+        if isinstance(request, dict) and isinstance(request.get("approval_request"), dict):
+            request = request["approval_request"]
+        if not isinstance(request, dict):
+            raise ApprovalError("--request-json must be the approval_request object returned by the MCP.")
+        audience, tool, action, params = request.get("aud"), request.get("tool"), request.get("action"), request.get("params")
+        if not all(isinstance(value, str) and value for value in (audience, tool, action)) or not isinstance(params, dict):
+            raise ApprovalError("approval_request must contain aud, tool, action and a params object.")
+        claimed = request.get("params_sha256")
+        if claimed is not None and claimed != params_hash(params):
+            raise ApprovalError("approval_request params_sha256 does not match its params; refusing to sign.")
+    else:
+        if not (args.tool and args.action and args.params_json):
+            raise ApprovalError("Provide --request-json, or all of --tool, --action and --params-json.")
+        tool, action = args.tool, args.action
+        params = json.loads(args.params_json)
+        if not isinstance(params, dict):
+            raise ApprovalError("--params-json must decode to a JSON object.")
+        audience = args.audience or (pinned_audiences[0] if len(pinned_audiences) == 1 else None)
+        if not audience:
+            raise ApprovalError("--audience is required (or pin exactly one in VEKLOM_MCP_APPROVER_AUDIENCES).")
+    if args.audience and args.audience != audience:
+        raise ApprovalError(f"Request targets audience {audience!r}, but --audience is {args.audience!r}.")
+    if pinned_audiences and audience not in pinned_audiences:
+        raise ApprovalError(f"Audience {audience!r} is not in VEKLOM_MCP_APPROVER_AUDIENCES; refusing to sign.")
+    return audience, tool, action, params
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Mint a one-time Ed25519 approval for exactly one MCP call, outside the agent.")
+    parser.add_argument("--request-json", help="The approval_request object the MCP returned to the agent.")
+    parser.add_argument("--tool")
+    parser.add_argument("--action")
+    parser.add_argument("--params-json", help="Exact JSON object the approved tool call will receive.")
+    parser.add_argument("--audience", help="Deployment identity (VEKLOM_MCP_APPROVAL_AUDIENCE on the target server).")
     parser.add_argument("--approved-by", required=True, help="Human or separately trusted coding-agent identity.")
     parser.add_argument("--ttl", type=int, default=None)
-    args = parser.parse_args()
+    parser.add_argument("--yes", action="store_true", help="Skip the interactive confirmation.")
+    args = parser.parse_args(argv)
     settings = Settings.from_env()
     private_key = os.getenv("VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64")
     if not private_key:
         raise SystemExit("VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64 is required in the external approval environment")
-    params = json.loads(args.params_json)
-    if not isinstance(params, dict):
-        raise SystemExit("--params-json must decode to a JSON object")
+    pinned = [item.strip() for item in os.getenv("VEKLOM_MCP_APPROVER_AUDIENCES", "").split(",") if item.strip()]
+    try:
+        audience, tool, action, params = resolve_request(args, pinned)
+    except ApprovalError as exc:
+        raise SystemExit(f"refused: {exc}") from exc
+
+    print("You are approving exactly one call:", file=sys.stderr)
+    print(f"  deployment : {audience}{'' if pinned else '   (unpinned: set VEKLOM_MCP_APPROVER_AUDIENCES)'}", file=sys.stderr)
+    print(f"  tool       : {tool}", file=sys.stderr)
+    print(f"  action     : {action}", file=sys.stderr)
+    print(f"  params     : {canonical_json(params)}", file=sys.stderr)
+    if not args.yes:
+        if not sys.stdin.isatty():
+            raise SystemExit("refused: confirmation needs a terminal; pass --yes only from a trusted script")
+        if input("Approve? [y/N] ").strip().lower() not in {"y", "yes"}:
+            raise SystemExit("not approved")
+
     token = ApprovalSigner(private_key, max_ttl_seconds=settings.approval_ttl_seconds).issue(
-        args.action, params, args.approved_by, args.ttl
+        audience=audience, tool=tool, action=action, params=params, approved_by=args.approved_by, ttl_seconds=args.ttl
     )
     print(token)
 

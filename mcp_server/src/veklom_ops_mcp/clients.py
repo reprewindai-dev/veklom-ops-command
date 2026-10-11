@@ -2,129 +2,142 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 import httpx
 
 from .config import SETTINGS, Settings
 from .redaction import redact
-from .safe_projection import project, project_domains
+from .safe_projection import container_detail, container_summary, is_healthy
 
 
 class UpstreamError(RuntimeError):
     pass
 
 
-class CoolifyClient:
-    def __init__(self, settings: Settings = SETTINGS):
+class DockerGateClient:
+    """Talks to the socket-holding Docker gate. This process never touches the Docker socket.
+
+    Reads use the gate's read token; lifecycle calls use its separate act token. Gate responses
+    are re-projected here as defence in depth, so a gate bug cannot widen what reaches the agent.
+    """
+
+    def __init__(self, settings: Settings = SETTINGS, transport: httpx.AsyncBaseTransport | None = None):
         self.settings = settings
+        self.transport = transport
 
-    async def _request(
-        self,
-        method: str,
-        path: str,
-        *,
-        deploy: bool = False,
-        params: dict[str, Any] | None = None,
-        json_body: dict[str, Any] | None = None,
-    ) -> Any:
-        token = self.settings.coolify_deploy_token if deploy else self.settings.coolify_read_token
+    async def _request(self, method: str, path: str, *, act: bool = False, params: dict[str, Any] | None = None) -> Any:
+        token = self.settings.docker_gate_act_token if act else self.settings.docker_gate_read_token
         if not token:
-            raise UpstreamError(f"Coolify {'deploy' if deploy else 'read'} credential is not configured.")
-        url = f"{self.settings.coolify_base_url}/api/v1{path}"
+            raise UpstreamError(f"Docker gate {'act' if act else 'read'} credential is not configured.")
+        url = f"{self.settings.docker_gate_url}{path}"
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
-        async with httpx.AsyncClient(timeout=self.settings.request_timeout_seconds, follow_redirects=False) as client:
-            response = await client.request(method, url, headers=headers, params=params, json=json_body)
-        if response.status_code >= 400:
-            body = redact(response.text, max_chars=4000)
-            raise UpstreamError(f"Coolify {method} {path} failed ({response.status_code}): {body}")
-        if not response.content:
-            return {"status_code": response.status_code}
         try:
-            payload = response.json()
-        except ValueError:
-            payload = {"text": response.text}
-        return redact(payload, max_chars=self.settings.max_response_chars)
+            async with httpx.AsyncClient(transport=self.transport, timeout=self.settings.request_timeout_seconds + 60, follow_redirects=False) as client:
+                response = await client.request(method, url, headers=headers, params=params)
+        except httpx.HTTPError as exc:
+            raise UpstreamError(f"Docker gate unreachable ({type(exc).__name__}).") from exc
+        if response.status_code >= 400:
+            raise UpstreamError(f"Docker gate {method} {path} failed ({response.status_code}): {redact(response.text, max_chars=2000)}")
+        return redact(response.json(), max_chars=self.settings.max_response_chars)
 
-    async def list_servers(self) -> Any:
-        return project("server", await self._request("GET", "/servers"))
+    @staticmethod
+    def _ref(container: str) -> str:
+        return quote(container, safe="")
 
-    async def get_server(self, uuid: str) -> Any:
-        return project("server", await self._request("GET", f"/servers/{uuid}"))
+    async def host(self) -> Any:
+        return await self._request("GET", "/v1/host")
 
-    async def server_resources(self, uuid: str) -> Any:
-        return project("server_resource", await self._request("GET", f"/servers/{uuid}/resources"))
+    async def list_containers(self) -> list[dict[str, Any]]:
+        rows = await self._request("GET", "/v1/containers")
+        return [container_summary(_unproject_summary(row)) for row in rows] if isinstance(rows, list) else []
 
-    async def server_domains(self, uuid: str) -> Any:
-        return project_domains(await self._request("GET", f"/servers/{uuid}/domains"))
+    async def get_container(self, container: str) -> dict[str, Any]:
+        return _reproject_detail(await self._request("GET", f"/v1/containers/{self._ref(container)}"))
 
-    async def list_applications(self) -> Any:
-        return project("application", await self._request("GET", "/applications"))
+    async def container_env_names(self, container: str) -> Any:
+        result = await self._request("GET", f"/v1/containers/{self._ref(container)}/env-names")
+        names = result.get("env_names") if isinstance(result, dict) else None
+        return {"id": result.get("id") if isinstance(result, dict) else None, "env_names": [str(n) for n in names] if isinstance(names, list) else []}
 
-    async def get_application(self, uuid: str) -> Any:
-        return project("application", await self._request("GET", f"/applications/{uuid}"))
-
-    async def application_env_presence(self, uuid: str) -> Any:
-        return project("environment_presence", await self._request("GET", f"/applications/{uuid}/envs"))
-
-    async def application_logs(self, uuid: str, lines: int) -> Any:
+    async def container_logs(self, container: str, lines: int) -> Any:
         lines = max(1, min(lines, self.settings.max_log_lines))
-        return redact(
-            await self._request("GET", f"/applications/{uuid}/logs", params={"lines": lines}),
-            max_chars=self.settings.max_response_chars,
-        )
+        return await self._request("GET", f"/v1/containers/{self._ref(container)}/logs", params={"tail": lines})
 
-    async def list_databases(self) -> Any:
-        return project("database", await self._request("GET", "/databases"))
+    async def restart(self, container: str) -> Any:
+        return await self._request("POST", f"/v1/containers/{self._ref(container)}/restart", act=True)
 
-    async def get_database(self, uuid: str) -> Any:
-        return project("database", await self._request("GET", f"/databases/{uuid}"))
+    async def stop(self, container: str) -> Any:
+        return await self._request("POST", f"/v1/containers/{self._ref(container)}/stop", act=True)
 
-    async def database_backups(self, uuid: str) -> Any:
-        return project("backup", await self._request("GET", f"/databases/{uuid}/backups"))
+    async def start(self, container: str) -> Any:
+        return await self._request("POST", f"/v1/containers/{self._ref(container)}/start", act=True)
 
-    async def list_services(self) -> Any:
-        return project("service", await self._request("GET", "/services"))
+    async def service_replicas(self, detail: dict[str, Any]) -> dict[str, Any]:
+        """Observe the compose service a container belongs to: how many replicas are running with a passing health check."""
+        labels = detail.get("labels") or {}
+        project, service = labels.get("com.docker.compose.project"), labels.get("com.docker.compose.service")
+        if not project or not service:
+            return {"service": None, "replicas": 1, "healthy_replicas": 1 if is_healthy(detail) else 0}
+        siblings = [
+            row["id"]
+            for row in await self.list_containers()
+            if row.get("id") and row["labels"].get("com.docker.compose.project") == project and row["labels"].get("com.docker.compose.service") == service
+        ]
+        details = await asyncio.gather(*(self.get_container(cid) for cid in siblings))
+        return {
+            "service": f"{project}/{service}",
+            "replicas": len(details),
+            "healthy_replicas": sum(1 for item in details if is_healthy(item)),
+        }
 
-    async def get_service(self, uuid: str) -> Any:
-        return project("service", await self._request("GET", f"/services/{uuid}"))
 
-    async def service_logs(self, uuid: str, lines: int) -> Any:
-        lines = max(1, min(lines, self.settings.max_log_lines))
-        return redact(
-            await self._request("GET", f"/services/{uuid}/logs", params={"lines": lines}),
-            max_chars=self.settings.max_response_chars,
-        )
+def _unproject_summary(row: Any) -> dict[str, Any]:
+    """Map the gate's projected summary back to Docker's shape so the shared allowlist is re-applied."""
+    if not isinstance(row, dict):
+        return {}
+    return {
+        "Id": row.get("id"),
+        "Names": [row["name"]] if row.get("name") else [],
+        "Image": row.get("image"),
+        "ImageID": row.get("image_id"),
+        "State": row.get("state"),
+        "Status": row.get("status"),
+        "Created": row.get("created"),
+        "Labels": row.get("labels"),
+    }
 
-    async def list_deployments(self) -> Any:
-        return project("deployment", await self._request("GET", "/deployments"))
 
-    async def get_deployment(self, uuid: str) -> Any:
-        return project("deployment", await self._request("GET", f"/deployments/{uuid}"))
-
-    async def restart_application(self, uuid: str) -> Any:
-        return await self._request("POST", f"/applications/{uuid}/restart", deploy=True)
-
-    async def start_application(self, uuid: str) -> Any:
-        return await self._request("POST", f"/applications/{uuid}/start", deploy=True)
-
-    async def stop_application(self, uuid: str) -> Any:
-        return await self._request("POST", f"/applications/{uuid}/stop", deploy=True)
-
-    async def restart_service(self, uuid: str) -> Any:
-        return await self._request("POST", f"/services/{uuid}/restart", deploy=True)
-
-    async def start_service(self, uuid: str) -> Any:
-        return await self._request("POST", f"/services/{uuid}/start", deploy=True)
-
-    async def stop_service(self, uuid: str) -> Any:
-        return await self._request("POST", f"/services/{uuid}/stop", deploy=True)
-
-    async def deploy(self, uuid: str, *, force: bool = False) -> Any:
-        return await self._request("POST", "/deploy", deploy=True, json_body={"uuid": uuid, "force": force})
-
-    async def cancel_deployment(self, uuid: str) -> Any:
-        return await self._request("POST", f"/deployments/{uuid}/cancel", deploy=True)
+def _reproject_detail(detail: Any) -> dict[str, Any]:
+    if not isinstance(detail, dict):
+        return {}
+    state = detail.get("state") if isinstance(detail.get("state"), dict) else {}
+    return container_detail(
+        {
+            "Id": detail.get("id"),
+            "Name": detail.get("name") or "",
+            "Created": detail.get("created"),
+            "Image": detail.get("image_id"),
+            "RestartCount": detail.get("restart_count"),
+            "HostConfig": {"RestartPolicy": {"Name": detail.get("restart_policy")}},
+            "Config": {
+                "Image": detail.get("image"),
+                "Tty": detail.get("tty"),
+                "Labels": detail.get("labels"),
+                "Healthcheck": {"Test": ["CMD"] if detail.get("has_healthcheck") else ["NONE"]},
+            },
+            "State": {
+                "Status": state.get("status"),
+                "Running": state.get("running"),
+                "Restarting": state.get("restarting"),
+                "OOMKilled": state.get("oom_killed"),
+                "ExitCode": state.get("exit_code"),
+                "StartedAt": state.get("started_at"),
+                "FinishedAt": state.get("finished_at"),
+                "Health": {"Status": state.get("health"), "FailingStreak": state.get("failing_streak")},
+            },
+        }
+    )
 
 
 class VeklomClient:
@@ -132,7 +145,7 @@ class VeklomClient:
         self.settings = settings
 
     async def _get(self, base: str, path: str) -> dict[str, Any]:
-        url = urljoin(base.rstrip("/") + "/", path.lstrip("/"))
+        url = urljoin(base.rstrip("/") + "/", path.lstrip("/")) if path else base
         try:
             async with httpx.AsyncClient(timeout=self.settings.request_timeout_seconds, follow_redirects=False) as client:
                 response = await client.get(url, headers={"Accept": "application/json"})
@@ -176,6 +189,9 @@ class VeklomClient:
         return dict(rows)
 
     async def security_posture(self) -> dict[str, Any]:
-        result = await self._get(self.settings.byos_base_url, "/api/v1/security/posture")
+        url = self.settings.posture_url
+        if not url:
+            return {"ok": False, "proof_state": "NOT_CONFIGURED", "hint": "Set VEKLOM_MCP_SECURITY_POSTURE_URL."}
+        result = await self._get(url, "")
         result["proof_state"] = "VERIFIED_LIVE" if result.get("ok") else "UNVERIFIED"
         return result

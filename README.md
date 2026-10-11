@@ -9,12 +9,12 @@ Veklom Ops Command is the standalone cross-repository operating control plane fo
 ## Operating truth
 
 - GitHub `main` is source truth.
-- Coolify on Hetzner is runtime deployment truth.
-- Cloudflare is DNS/WAF/cache and Apex static hosting only.
+- Runtime is owned/local hardware + Docker + Cloudflare Tunnels, per [`CURRENT_ARCHITECTURE_LOCK.md`](./CURRENT_ARCHITECTURE_LOCK.md). Coolify, Hetzner and Vercel are retired; actual deployment state is whatever fresh observation of those hosts shows, otherwise **UNVERIFIED**.
+- Cloudflare is DNS/WAF/cache, Pages static hosting and Tunnels.
 - Poltergeist is the local watcher, build queue, status, and evidence trigger.
 - Jean, Windsurf, Cursor, VS Code, Codex, Claude Code, GitHub MCP, and Veklom Ops MCP are interchangeable interfaces only to the extent their granted capabilities permit.
 - Local success is not production success.
-- A change is complete only after repo-backed change → pushed commit → Coolify deployment → live HTTPS proof.
+- A change is complete only after repo-backed change → pushed commit → deployment on the owned Docker hosts → live HTTPS proof.
 - Hot patches are emergency-only and must be reconciled back into GitHub.
 - No secrets belong in Git, chat, scripts, configs, or reports.
 

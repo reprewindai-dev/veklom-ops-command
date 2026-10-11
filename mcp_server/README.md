@@ -1,58 +1,68 @@
 # Veklom Ops MCP
 
-Veklom Ops MCP is the governed machine-facing operations plane for Veklom infrastructure. It is intentionally **not** a generic shell and **not** an unrestricted Coolify administrator.
+Veklom Ops MCP lets AI agents (Claude Code, Cursor, ChatGPT and other MCP clients) operate Docker hosts without being able to destroy them. It is intentionally **not** a generic shell and **not** a Docker administrator.
 
-It provides ChatGPT and other MCP clients with source-backed operational capabilities while enforcing Veklom's least-authority model at the server boundary.
+```text
+agent ──MCP──▶ veklom-ops-mcp ──HTTP (internal network)──▶ docker-gate ──unix socket──▶ Docker Engine
+               policy, approvals,                          the ONLY holder of the socket;
+               audit, redaction                            fixed capability ceiling
+```
+
+- The MCP server decides **whether** an action may run: risk tier, live redundancy, signed approval.
+- The Docker gate decides **what can run at all**: list, inspect, env-var names, log tail, restart, stop, start — on containers that opted in with a label. There is no route for exec, create, remove, attach, archive, volumes, images, networks, build or prune, so no policy bug or approval can reach them.
 
 ## Authority model
 
-Every operation is classified before execution:
-
 | Tier | Meaning | Default behavior |
 |---|---|---|
-| `LOW` | Read-only or demonstrably non-consequential | Autonomous |
-| `MEDIUM` | Reversible operational mutation | Autonomous only when runtime guardrails prove it safe; otherwise approval |
-| `HIGH` | Consequential production/configuration mutation | One-time external approval required |
-| `FORBIDDEN` | Violates a trust/security boundary | Never executable, even with approval |
+| `LOW` | Read-only | Autonomous |
+| `MEDIUM` | Reversible operational mutation | Autonomous only when observed runtime state proves it safe; otherwise approval |
+| `HIGH` | Consequential mutation | One-time external approval required |
+| `FORBIDDEN` | Violates a trust boundary | Never executable, even with approval |
 
-Examples:
-
-- LOW: health, topology, domains, deployments, resource metadata, env-name presence, redacted logs, DB metadata/backups, evidence verification.
-- MEDIUM: application/service restart, exact-artifact redeploy when independently proven, deployment cancellation, bounded runtime operations.
-- HIGH: stop/start-after-stop, source/image/build changes, route changes, non-secret environment changes.
-- FORBIDDEN: database writes/schema mutation, secret-value reads/exports, arbitrary shell, volume destruction, disabling fail-closed/zero-trust/air-gap boundaries.
+- LOW: host info, managed-container list/inspect, env-var **names**, redacted log tail, public health probes, audit verification.
+- MEDIUM: `restart_container` — autonomous in production only when at least `min_healthy_replicas` (default 2) containers of the same Compose service are running **and** passing a defined health check. A container with no health check is never counted as healthy.
+- HIGH: `stop_container`, `start_stopped_container`.
+- FORBIDDEN: container exec, create/remove, reading container filesystems, volume deletion, prune, raw socket access, database writes, secret-value reads/exports, arbitrary shell, disabling fail-closed/zero-trust/air-gap boundaries.
 
 Unknown actions fail closed.
 
-## Coolify credential separation
+## Opting containers in
 
-The service uses purpose-separated credentials:
+Only containers carrying the managed label are visible or actionable. Everything else — including the MCP and gate themselves, and databases you have not labelled — looks "not found":
 
-1. `VEKLOM_MCP_ACCESS_TOKEN` — authenticates the MCP client to this service.
-2. `COOLIFY_READ_TOKEN` — Coolify token with `read` only. Do not grant `read:sensitive`.
-3. `COOLIFY_DEPLOY_TOKEN` — separate Coolify token with `deploy` only for lifecycle/deployment operations.
+```yaml
+services:
+  web:
+    image: example/web:1.4.2
+    labels:
+      veklom.ops.managed: "true"
+    healthcheck:            # required for autonomous restarts
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    deploy:
+      replicas: 2           # two healthy replicas => restarts need no human
+```
 
-The current Coolify `v4.x` API routes require `deploy` for application/service start, restart, stop, `/deploy`, and deployment cancellation, so this MCP does **not** need a Coolify `write` or `root` credential for its operational lifecycle tools.
+The label key/value is `DOCKER_GATE_MANAGED_LABEL` (default `veklom.ops.managed=true`).
 
-**Never provide this service a Coolify `root` token. Never mount a Coolify `write` token just to make an operation easier.**
+## Credential separation
 
-The MCP never exposes upstream credentials to clients. Resource responses are first projected onto explicit safe fields and then recursively redacted. A new upstream field is invisible until it is deliberately added to a safe projection.
+1. `VEKLOM_MCP_ACCESS_TOKEN` — authenticates the MCP client to the MCP server.
+2. `DOCKER_GATE_READ_TOKEN` — lets the MCP call the gate's read routes only.
+3. `DOCKER_GATE_ACT_TOKEN` — a different token for restart/stop/start. Startup fails if it equals the read token.
+4. `DOCKER_GATE_ALLOW_ACT` — an independent switch **on the gate**. While `false` (the default), lifecycle routes return 403 whatever the MCP decides.
 
-## Environment-variable presence without values
+The MCP container never mounts the Docker socket. A compromised MCP process can therefore do at most what the gate's routes allow on labelled containers. The gate itself has no internet route (`internal: true` network) and publishes no port.
 
-`get_application_env_presence` returns variable names and non-secret flags only. It structurally discards `value` and `real_value` before a result can leave the server.
-
-That lets an operator answer “is `COVENANT_EVIDENCE_SIGNING_KEY` configured?” without ever reading the key.
+Gate responses are allowlist-projected twice (in the gate and again in the MCP). Container env values, mounts, command args, health-check output and arbitrary labels (which often carry auth hashes) never leave the gate. Logs are capped and redacted.
 
 ## Approval model — asymmetric by design
 
 The MCP is cryptographically unable to approve its own high-risk request.
 
-Approval uses **Ed25519**:
-
 - the MCP server stores only `VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64`;
-- the matching `VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64` stays outside the MCP server with the founder or a separately trusted coding-agent approval environment;
-- the server has a verifier but no signing method/key.
+- the matching private key stays with a human or a separately trusted approval environment;
+- each deployment has an approval **audience** (`VEKLOM_MCP_APPROVAL_AUDIENCE`, e.g. `acme-prod`); write mode refuses to start without one.
 
 Generate a pair in the trusted approval environment:
 
@@ -60,148 +70,111 @@ Generate a pair in the trusted approval environment:
 veklom-mcp-keygen
 ```
 
-Store only the generated public key in Coolify for the MCP service. Store the private key in the separate approval environment/secret store.
-
-When a tool call needs approval, the MCP returns an `approval_request` containing the canonical action, SHA-256 of the exact parameters, and maximum TTL.
-
-The external approver mints a one-time token:
+When a call needs approval, the MCP returns an `approval_request` with the audience, tool, action, exact parameters, their SHA-256, and maximum TTL. The agent relays it; the approver confirms exactly what will run:
 
 ```bash
 export VEKLOM_MCP_APPROVAL_PRIVATE_KEY_B64='<private-key-kept-outside-mcp>'
+export VEKLOM_MCP_APPROVER_AUDIENCES='acme-prod'   # refuse to sign for any other deployment
 
-veklom-mcp-approve \
-  --action service.stop \
-  --params-json '{"application_uuid":"..."}' \
-  --approved-by 'founder:chris'
+veklom-mcp-approve --approved-by 'founder:chris' --request-json '<approval_request from the agent>'
+#   You are approving exactly one call:
+#     deployment : acme-prod
+#     tool       : stop_container
+#     action     : service.stop
+#     params     : {"container":"shop-api-1"}
+#   Approve? [y/N]
 ```
 
-The signed token is bound to the action and exact parameters, cannot exceed the server's TTL policy, expires quickly, and is consumed once. Wrong-signer tokens, parameter substitution, action substitution, replay, expiry, and excessive TTL are rejected.
+The CLI re-hashes the parameters it displays, so an agent cannot show one target and get a token for another. Explicit flags (`--tool --action --params-json --audience`) still work for scripted approvers.
 
-## Database boundary
+The signed (v2) token is bound to the **deployment audience, tool, action and exact parameters**, cannot exceed the server's TTL policy, expires quickly, and is consumed once. Wrong-signer tokens, audience substitution, tool/action/parameter substitution, replay, expiry, excessive TTL and legacy unbound v1 tokens are rejected. If the upstream call fails after verification, the approval is still spent and the response says so. An approval can never widen the gate: an approved stop of an unlabelled container still fails.
 
-There is **no arbitrary SQL tool** and no database mutation/lifecycle tool. Database capability is limited to safe-projected metadata and backup/status inspection. The policy engine also classifies database mutation actions as `FORBIDDEN`, providing defense in depth.
+## Operator policy file — tighten only
 
-The MCP does not expose database start/stop/restart, backup creation/restore/trigger, schema mutation, credentials, connection strings, or direct query execution.
+`VEKLOM_MCP_POLICY_FILE` points at a JSON file that can make the built-in model stricter, never looser:
 
-## Current tool surface
+```json
+{
+  "forbid": ["service.stop", "infra.logs.read"],
+  "require_approval": ["service.restart"],
+  "min_healthy_replicas": 3
+}
+```
 
-### Read / LOW
+- `forbid` — any known action becomes FORBIDDEN (reads included).
+- `require_approval` — medium actions lose autonomy and always need approval.
+- `min_healthy_replicas` — raise the redundancy floor for autonomous production restarts (minimum 2).
 
-- operations policy + operation classification
-- infrastructure overview
-- Veklom health matrix
-- Veklom security posture
-- server list/details/resources/domains
-- application list/details/env-name presence/log tail
-- database list/details/backup metadata
-- service list/details/log tail
-- deployment list/details
-- MCP audit-chain verify/tail
-- source-backed Operator Evidence Panel
+There is deliberately no key to allow, downgrade or un-forbid anything. Unknown keys, unknown action names and a lowered floor fail at startup. `operations_policy` reports the effective model. See `policy.example.json`.
 
-### MEDIUM / conditional
+## Tool surface
 
-- application restart
-- service-stack restart
-- normal application redeploy (currently escalates unless exact artifact identity is independently proven)
-- deployment cancellation
+- **Read / LOW:** `operations_policy`, `evaluate_operation`, `infrastructure_overview`, `health_matrix`, `security_posture`, `docker_host_info`, `list_containers`, `get_container`, `get_container_env_presence`, `get_container_logs`, `verify_mcp_audit_chain`, `recent_mcp_audit_events`, `operator_snapshot`, `render_operator_evidence_plane`.
+- **MEDIUM:** `restart_container`.
+- **HIGH:** `stop_container`, `start_stopped_container`.
 
-### HIGH / approval
-
-- stop application
-- start deliberately stopped application
-- stop service stack
-- start deliberately stopped service stack
-
-No arbitrary command tool exists.
+No arbitrary command, exec, SQL or file tool exists.
 
 ## Audit evidence
 
-Governed upstream operational reads/writes, denials, approval escalations, failures, and completed mutations record local JSONL hash-chain events. The ledger stores hashes of requests/results plus tool, action, tier, outcome, approval identity, and previous hash. It intentionally does not persist raw tool arguments or raw output.
+Reads, denials, approval escalations, failures and completed mutations append to a local JSONL hash chain. It stores hashes of requests/results plus tool, action, tier, outcome, approver and previous hash — never raw arguments or output. Appends are serialized with a file lock.
 
-Pure introspection tools such as `operations_policy`, `verify_mcp_audit_chain`, and `recent_mcp_audit_events` do not mutate the chain they are inspecting. The Operator Evidence Panel also reads the current chain state rather than adding an event merely because it was rendered.
+A hash chain alone proves edits in the middle, but not deletion of the newest events or replacement of the whole file. Two defences:
 
-Use:
-
-- `verify_mcp_audit_chain`
-- `recent_mcp_audit_events`
-
-for inspection.
+- **Anchor webhook.** Set `VEKLOM_MCP_AUDIT_ANCHOR_URL` (and optionally `VEKLOM_MCP_AUDIT_ANCHOR_TOKEN`) and every event's hash, previous hash, tier and outcome is POSTed off-box as it is written.
+- **Anchored verification.** `verify_mcp_audit_chain(anchor_head=...)` with a head recorded earlier outside the server fails with `anchor_not_found` if that history was truncated or replaced.
 
 ## Verification after mutations
 
-Coolify lifecycle operations can be asynchronous. A successful POST response means the operation was accepted/executed by the upstream API; it is **not automatically proof that the resulting production state is healthy**.
-
-After a mutation, the operator/client must re-read the affected application/service/deployment and, where relevant, the public health endpoint before calling the change complete. The canonical completion rule remains:
+Docker accepts a restart/stop/start before the container is healthy again. After a mutation, re-read the container (`get_container`) and the relevant public health probe before calling the change complete:
 
 ```text
 request -> authorize -> mutate -> runtime re-read -> live health/proof -> evidence
 ```
 
-## Transport
-
-The server uses MCP Streamable HTTP and is intended to sit behind an approved TLS/private-tunnel boundary. The container listens only on internal port `8787`; the included Compose file does not publish a host port.
-
-Inbound bearer authentication is fail-closed by default. `VEKLOM_MCP_ALLOW_UNAUTHENTICATED=true` exists only for a separately authenticated private/tunneled boundary and should not be used on a public endpoint.
-
-## Container hardening
-
-The included deployment runs:
-
-- non-root user;
-- read-only root filesystem;
-- all Linux capabilities dropped;
-- `no-new-privileges`;
-- no Docker socket;
-- no host filesystem mount;
-- only a small persistent state volume for approval nonces and audit hashes;
-- internal port `8787` only;
-- approval **public key only** — never the signing private key.
-
 ## Configuration
 
-Copy `.env.example` into Coolify's environment configuration and supply secret values through Coolify secret management. Never commit real values.
+Copy `.env.example`, generate the tokens, and keep real values out of Git. Read-only is the default.
 
-Read-only mode is the deployment default:
-
-```text
-VEKLOM_MCP_WRITES_ENABLED=false
-```
-
-After the read plane is verified, enabling lifecycle operations requires a deploy-scoped Coolify credential plus the Ed25519 **public** approval key:
+To enable lifecycle actions, set **both** switches plus the approval verifier:
 
 ```text
+# MCP
 VEKLOM_MCP_WRITES_ENABLED=true
-COOLIFY_DEPLOY_TOKEN=<deploy-only token>
 VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64=<public-verification-key>
+VEKLOM_MCP_APPROVAL_AUDIENCE=<unique name for this deployment>
+DOCKER_GATE_ACT_TOKEN=<random, different from the read token>
+# gate
+DOCKER_GATE_ALLOW_ACT=true
+DOCKER_SOCKET_GID=<gid owning /var/run/docker.sock>
 ```
 
-Do **not** add the approval private key to the MCP service.
+Set `MCP_ALLOWED_HOSTS` to the hostname clients use (for example the Cloudflare Tunnel hostname). It enables the MCP SDK's DNS-rebinding guard for exactly those hosts; without it, the SDK default would reject every non-localhost request with 421.
+
+### Profiles and health probes
+
+`VEKLOM_MCP_PROFILE` is `generic` by default: no vendor health targets and no security-posture endpoint. Configure your own:
+
+```text
+VEKLOM_MCP_HEALTH_TARGETS={"api":"https://api.example.com","web":{"base_url":"https://example.com","paths":["/","/status"]}}
+VEKLOM_MCP_SECURITY_POSTURE_URL=https://api.example.com/security/posture   # optional
+```
+
+Veklom's own deployment sets `VEKLOM_MCP_PROFILE=veklom` to probe BYOS, CAPPO, PGL and cAPI and read the BYOS posture endpoint.
+
+### Replica constraint
+
+Approval nonces live on the MCP's state volume. Run **one** MCP replica per audience; otherwise a token could be consumed once per replica.
+
+## Transport and container hardening
+
+MCP Streamable HTTP on internal port `8787`, intended to sit behind a TLS tunnel (Cloudflare Tunnel in Veklom's Core V1). Inbound bearer auth is fail-closed; `VEKLOM_MCP_ALLOW_UNAUTHENTICATED=true` exists only for a separately authenticated private boundary.
+
+Both containers run non-root, read-only root filesystem, all capabilities dropped, `no-new-privileges`, no published host ports. Only the gate mounts the Docker socket; only the MCP has the state volume and an outbound network. `tests/test_deployment.py` asserts these properties from the shipped compose file.
 
 ## ChatGPT / Apps SDK
 
-The server exposes a Veklom Operator Evidence Panel as an MCP App resource. The widget is display-oriented: it renders structured data returned by the MCP and does not receive infrastructure credentials.
-
-The useful operating flow is:
-
-```text
-ChatGPT
-  -> Veklom Ops MCP
-      -> classify authority
-      -> Coolify/Veklom source-of-truth read
-      -> safe-field projection
-      -> redact
-      -> operational audit evidence
-      -> structured result / operator panel
-
-State-changing request
-  -> classify LOW/MEDIUM/HIGH/FORBIDDEN
-  -> derive runtime safety facts
-  -> external Ed25519 approval when required
-  -> deploy-scoped upstream action
-  -> re-read runtime/live health
-  -> record/inspect evidence
-```
+The server exposes an Operator Evidence Panel as an MCP App resource. It renders managed-container counts, public health, authority settings and audit-chain state from data returned by the MCP and receives no credentials.
 
 ## Local validation
 
@@ -212,25 +185,15 @@ python -m pip install -e '.[dev]'
 pytest
 ```
 
-For development only, set a dummy inbound token before importing the ASGI app:
-
-```bash
-export VEKLOM_MCP_ACCESS_TOKEN=local-test-token
-uvicorn veklom_ops_mcp.main:app --host 127.0.0.1 --port 8787
-```
-
-Then connect an MCP inspector to `http://127.0.0.1:8787/mcp` using the same bearer token.
+The suite drives MCP tools through the real gate app into an in-process fake Docker Engine, including replay, substitution, unlabelled-container and secret-leak cases.
 
 ## Production rollout
 
-1. Deploy with `VEKLOM_MCP_WRITES_ENABLED=false`.
-2. Verify `/health`, MCP initialization, tool listing, safe projections, redaction tests, topology reads, Veklom health, and audit-chain verification.
-3. Connect ChatGPT Developer Mode to the TLS/tunneled MCP endpoint.
-4. Exercise read tools and the Operator Evidence Panel.
-5. Create separate Coolify `read` and `deploy` tokens; never `root`, never `write`, never `read:sensitive` unless a future reviewed capability explicitly proves it is required.
-6. Generate the Ed25519 approval keypair outside the MCP environment; configure only the public key on the MCP.
-7. Enable the lifecycle plane only after policy/approval tests are green.
-8. Verify a medium-risk operation in a safe/sandbox resource before production.
-9. Verify a high-risk operation refuses without an externally signed approval and consumes a valid approval exactly once.
-10. After every mutation test, re-read runtime state and health before calling it successful.
-11. Confirm the MCP container has no approval private key, Docker socket, host filesystem mount, database mutation credential, or arbitrary shell capability.
+1. Label the containers the agent may see; add health checks; run two or more replicas where restarts should be autonomous.
+2. Deploy with `VEKLOM_MCP_WRITES_ENABLED=false` and `DOCKER_GATE_ALLOW_ACT=false`.
+3. Verify `/health`, MCP initialization, tool listing, `list_containers` (only labelled containers), redacted logs, env names without values, and audit-chain verification.
+4. Expose the MCP through the TLS tunnel with `MCP_ALLOWED_HOSTS` set; connect the client.
+5. Generate the Ed25519 keypair outside the MCP environment; configure only the public key and a unique audience on the MCP; pin that audience in the approver's `VEKLOM_MCP_APPROVER_AUDIENCES`.
+6. Enable both write switches. Verify a restart with healthy redundancy runs autonomously, a single-replica restart asks for approval, a stop refuses without approval and consumes a valid approval exactly once, and an approved stop of an unlabelled container still fails.
+7. After every mutation test, re-read runtime state and health before calling it successful.
+8. Confirm the MCP container has no Docker socket, approval private key, host filesystem mount, or database credential.

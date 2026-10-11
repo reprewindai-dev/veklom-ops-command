@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "veklom-ops-mcp"
 version = "0.1.0"
-description = "Least-authority MCP operations and evidence plane for Veklom."
+description = "Least-authority MCP server and Docker capability gate that let AI agents operate Docker hosts safely."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

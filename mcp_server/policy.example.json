@@ -1,0 +1,6 @@
+{
+  "description": "Example operator policy. It can only tighten the built-in model: forbid actions, require approval for medium actions, or raise the redundancy floor.",
+  "forbid": ["service.stop"],
+  "require_approval": ["deployment.cancel"],
+  "min_healthy_replicas": 2
+}

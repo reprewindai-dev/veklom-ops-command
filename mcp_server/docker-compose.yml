@@ -12,15 +12,22 @@ services:
       VEKLOM_MCP_ALLOW_UNAUTHENTICATED: "${VEKLOM_MCP_ALLOW_UNAUTHENTICATED:-false}"
       VEKLOM_MCP_WRITES_ENABLED: "${VEKLOM_MCP_WRITES_ENABLED:-false}"
       VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64: "${VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64:-}"
-      COOLIFY_BASE_URL: "${COOLIFY_BASE_URL:-http://host.docker.internal:8000}"
-      COOLIFY_READ_TOKEN: "${COOLIFY_READ_TOKEN:-}"
-      COOLIFY_DEPLOY_TOKEN: "${COOLIFY_DEPLOY_TOKEN:-}"
+      VEKLOM_MCP_APPROVAL_AUDIENCE: "${VEKLOM_MCP_APPROVAL_AUDIENCE:-}"
+      VEKLOM_MCP_PROFILE: "${VEKLOM_MCP_PROFILE:-generic}"
+      VEKLOM_MCP_HEALTH_TARGETS: "${VEKLOM_MCP_HEALTH_TARGETS:-}"
+      VEKLOM_MCP_SECURITY_POSTURE_URL: "${VEKLOM_MCP_SECURITY_POSTURE_URL:-}"
+      VEKLOM_MCP_AUDIT_ANCHOR_URL: "${VEKLOM_MCP_AUDIT_ANCHOR_URL:-}"
+      VEKLOM_MCP_AUDIT_ANCHOR_TOKEN: "${VEKLOM_MCP_AUDIT_ANCHOR_TOKEN:-}"
+      DOCKER_GATE_URL: "http://docker-gate:8788"
+      DOCKER_GATE_READ_TOKEN: "${DOCKER_GATE_READ_TOKEN:-}"
+      DOCKER_GATE_ACT_TOKEN: "${DOCKER_GATE_ACT_TOKEN:-}"
       MCP_ALLOWED_HOSTS: "${MCP_ALLOWED_HOSTS:-}"
       MCP_ALLOWED_ORIGINS: "${MCP_ALLOWED_ORIGINS:-}"
     volumes:
       - veklom_ops_mcp_state:/data/veklom-mcp
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - gate
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
@@ -28,6 +35,44 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+
+  # The only container with the Docker socket. It has no internet route, publishes no port,
+  # and exposes a fixed capability ceiling (see src/veklom_ops_mcp/docker_gate.py).
+  docker-gate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["uvicorn", "veklom_ops_mcp.docker_gate:app", "--host", "0.0.0.0", "--port", "8788"]
+    expose:
+      - "8788"
+    environment:
+      DOCKER_GATE_READ_TOKEN: "${DOCKER_GATE_READ_TOKEN:-}"
+      DOCKER_GATE_ACT_TOKEN: "${DOCKER_GATE_ACT_TOKEN:-}"
+      DOCKER_GATE_ALLOW_ACT: "${DOCKER_GATE_ALLOW_ACT:-false}"
+      DOCKER_GATE_MANAGED_LABEL: "${DOCKER_GATE_MANAGED_LABEL:-veklom.ops.managed=true}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "${DOCKER_SOCKET_GID:-999}"
+    networks:
+      - gate
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8788/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  gate:
+    internal: true
 
 volumes:
   veklom_ops_mcp_state:

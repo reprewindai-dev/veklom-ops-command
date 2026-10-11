@@ -173,9 +173,8 @@
       $('environment').textContent = `Environment: ${data.environment || 'unknown'}`;
 
       const counts = data.counts || {};
-      const total = Number(counts.applications || 0) + Number(counts.services || 0) + Number(counts.databases || 0);
-      $('runtime-metric').textContent = String(total);
-      $('runtime-note').textContent = `${counts.applications || 0} apps · ${counts.services || 0} services · ${counts.databases || 0} databases · ${counts.deployments || 0} deployments`;
+      $('runtime-metric').textContent = String(Number(counts.containers || 0));
+      $('runtime-note').textContent = `${counts.running || 0} running · ${counts.unhealthy || 0} unhealthy · ${counts.stopped || 0} stopped managed containers`;
       setPill('runtime-pill', data.proof_state || 'UNVERIFIED');
 
       const security = data.security || {};

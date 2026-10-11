@@ -7,24 +7,13 @@ READ_ONLY_TOOLS = {
     "operations_policy",
     "evaluate_operation",
     "infrastructure_overview",
-    "veklom_health_matrix",
+    "health_matrix",
     "security_posture",
-    "list_servers",
-    "get_server",
-    "get_server_resources",
-    "get_server_domains",
-    "list_applications",
-    "get_application",
-    "get_application_env_presence",
-    "get_application_logs",
-    "list_databases",
-    "get_database",
-    "get_database_backups",
-    "list_services",
-    "get_service",
-    "get_service_logs",
-    "list_deployments",
-    "get_deployment",
+    "docker_host_info",
+    "list_containers",
+    "get_container",
+    "get_container_env_presence",
+    "get_container_logs",
     "verify_mcp_audit_chain",
     "recent_mcp_audit_events",
     "operator_snapshot",
@@ -32,17 +21,12 @@ READ_ONLY_TOOLS = {
 }
 
 MEDIUM_WRITE_TOOLS = {
-    "restart_application",
-    "restart_service",
-    "redeploy_application_same_source",
-    "cancel_deployment",
+    "restart_container",
 }
 
 HIGH_WRITE_TOOLS = {
-    "stop_application",
-    "start_stopped_application",
-    "stop_service",
-    "start_stopped_service",
+    "stop_container",
+    "start_stopped_container",
 }
 
 
@@ -90,7 +74,7 @@ def apply_tool_annotations(mcp: FastMCP) -> None:
         tool.annotations = types.ToolAnnotations(
             title=tool.title or name.replace("_", " ").title(),
             readOnlyHint=False,
-            destructiveHint=name in {"stop_application", "stop_service"},
+            destructiveHint=name == "stop_container",
             idempotentHint=False,
             openWorldHint=False,
         )

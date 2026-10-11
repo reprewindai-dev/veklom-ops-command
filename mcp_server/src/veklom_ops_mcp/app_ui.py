@@ -9,7 +9,7 @@ import mcp.types as types
 
 from .config import SETTINGS
 from .redaction import redact
-from .tools import audit, coolify, mcp, veklom
+from .tools import audit, docker, mcp, veklom
 
 TEMPLATE_URI = "ui://veklom/operator-evidence-plane.html"
 MIME_TYPE = "text/html+skybridge"
@@ -77,11 +77,8 @@ def _compact_health(matrix: dict[str, Any]) -> dict[str, Any]:
 
 
 async def build_snapshot() -> dict[str, Any]:
-    applications, databases, services, deployments, health, security = await asyncio.gather(
-        coolify.list_applications(),
-        coolify.list_databases(),
-        coolify.list_services(),
-        coolify.list_deployments(),
+    containers, health, security = await asyncio.gather(
+        docker.list_containers(),
         veklom.health_matrix(),
         veklom.security_posture(),
         return_exceptions=True,
@@ -90,10 +87,7 @@ async def build_snapshot() -> dict[str, Any]:
     source_errors = {
         key: failure
         for key, value in {
-            "applications": applications,
-            "databases": databases,
-            "services": services,
-            "deployments": deployments,
+            "containers": containers,
             "health": health,
             "security": security,
         }.items()
@@ -108,18 +102,19 @@ async def build_snapshot() -> dict[str, Any]:
     }
 
     proof_state = "PARTIAL_RUNTIME_OBSERVATION" if source_errors else "RUNTIME_OBSERVED"
+    rows = containers if isinstance(containers, list) else []
 
     return redact(
         {
-            "schema_version": "veklom.operator.snapshot.v1",
+            "schema_version": "veklom.operator.snapshot.v2",
             "observed_at": int(time.time()),
             "environment": SETTINGS.environment,
             "proof_state": proof_state,
             "counts": {
-                "applications": _count(applications),
-                "databases": _count(databases),
-                "services": _count(services),
-                "deployments": _count(deployments),
+                "containers": _count(rows),
+                "running": sum(1 for row in rows if row.get("state") == "running"),
+                "unhealthy": sum(1 for row in rows if "(unhealthy)" in str(row.get("status", ""))),
+                "stopped": sum(1 for row in rows if row.get("state") in {"exited", "created", "dead"}),
             },
             "health": _compact_health(health_value),
             "security": security_value,
@@ -129,8 +124,9 @@ async def build_snapshot() -> dict[str, Any]:
                 "arbitrary_shell": False,
                 "secret_value_reads": False,
                 "approval_ttl_seconds": SETTINGS.approval_ttl_seconds,
-                "credential_classes": ["read", "deploy"],
-                "root_credential_present_by_design": False,
+                "credential_classes": ["read", "act"],
+                "docker_socket_held_by_mcp": False,
+                "approval_audience": SETTINGS.approval_audience,
                 "approval_signing_key_present_by_design": False,
             },
             "audit": audit.verify(),

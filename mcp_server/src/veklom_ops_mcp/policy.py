@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any
+
+from .config import SETTINGS
 
 
 class RiskTier(str, Enum):
@@ -38,6 +42,11 @@ FORBIDDEN_ACTIONS = {
     "lockerphycer.expose_publicly",
     "docker.delete_volume",
     "docker.system_prune",
+    "docker.exec",
+    "docker.create_container",
+    "docker.remove_container",
+    "docker.read_container_filesystem",
+    "docker.socket_access",
     "host.arbitrary_shell",
 }
 
@@ -80,7 +89,69 @@ HIGH_RISK_ACTIONS = {
 }
 
 
-def _medium_needs_approval(context: dict[str, Any]) -> tuple[bool, str]:
+KNOWN_ACTIONS = FORBIDDEN_ACTIONS | LOW_RISK_ACTIONS | MEDIUM_RISK_ACTIONS | HIGH_RISK_ACTIONS
+DEFAULT_MIN_HEALTHY_REPLICAS = 2
+
+
+class PolicyFileError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class PolicyOverlay:
+    """Operator policy. It can only tighten the built-in model, never loosen it."""
+
+    forbid: frozenset[str] = frozenset()
+    require_approval: frozenset[str] = frozenset()
+    min_healthy_replicas: int = DEFAULT_MIN_HEALTHY_REPLICAS
+
+    @classmethod
+    def from_dict(cls, data: Any) -> "PolicyOverlay":
+        if not isinstance(data, dict):
+            raise PolicyFileError("Policy file must be a JSON object.")
+        unknown_keys = set(data) - {"forbid", "require_approval", "min_healthy_replicas", "$schema", "description"}
+        if unknown_keys:
+            raise PolicyFileError(
+                f"Unsupported policy keys {sorted(unknown_keys)}. Policy files can only forbid actions, "
+                "require approval for medium actions, or raise the redundancy floor."
+            )
+        forbid = _action_set(data.get("forbid", []), "forbid")
+        require_approval = _action_set(data.get("require_approval", []), "require_approval")
+        not_medium = require_approval - MEDIUM_RISK_ACTIONS
+        if not_medium:
+            raise PolicyFileError(
+                f"require_approval only applies to medium actions; got {sorted(not_medium)}. "
+                "High actions already require approval; use forbid to block any action outright."
+            )
+        floor = data.get("min_healthy_replicas", DEFAULT_MIN_HEALTHY_REPLICAS)
+        if not isinstance(floor, int) or isinstance(floor, bool) or floor < DEFAULT_MIN_HEALTHY_REPLICAS:
+            raise PolicyFileError(f"min_healthy_replicas must be an integer >= {DEFAULT_MIN_HEALTHY_REPLICAS}.")
+        return cls(forbid=forbid, require_approval=require_approval, min_healthy_replicas=floor)
+
+    @classmethod
+    def load(cls, path: Path | None) -> "PolicyOverlay":
+        if path is None:
+            return cls()
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise PolicyFileError(f"Cannot load policy file {path}: {exc}") from exc
+        return cls.from_dict(data)
+
+
+def _action_set(value: Any, key: str) -> frozenset[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise PolicyFileError(f"{key} must be a list of action names.")
+    unknown = set(value) - KNOWN_ACTIONS
+    if unknown:
+        raise PolicyFileError(f"{key} names unknown actions {sorted(unknown)}; check spelling against operations_policy.")
+    return frozenset(value)
+
+
+ACTIVE_OVERLAY = PolicyOverlay.load(SETTINGS.policy_file)
+
+
+def _medium_needs_approval(context: dict[str, Any], min_healthy_replicas: int = DEFAULT_MIN_HEALTHY_REPLICAS) -> tuple[bool, str]:
     """Resolve conditional approval using proven runtime context only."""
     environment = str(context.get("environment", "production")).lower()
     healthy_replicas = context.get("healthy_replicas")
@@ -96,7 +167,7 @@ def _medium_needs_approval(context: dict[str, Any]) -> tuple[bool, str]:
     if causes_downtime:
         return True, "Medium action may cause user-visible downtime."
     if environment == "production" and affects_single_instance:
-        if not isinstance(healthy_replicas, int) or healthy_replicas < 2:
+        if not isinstance(healthy_replicas, int) or healthy_replicas < min_healthy_replicas:
             return True, "Production action lacks redundancy proof."
     if context.get("action") == "service.redeploy_same_commit":
         if not same_artifact or not artifact_digest_verified:
@@ -107,9 +178,10 @@ def _medium_needs_approval(context: dict[str, Any]) -> tuple[bool, str]:
     return False, "Guardrails satisfied; medium-risk action may execute autonomously."
 
 
-def evaluate(action: str, context: dict[str, Any] | None = None) -> PolicyDecision:
+def evaluate(action: str, context: dict[str, Any] | None = None, overlay: PolicyOverlay | None = None) -> PolicyDecision:
     context = dict(context or {})
     context.setdefault("action", action)
+    overlay = overlay or ACTIVE_OVERLAY
 
     if action in FORBIDDEN_ACTIONS:
         return PolicyDecision(
@@ -118,6 +190,15 @@ def evaluate(action: str, context: dict[str, Any] | None = None) -> PolicyDecisi
             allowed=False,
             requires_approval=False,
             reason="Action violates a non-bypassable Veklom trust boundary.",
+        )
+
+    if action in overlay.forbid:
+        return PolicyDecision(
+            action=action,
+            risk_tier=RiskTier.FORBIDDEN,
+            allowed=False,
+            requires_approval=False,
+            reason="Action is forbidden by the operator policy file.",
         )
 
     if action in LOW_RISK_ACTIONS:
@@ -130,7 +211,10 @@ def evaluate(action: str, context: dict[str, Any] | None = None) -> PolicyDecisi
         )
 
     if action in MEDIUM_RISK_ACTIONS:
-        requires_approval, reason = _medium_needs_approval(context)
+        if action in overlay.require_approval:
+            requires_approval, reason = True, "Operator policy file requires approval for this action."
+        else:
+            requires_approval, reason = _medium_needs_approval(context, overlay.min_healthy_replicas)
         return PolicyDecision(
             action=action,
             risk_tier=RiskTier.MEDIUM,

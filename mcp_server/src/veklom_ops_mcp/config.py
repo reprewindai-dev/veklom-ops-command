@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,9 +30,9 @@ def _csv(name: str) -> list[str]:
 class Settings:
     service_name: str
     environment: str
-    coolify_base_url: str
-    coolify_read_token: str | None
-    coolify_deploy_token: str | None
+    docker_gate_url: str
+    docker_gate_read_token: str | None
+    docker_gate_act_token: str | None
     byos_base_url: str
     cappo_base_url: str
     pgl_base_url: str
@@ -50,15 +51,22 @@ class Settings:
     allow_unauthenticated: bool
     allowed_hosts: list[str]
     allowed_origins: list[str]
+    profile: str = "generic"
+    approval_audience: str | None = None
+    policy_file: Path | None = None
+    audit_anchor_url: str | None = None
+    audit_anchor_token: str | None = None
+    health_targets_json: str | None = None
+    security_posture_url: str | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
         return cls(
             service_name=os.getenv("VEKLOM_MCP_SERVICE_NAME", "Veklom Ops MCP"),
             environment=os.getenv("VEKLOM_MCP_ENVIRONMENT", "production"),
-            coolify_base_url=os.getenv("COOLIFY_BASE_URL", "http://host.docker.internal:8000").rstrip("/"),
-            coolify_read_token=os.getenv("COOLIFY_READ_TOKEN"),
-            coolify_deploy_token=os.getenv("COOLIFY_DEPLOY_TOKEN"),
+            docker_gate_url=os.getenv("DOCKER_GATE_URL", "http://docker-gate:8788").rstrip("/"),
+            docker_gate_read_token=os.getenv("DOCKER_GATE_READ_TOKEN") or None,
+            docker_gate_act_token=os.getenv("DOCKER_GATE_ACT_TOKEN") or None,
             byos_base_url=os.getenv("VEKLOM_BYOS_BASE_URL", "https://api.veklom.com").rstrip("/"),
             cappo_base_url=os.getenv("VEKLOM_CAPPO_BASE_URL", "https://cappo.veklom.com").rstrip("/"),
             pgl_base_url=os.getenv("VEKLOM_PGL_BASE_URL", "https://pgl.veklom.com").rstrip("/"),
@@ -77,6 +85,13 @@ class Settings:
             allow_unauthenticated=_bool("VEKLOM_MCP_ALLOW_UNAUTHENTICATED", False),
             allowed_hosts=_csv("MCP_ALLOWED_HOSTS"),
             allowed_origins=_csv("MCP_ALLOWED_ORIGINS"),
+            profile=os.getenv("VEKLOM_MCP_PROFILE", "generic").strip().lower(),
+            approval_audience=(os.getenv("VEKLOM_MCP_APPROVAL_AUDIENCE") or "").strip() or None,
+            policy_file=Path(os.environ["VEKLOM_MCP_POLICY_FILE"]) if os.getenv("VEKLOM_MCP_POLICY_FILE") else None,
+            audit_anchor_url=(os.getenv("VEKLOM_MCP_AUDIT_ANCHOR_URL") or "").strip() or None,
+            audit_anchor_token=os.getenv("VEKLOM_MCP_AUDIT_ANCHOR_TOKEN") or None,
+            health_targets_json=os.getenv("VEKLOM_MCP_HEALTH_TARGETS") or None,
+            security_posture_url=(os.getenv("VEKLOM_MCP_SECURITY_POSTURE_URL") or "").strip() or None,
         )
 
     def validate(self) -> None:
@@ -89,8 +104,9 @@ class Settings:
             missing = [
                 name
                 for name, value in (
-                    ("COOLIFY_DEPLOY_TOKEN", self.coolify_deploy_token),
+                    ("DOCKER_GATE_ACT_TOKEN", self.docker_gate_act_token),
                     ("VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64", self.approval_public_key_b64),
+                    ("VEKLOM_MCP_APPROVAL_AUDIENCE", self.approval_audience),
                 )
                 if not value
             ]
@@ -98,11 +114,11 @@ class Settings:
                 raise RuntimeError(
                     f"Write mode is fail-closed; missing required settings: {', '.join(missing)}"
                 )
-            if self.coolify_read_token and self.coolify_read_token == self.coolify_deploy_token:
-                raise RuntimeError("Read and deploy Coolify tokens must be different credentials.")
+            if self.docker_gate_read_token and self.docker_gate_read_token == self.docker_gate_act_token:
+                raise RuntimeError("Docker gate read and act tokens must be different credentials.")
 
         for label, url in (
-            ("COOLIFY_BASE_URL", self.coolify_base_url),
+            ("DOCKER_GATE_URL", self.docker_gate_url),
             ("VEKLOM_BYOS_BASE_URL", self.byos_base_url),
             ("VEKLOM_CAPPO_BASE_URL", self.cappo_base_url),
             ("VEKLOM_PGL_BASE_URL", self.pgl_base_url),
@@ -113,15 +129,62 @@ class Settings:
             if parsed.scheme not in {"http", "https"}:
                 raise RuntimeError(f"{label} must use HTTP(S), not {parsed.scheme or 'an empty scheme'}.")
 
+        if self.profile not in {"generic", "veklom"}:
+            raise RuntimeError("VEKLOM_MCP_PROFILE must be 'generic' or 'veklom'.")
+        for label, url in (
+            ("VEKLOM_MCP_AUDIT_ANCHOR_URL", self.audit_anchor_url),
+            ("VEKLOM_MCP_SECURITY_POSTURE_URL", self.security_posture_url),
+        ):
+            if url and urlparse(url).scheme not in {"http", "https"}:
+                raise RuntimeError(f"{label} must use HTTP(S).")
+        _ = self.health_targets  # Fail at startup on a malformed VEKLOM_MCP_HEALTH_TARGETS.
+
+    @property
+    def posture_url(self) -> str | None:
+        if self.security_posture_url:
+            return self.security_posture_url
+        if self.profile == "veklom":
+            return f"{self.byos_base_url}/api/v1/security/posture"
+        return None
+
     @property
     def health_targets(self) -> dict[str, tuple[str, tuple[str, ...]]]:
+        """Public health probes. VEKLOM_MCP_HEALTH_TARGETS wins; the veklom profile keeps the legacy targets."""
+        if self.health_targets_json:
+            return parse_health_targets(self.health_targets_json)
+        if self.profile != "veklom":
+            return {}
         return {
             "byos": (self.byos_base_url, ("/health", "/api/v1/health")),
             "cappo": (self.cappo_base_url, ("/health", "/health/detailed")),
             "pgl": (self.pgl_base_url, ("/health",)),
             "capi": (self.capi_base_url, ("/health",)),
-            "control": (self.control_base_url, ("/",)),
+            # The legacy Control Plane is not a Core V1 surface (CURRENT_ARCHITECTURE_LOCK.md); it is not probed.
         }
+
+
+def parse_health_targets(raw: str) -> dict[str, tuple[str, tuple[str, ...]]]:
+    """Accept {"name": "https://host"} or {"name": {"base_url": "https://host", "paths": ["/health"]}}."""
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("VEKLOM_MCP_HEALTH_TARGETS must be a JSON object.") from exc
+    if not isinstance(data, dict):
+        raise RuntimeError("VEKLOM_MCP_HEALTH_TARGETS must be a JSON object.")
+    targets: dict[str, tuple[str, tuple[str, ...]]] = {}
+    for name, spec in data.items():
+        if isinstance(spec, str):
+            base, paths = spec, ["/health"]
+        elif isinstance(spec, dict) and isinstance(spec.get("base_url"), str):
+            base, paths = spec["base_url"], spec.get("paths") or ["/health"]
+        else:
+            raise RuntimeError(f"Health target {name!r} must be a URL string or an object with base_url.")
+        if urlparse(base).scheme not in {"http", "https"}:
+            raise RuntimeError(f"Health target {name!r} must use HTTP(S).")
+        if not isinstance(paths, list) or not all(isinstance(p, str) and p.startswith("/") for p in paths):
+            raise RuntimeError(f"Health target {name!r} paths must be a list of absolute paths.")
+        targets[str(name)] = (base.rstrip("/"), tuple(paths))
+    return targets
 
 
 SETTINGS = Settings.from_env()
