@@ -1,14 +1,14 @@
 # Ownership - backend-chief
 
 ## CAPPO Backend
-- Container: cappo-backend-node | Port: 8002 | Domain: cappo.veklom.com
-- Server: /data/coolify/applications/cappo-backend/
+- Container: cappo-backend-node (LAST_KNOWN) | Port: 8002 (LAST_KNOWN) | Domain: cappo.veklom.com
+- Deploy target: owned Docker host (UNVERIFIED; see runbooks/release-deploy.md)
 - Stack: Python FastAPI + SQLAlchemy + Alembic
 - Critical: cappo_backend/api/routers/, alembic/, docker-compose.yml
 
 ## BYOS Backend 2
-- Container: n13gp1nhrcdp0hvazvbnlxru-213557155694 | Port: 8088 | Domain: api.veklom.com
-- Server: /data/coolify/applications/veklom-byos-backend/
+- Container: UNVERIFIED (former Coolify-generated name removed) | Port: 8088 (LAST_KNOWN) | Domain: api.veklom.com
+- Deploy target: owned Docker host (UNVERIFIED; see runbooks/release-deploy.md)
 - Stack: Python FastAPI
 - Critical: backend/apps/api/routers/benchmarks.py, main.py
 
@@ -16,4 +16,4 @@
 - gnomledger -> governance-chief
 - lockerphycer -> security-chief
 - cAPI -> runtime-chief
-- Traefik routing -> platform-chief
+- Ingress routing (Cloudflare Tunnels) -> platform-chief

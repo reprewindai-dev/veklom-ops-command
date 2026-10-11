@@ -8,16 +8,16 @@ Severity: Critical (Truth Violation) | SLA: Immediate
 4. Verify: empty states show "Unmeasured" or "-"
 5. Report to Production Truth Engineer
 
-## INC-002: control.veklom.com is Down
+## INC-002: Frontend Domain is Down
 Severity: High | SLA: 15 minutes
-1. Check Vercel dashboard for deployment errors
+1. On the owned Docker host: check the frontend container status and logs (host UNVERIFIED - observe)
 2. Check latest git push for build failures: npm run build locally
-3. Rollback to previous Vercel deployment if needed
+3. Roll back to the previous known-good SHA per runbooks/release-deploy.md if needed
 4. Fix build error, redeploy
 
 ## INC-003: API Data Not Loading (Frontend Shows Loading Forever)
 Severity: Medium | SLA: 30 minutes
 1. Check browser network tab for failed API calls
 2. Verify CORS settings on backend
-3. Verify API URL env var is set correctly in Vercel
+3. Verify the API URL env var is set correctly in the owned host's deployment configuration
 4. Check backend health endpoints

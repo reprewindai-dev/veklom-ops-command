@@ -1,8 +1,8 @@
 # Ownership - governance-chief
 
 ## Gnomledger (PGL)
-- Container: gnomledger-api-1 | Port: 8001 | Domain: pgl.veklom.com
-- Server: /data/coolify/applications/gnomledger/
+- Container: gnomledger-api-1 (LAST_KNOWN) | Port: 8001 (LAST_KNOWN) | Domain: pgl.veklom.com
+- Deploy target: owned Docker host (UNVERIFIED; see runbooks/release-deploy.md)
 - Stack: Python FastAPI
 
 ## What governance-chief is responsible for

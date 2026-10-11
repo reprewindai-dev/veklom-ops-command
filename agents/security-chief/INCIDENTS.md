@@ -5,7 +5,7 @@ Severity: CRITICAL | SLA: Immediate - STOP ALL DEPLOYMENTS
 1. Halt all deployments
 2. Identify the secret and which commits it appears in
 3. Remove from source code immediately
-4. Rotate the compromised secret in Coolify
+4. Rotate the compromised secret in the owned host's deployment secret management
 5. Force-push is ONLY permitted for removing committed secrets
 6. Notify Antigravity immediately
 7. Document in security incident log
@@ -15,7 +15,7 @@ Severity: Critical | SLA: 15 minutes
 1. docker ps --filter name=lockerphycer-api
 2. Restart: docker restart lockerphycer-api
 3. Verify SECRET_KEY length (SOP-003)
-4. If key < 64 chars: rotate via Coolify UI, restart
+4. If key < 64 chars: rotate via the owned host's deployment secret management, restart
 5. Verify: auth endpoints return 401 for unauthenticated requests
 
 ## INC-003: Dependency Vulnerability

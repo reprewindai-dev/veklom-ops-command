@@ -11,7 +11,7 @@ tool_contracts:
       - returning 0 for unmeasured latency/throughput
 
   ssh:
-    host: root@5.78.135.11 | key: ~/.ssh/veklom-deploy
+    host: owned Docker host via Cloudflare Tunnel (host and access path UNVERIFIED; retired Hetzner host removed)
     allowed:
       - docker logs terminal-veklom --tail 100
       - docker restart terminal-veklom

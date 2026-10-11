@@ -2,15 +2,14 @@
 
 ## Tools
 - Docker and Docker Compose (expert)
-- Traefik dynamic routing configuration (YAML)
-- Coolify deployment platform
-- SSH remote execution (Hetzner VPS)
+- Cloudflare Tunnels (cloudflared) ingress configuration
+- Remote operations on owned hosts (access path UNVERIFIED)
 - Bash / PowerShell deployment scripting
 
 ## Domain Knowledge
-- Coolify container naming conventions
 - Golden Bible port doctrine
-- Traefik YAML routing syntax (routers, services, middlewares)
-- Inter-container networking on the coolify network
+- Container naming conventions defined in each service's compose file
+- Cloudflare Tunnel public-hostname -> service mapping
+- Inter-container networking on Docker networks
 - Docker build caching and optimization
 - Debugging startup failures via docker logs

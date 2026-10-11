@@ -1,10 +1,10 @@
 # Edge Fleet Team
 
-Mission: use Hetzner edge servers as probes, regional runners, staging, and future failover without splitting production state prematurely.
+Mission: use approved owned edge/probe hosts (inventory UNVERIFIED — see `matrices/server-role-map.md`) as probes, regional runners, staging, and future failover without splitting production state prematurely.
 
 Captain: Edge Fleet Agent
 
-Sub-agents: US-East Probe, EU-Central Probe, EU-North Build Agent, APAC Probe, Floating IP Planner.
+Sub-agents: US-East Probe, EU-Central Probe, EU-North Build Agent, APAC Probe, Failover Planner.
 
 Owned systems: role map, probe plans, private networking assumptions, firewall posture, and regional evidence.
 

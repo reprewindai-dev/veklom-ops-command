@@ -11,7 +11,7 @@
 - npm audit, pip-audit
 - grep-based secret scanning
 - Docker environment inspection (names only, not values)
-- Coolify environment variable management
+- Deployment secret management on owned Docker hosts (mechanism UNVERIFIED)
 - GitHub Dependabot alert management
 
 ## Languages: Python (security middleware), TypeScript/Node.js (auth middleware), Bash (audit scripts)

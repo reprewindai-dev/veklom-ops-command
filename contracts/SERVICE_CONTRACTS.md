@@ -157,5 +157,5 @@ Every entry in reports/production-truth-signoffs.jsonl must contain:
 }
 
 ### Escalation
-release-chief must check for a APPROVED sign-off before executing deploy_all.sh.
+release-chief must check for an APPROVED sign-off before deploying (see runbooks/release-deploy.md).
 If the latest sign-off is REJECTED, halt the release immediately.

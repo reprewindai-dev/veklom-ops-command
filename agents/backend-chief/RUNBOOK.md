@@ -19,4 +19,5 @@ grep -r 'db_seeds' veklom-byos-backend-2/backend/
 # Expected: zero matches
 
 ## SOP-005: Container Logs
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "docker logs cappo-backend-node --tail 50"
+# On the owned Docker host (access path UNVERIFIED; container name LAST_KNOWN):
+docker logs cappo-backend-node --tail 50

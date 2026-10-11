@@ -1,18 +1,10 @@
 # Ownership - platform-chief
 
-## Infrastructure Files
-- /data/coolify/proxy/dynamic/*.yaml - ALL Traefik routing configs
-- deploy_all.sh - master deployment script
+## Infrastructure Owned
+- Ingress routing for owned Docker hosts: Cloudflare Tunnel public-hostname -> service mappings (tunnel names and mappings: UNVERIFIED - observe before acting)
 - All docker-compose.yml files across all Veklom applications
+- runbooks/release-deploy.md (deployment procedure)
 
-## Canonical Traefik Routes
-| File | Routes To |
-|---|---|
-| capi.yaml | capi-container:3003 |
-| abide.yaml | abide-node:3009 |
-| cappo.yaml | cappo-backend-node:8002 |
-| pgl.yaml | gnomledger-api-1:8001 |
-| veklom.yaml | n13gp1nhrcdp0hvazvbnlxru-213557155694:8088 |
-| terminal.yaml | terminal-veklom:80 |
-
-## Network: coolify Docker network - all production containers must be members
+## Canonical Routes
+The former Coolify/Traefik route table is retired (history in Git).
+Domain -> container -> port mappings are LAST_KNOWN in [matrices/domain-container-port-map.md](../../matrices/domain-container-port-map.md) and must be re-observed.

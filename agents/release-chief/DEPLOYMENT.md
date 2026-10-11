@@ -1,13 +1,14 @@
 # Deployment - release-chief
 
+Deployment target: owned/local Docker hosts reached via Cloudflare Tunnels ([CURRENT_ARCHITECTURE_LOCK.md](../../CURRENT_ARCHITECTURE_LOCK.md)).
+
 ## Full Stack Deploy (Standard)
-# From PowerShell on local machine:
-$script = Get-Content -Raw C:\Users\antho\.windsurf\deploy_all.sh
-ssh -i C:\Users\antho\.ssh\veklom-deploy -o StrictHostKeyChecking=no root@5.78.135.11 $script
+Follow [runbooks/release-deploy.md](../../runbooks/release-deploy.md) for each changed service.
+Host identity, access path, and compose project directories are UNVERIFIED in this repo; observe them on the owned host and record them in the release proof.
+The retired `deploy_all.sh` over SSH to the Hetzner host must not be used.
 
 ## Rollback Protocol
 1. Identify last known good release tag: git tag --sort=-creatordate | head -5
-2. For each affected repo: git -C /data/coolify/applications/<app-dir> reset --hard <previous-tag>
-3. docker compose up -d --build for each affected service
-4. Verify all health endpoints return 200
-5. Record rollback in reports/releases.jsonl
+2. For each affected service: redeploy that tag on its owned Docker host per runbooks/release-deploy.md
+3. Verify all health endpoints return 200
+4. Record rollback in reports/releases.jsonl

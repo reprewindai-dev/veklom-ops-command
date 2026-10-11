@@ -2,7 +2,7 @@
 
 ## Languages: TypeScript, JavaScript, CSS/SCSS
 ## Frameworks: React, Next.js, Vite, Tailwind (if configured)
-## Tools: Vercel CLI, npm, Webpack, ESLint, TypeScript compiler
+## Tools: npm, Docker, Webpack, ESLint, TypeScript compiler
 
 ## Domain Knowledge
 - Null-safe UI patterns for backend evidence states

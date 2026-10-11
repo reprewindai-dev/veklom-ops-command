@@ -1,24 +1,7 @@
-# Runbook: Coolify Environment Wiring (Vector + MCP)
+# Runbook: Coolify Environment Wiring (Vector + MCP) (retired)
 
-**Objective**: Hook up the live production environment on Server 2 (Veklom Control Plane) to the internal Vector Service (Server 0) and establish the IDE/MCP Mesh Connection.
+**Retired 2026-09-27. Do not use this file for deployment, runtime, or architecture decisions.**
 
-## Target Details
-- **Application**: `veklom-control-plane`
-- **Location**: Coolify Server 2 (US-East Edge)
+The former text described superseded infrastructure (Coolify environment wiring for the legacy Control Plane over the Hetzner private network) and must not be treated as current. Its versioned history remains available in Git; the stale instructions have been removed from the active working tree to prevent them from being reused.
 
-## Required Environment Variables
-Operator must navigate to the Coolify Environment Variable panel for the Control Plane application and inject the following KV pairs:
-
-```env
-# Vector Database / Service Integration
-VECTOR_SERVICE_URL=http://veklom-vector-service:8095
-VECTOR_DB_URL=postgresql://user:pass@llwfyzhnft87bz6brddiax1z:5432/veklom_vectors
-
-# MCP Terminal / IDE Wiring
-MCP_MESH_URL=http://capi-container:3003/mcp
-```
-
-## Validation Protocol
-1. Deploy configuration in Coolify.
-2. Confirm that Port 5432 and 8095 are NOT exposed on the public internet, but operate securely across the Hetzner Private Network overlay to Server 0.
-3. Test terminal telemetry to ensure the MCP mesh correctly syncs state.
+Current Core V1 infrastructure is defined in [`CURRENT_ARCHITECTURE_LOCK.md`](../CURRENT_ARCHITECTURE_LOCK.md). Vector service and MCP wiring for the current architecture is `UNVERIFIED`; establish it from fresh observation before acting.

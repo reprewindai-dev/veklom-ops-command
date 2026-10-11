@@ -12,4 +12,4 @@
 - Does NOT own cAPI -> runtime-chief
 - Does NOT own gnomledger -> governance-chief
 - Does NOT own lockerphycer -> security-chief
-- Does NOT manage Traefik routing -> platform-chief
+- Does NOT manage ingress routing (Cloudflare Tunnels) -> platform-chief
