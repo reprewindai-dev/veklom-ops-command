@@ -457,11 +457,21 @@
   }
 
   function attachHold(button, onComplete) {
-    let start = 0, frame = 0, done = false;
+    // A timer decides completion; animation frames only paint progress. Frames can stall when the page
+    // is not being painted, and a hold must never silently hang because of that.
+    let start = 0, frame = 0, timer = 0, done = false;
+    const finish = () => {
+      if (done || !start) return;
+      done = true;
+      cancelAnimationFrame(frame);
+      button.style.setProperty("--p", "1");
+      button.classList.remove("active");
+      button.classList.add("done");
+      onComplete();
+    };
     const tick = (now) => {
-      const p = Math.min(1, (now - start) / HOLD_MS);
-      button.style.setProperty("--p", p.toFixed(3));
-      if (p >= 1) { done = true; button.classList.remove("active"); button.classList.add("done"); onComplete(); return; }
+      if (done) return;
+      button.style.setProperty("--p", Math.min(1, (now - start) / HOLD_MS).toFixed(3));
       frame = requestAnimationFrame(tick);
     };
     const begin = (event) => {
@@ -471,11 +481,13 @@
       start = performance.now();
       button.classList.add("active");
       frame = requestAnimationFrame(tick);
+      timer = setTimeout(finish, HOLD_MS);
     };
     const cancel = (event) => {
       if (done || !start) return;
       if (event && event.type === "keyup" && event.key !== " " && event.key !== "Enter") return;
       cancelAnimationFrame(frame);
+      clearTimeout(timer);
       start = 0;
       button.classList.remove("active");
       button.style.setProperty("--p", "0");
