@@ -223,7 +223,8 @@
   // ---------- views ----------
 
   function render(...nodes) {
-    view.replaceChildren(...nodes);
+    // replaceChildren would print a skipped optional section as the text "null".
+    view.replaceChildren(...nodes.filter((node) => node !== null && node !== undefined && node !== false));
     document.getElementById("main").focus({ preventScroll: true });
   }
 
