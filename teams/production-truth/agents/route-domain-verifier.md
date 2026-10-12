@@ -1,3 +1,3 @@
 # Route & Domain Verifier
 
-Trace domain → Traefik → container → internal port using live evidence.
+Trace domain → Cloudflare Tunnel → owned Docker host → container → internal port using live evidence.

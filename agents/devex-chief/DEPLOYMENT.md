@@ -6,7 +6,7 @@ npm run build
 npm publish --access public
 
 ## Documentation Deployment
-Documentation is typically auto-deployed via GitHub Pages or Vercel when committed to main.
+Documentation hosting is UNVERIFIED; observe the current docs target before publishing. Vercel is retired (see CURRENT_ARCHITECTURE_LOCK.md).
 
 ## devex-chief does NOT deploy production services
 Coordinate with release-chief for application deployments.

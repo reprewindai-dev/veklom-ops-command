@@ -14,11 +14,7 @@ curl https://terminal.veklom.com/api/v1/status | jq '.capabilities[] | select(.f
 # Expected: capabilities with stale evidence show "Insufficient Evidence"
 
 ## SOP-004: Deploy VNP Update
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-cd /data/coolify/applications/vnp-standalone
-git stash && git fetch origin && git reset --hard origin/master && git stash pop || true
-docker compose up -d --build
-"
+# Deploy the reviewed SHA (branch: master) to the owned Docker host per runbooks/release-deploy.md (host UNVERIFIED - observe first)
 
 ## SOP-005: Verify No Methodology Overrides
 grep -r 'operational_state.*Connected.*status.*Live\|evidence_count.*=.*1' veklom-vnp/app/

@@ -10,7 +10,7 @@ tool_contracts:
       - invoke_subagent to spawn engineers
       - read any file
     forbidden:
-      - ssh root@5.78.135.11 (escalate to platform-chief or runtime-chief)
+      - ssh to owned production hosts (escalate to platform-chief or runtime-chief)
       - docker exec into production containers
       - direct database mutations
       - force-push any branch
@@ -29,14 +29,14 @@ tool_contracts:
       - rewrite commit history
       - bypass branch protection rules
 
-  coolify:
+  deployment:
+    description: Owned Docker hosts reached via Cloudflare Tunnels (see CURRENT_ARCHITECTURE_LOCK.md); host and access path UNVERIFIED
     allowed:
-      - view service status in Coolify dashboard
-      - read deployment logs
+      - read deployment evidence and release proofs
     forbidden:
-      - directly trigger Coolify deployments (delegate to platform-chief)
-      - modify environment variables in Coolify UI (delegate to security-chief)
-      - delete applications in Coolify
+      - directly trigger deployments (delegate to platform-chief)
+      - modify deployment secrets (delegate to security-chief)
+      - delete services or volumes on owned hosts
 
   subagent_invocation:
     allowed:
@@ -60,7 +60,6 @@ tool_contracts:
     allowed:
       - verify live production domains
       - review GitHub PRs and diffs
-      - view Coolify dashboard
     forbidden:
       - submit forms that mutate production state
-      - approve Coolify deployments via browser
+      - approve deployments via browser

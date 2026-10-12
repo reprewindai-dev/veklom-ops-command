@@ -11,7 +11,7 @@
  * This Worker is a TRANSPORT OPTIMIZATION LAYER, not a governance kernel.
  * It may:
  *   - Pool Postgres connections via Hyperdrive (CACHEABLE binding only)
- *   - Proxy requests to CAPPO over the private network path (Tunnel → Server 0)
+ *   - Proxy requests to CAPPO over the private network path (Cloudflare Tunnel → owned origin host; host identity UNVERIFIED)
  *
  * This Worker MUST NOT:
  *   - Read authority, revocations, delegation, permissions, budget, nonce,
@@ -36,7 +36,7 @@
  * Placement:
  *   No placement configuration for Phase 4. Smart Placement needs traffic
  *   data to learn. Host-based placement conflicts with the origin-protection
- *   goal (Hetzner origin must not be publicly reachable for TCP probes).
+ *   goal (the origin must not be publicly reachable for TCP probes).
  *   Measure first; optimize later if multiple sequential queries warrant it.
  *
  * Private DB access path (Phase 5, when implemented):

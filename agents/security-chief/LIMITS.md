@@ -6,7 +6,7 @@
 4. Never allow Lockerphycer SECRET_KEY less than 64 characters.
 5. Never bypass authentication for convenience.
 6. Never store credentials in reports, chat, or artifacts.
-7. Never share Coolify login credentials.
+7. Never share owned-host, Cloudflare, or deployment-secret-store login credentials.
 
 ## Veto Authority
 security-chief may halt any deployment by issuing a security hold.

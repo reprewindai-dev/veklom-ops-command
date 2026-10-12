@@ -13,9 +13,5 @@ curl https://pgl.veklom.com/api/v1/receipts/<receipt-id>/verify
 # Expected: {"valid": true, "signed": true}
 
 ## SOP-004: Deploy Gnomledger
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-cd /data/coolify/applications/gnomledger
-git stash && git fetch origin && git reset --hard origin/main && git stash pop || true
-docker compose up -d --build
-"
+# Deploy the reviewed SHA to the owned Docker host per runbooks/release-deploy.md (host UNVERIFIED - observe first)
 curl https://pgl.veklom.com/health

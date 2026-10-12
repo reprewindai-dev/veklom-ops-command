@@ -1,6 +1,6 @@
 # Production SRE Team
 
-Mission: keep live Veklom production healthy across Coolify, Traefik, Docker, Hetzner, Cloudflare, and HTTPS domains.
+Mission: keep live Veklom production healthy across owned Docker hosts, Cloudflare Tunnels, and HTTPS domains.
 
 Captain: Production SRE Agent
 

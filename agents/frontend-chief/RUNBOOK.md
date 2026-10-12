@@ -5,7 +5,7 @@ grep -r 'Math.random' src/ components/ app/
 # Expected: zero matches in data paths (only allowed in crypto ID generation via crypto.randomUUID())
 
 ## SOP-002: Build Verification
-cd C:\Users\antho\.windsurf\veklom-control-plane
+cd <local veklom-FRONTEND checkout>
 npm run build
 # Expected: zero errors
 
@@ -14,8 +14,7 @@ npm run build
 # Verify: numeric cells show "-", status cells show "Unmeasured"
 # NOT: random numbers, N/A with generated values
 
-## SOP-004: Deploy to Vercel
-cd C:\Users\antho\.windsurf\veklom-control-plane
+## SOP-004: Deploy
 git push origin main
-# Vercel auto-deploys from main
-# Verify: https://control.veklom.com loads and shows correct data
+# Deploy per runbooks/release-deploy.md (owned Docker host; host and domain UNVERIFIED - observe)
+# Verify: the live frontend domain loads and shows correct data

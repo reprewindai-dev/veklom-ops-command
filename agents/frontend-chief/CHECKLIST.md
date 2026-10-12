@@ -5,9 +5,9 @@
 - [ ] Zero Math.random() calls in production data paths (grep verified)
 - [ ] All API calls have error/loading/empty states handled
 - [ ] npm run build completes with zero errors
-- [ ] Visual check on control.veklom.com confirms changes render correctly
+- [ ] Visual check on the live veklom-FRONTEND domain confirms changes render correctly (domain UNVERIFIED - observe)
 - [ ] Changes committed and pushed
-- [ ] Deployed to Vercel (or Coolify) and verified live
+- [ ] Deployed to an owned Docker host per runbooks/release-deploy.md and verified live
 - [ ] Production Truth sign-off obtained
 
 ## Hard Gates

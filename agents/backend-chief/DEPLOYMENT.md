@@ -1,27 +1,20 @@
 # Deployment - backend-chief
 
+Deployment target: owned/local Docker hosts reached via Cloudflare Tunnels ([CURRENT_ARCHITECTURE_LOCK.md](../../CURRENT_ARCHITECTURE_LOCK.md)). Procedure (deploy and rollback): [runbooks/release-deploy.md](../../runbooks/release-deploy.md).
+
+Host identity, access path, and compose project directory are UNVERIFIED in this repo; observe them on the owned host at deploy time. The retired Hetzner host and `/data/coolify/...` paths must not be used.
+
 ## Deploy CAPPO
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-cd /data/coolify/applications/cappo-backend
-git stash && git fetch origin && git reset --hard origin/main && git stash pop || true
-docker compose up -d --build
-"
+Deploy reviewed `cappo-backend` SHA per runbooks/release-deploy.md, then:
 curl https://cappo.veklom.com/health
 
 ## Deploy BYOS
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-cd /data/coolify/applications/veklom-byos-backend
-git stash && git fetch origin && git reset --hard origin/main && git stash pop || true
-docker compose up -d --build
-"
+Deploy reviewed `veklom-byos-backend` SHA per runbooks/release-deploy.md, then:
 curl https://api.veklom.com/health
 
 ## Rollback
-git -C /data/coolify/applications/cappo-backend log --oneline -5
-git -C /data/coolify/applications/cappo-backend reset --hard <previous-sha>
-docker compose -f /data/coolify/applications/cappo-backend/docker-compose.yml up -d --build
+Redeploy the previous known-good SHA per runbooks/release-deploy.md and re-verify health.
 
-## Credentials Required (Coolify-injected)
+## Credentials Required (injected by owned-host deployment secret management; mechanism UNVERIFIED)
 - DATABASE_URL, REDIS_URL
-- CAPI_URL = http://capi-container:3003
-- LOCKERPHYCER_URL = http://lockerphycer-api:8092
+- CAPI_URL, LOCKERPHYCER_URL (internal addresses UNVERIFIED; LAST_KNOWN values in matrices/domain-container-port-map.md)

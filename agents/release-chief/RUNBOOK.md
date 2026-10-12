@@ -7,13 +7,11 @@ gh run list --branch main --limit 5
 cat reports/production-truth-signoffs.jsonl | tail -5
 
 ## SOP-002: Execute Full Deploy
-# From PowerShell:
-$script = Get-Content -Raw C:\Users\antho\.windsurf\deploy_all.sh
-ssh -i C:\Users\antho\.ssh\veklom-deploy -o StrictHostKeyChecking=no root@5.78.135.11 $script
+# Follow runbooks/release-deploy.md for each changed service.
+# Owned host identity and access path: UNVERIFIED - observe; never use the retired Hetzner host or deploy_all.sh.
 
 ## SOP-003: Verify Deployment SHA
-# SSH to Hetzner and check each app's deployed commit:
-# git -C /data/coolify/applications/<app> rev-parse HEAD
+# On the owned Docker host, read the SHA each running service was built from (docker inspect / compose project checkout)
 # Compare with: gh api repos/reprewindai-dev/<repo>/branches/main | jq '.commit.sha'
 
 ## SOP-004: Tag Release

@@ -8,9 +8,9 @@
 - [ ] truth-chief sign-off obtained in reports/production-truth-signoffs.jsonl
 
 ### Deployment
-- [ ] deploy_all.sh executed and exits with code 0
+- [ ] Deployed per runbooks/release-deploy.md to the observed owned Docker host(s)
 - [ ] docker ps confirms all containers are Up
-- [ ] Deployment SHA verified (matches git log on server)
+- [ ] Deployment SHA verified on the owned host (matches the reviewed commit)
 
 ### Post-Release
 - [ ] CHANGELOG.md updated
@@ -22,5 +22,5 @@
 ## Hard Gates
 1. CI green on all changed repositories
 2. qa-chief test certificate present
-3. deploy_all.sh exits with code 0
+3. Deployment per runbooks/release-deploy.md completed with live HTTPS proof
 4. truth-chief sign-off present

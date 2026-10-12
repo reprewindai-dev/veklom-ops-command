@@ -7,7 +7,7 @@ compatibility_date = "2024-03-20"
 #
 # WHY NOT placement.host:
 #   placement.host probes the target backend over TCP from Cloudflare's public
-#   IP space. This conflicts directly with the origin-protection goal (Hetzner
+#   IP space. This conflicts directly with the origin-protection goal (the
 #   origin must NOT be publicly reachable after Phase 1). Additionally,
 #   placement.host is currently marked experimental by Cloudflare.
 #
@@ -42,7 +42,7 @@ name = "veklom-origin-connector"
 #                nonce, LAW 0 state, identity, governance decisions.
 #
 # Both configurations connect to the same Workers VPC Service, which routes
-# through Cloudflare Tunnel to private Postgres on Server 0 (5.78.135.11).
+# through Cloudflare Tunnel to private Postgres on an owned origin host (host identity UNVERIFIED).
 # Configure the VPC Service separately via Cloudflare dashboard or Terraform.
 # ────────────────────────────────────────────────────────────────────────────
 

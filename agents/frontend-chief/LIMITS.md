@@ -9,5 +9,5 @@
 
 ## Scope Limits
 - Does NOT write backend API routes -> backend-chief
-- Does NOT manage Vercel account settings -> platform-chief
+- Does NOT manage hosting or ingress settings -> platform-chief
 - Does NOT write integration tests -> qa-chief

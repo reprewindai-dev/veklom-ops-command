@@ -6,4 +6,4 @@ Mission: let Chris use Jean, Poltergeist, Windsurf, Cursor, VS Code, Codex, Clau
 
 Sub-agents: Jean Workspace Agent, Repo Open/Clone Agent, Dependency Install Agent, Test Runner Agent, Local Drift Checker, PR Prep Agent, IDE Prompt Translator, GitHub MCP Repo Agent.
 
-Forbidden: SSH to production, Docker production mutation, Coolify deploy claims, final completion claims, or secret editing.
+Forbidden: SSH to production, Docker production mutation, deployment claims, final completion claims, or secret editing.

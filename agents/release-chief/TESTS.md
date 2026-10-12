@@ -1,12 +1,11 @@
 # Tests - release-chief
 
 ## SHA Verification Test
-# SSH and compare deployed SHA vs GitHub HEAD
-# git -C /data/coolify/applications/<app> rev-parse HEAD
+# On the owned Docker host, compare the SHA the running service was built from
 # vs: gh api repos/reprewindai-dev/<repo>/branches/main | jq '.commit.sha'
 
-## deploy_all.sh Syntax Test
-bash -n C:\Users\antho\.windsurf\deploy_all.sh
+## Deploy Procedure Check
+# Confirm the release proof records the observed owned host, compose project, and SHA per runbooks/release-deploy.md
 
 ## Post-Deploy Health Suite
 curl https://capi.veklom.com/health

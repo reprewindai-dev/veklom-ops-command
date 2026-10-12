@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 set -euo pipefail
-echo 'Apex: static only; runtime: Coolify; execution: Cappo permit required'
+echo 'Apex: static only; runtime: owned Docker hosts via Cloudflare Tunnels; execution: Cappo permit required'

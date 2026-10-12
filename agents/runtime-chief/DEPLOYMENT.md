@@ -1,22 +1,20 @@
 # Deployment - runtime-chief
 
 ## Deployment Authority
-runtime-chief deploys: capi-container, abide-node, terminal-veklom
+runtime-chief deploys: cAPI, ABIDE, VNP Terminal (container names LAST_KNOWN: capi-container, abide-node, terminal-veklom)
+
+Deployment target: owned/local Docker hosts reached via Cloudflare Tunnels ([CURRENT_ARCHITECTURE_LOCK.md](../../CURRENT_ARCHITECTURE_LOCK.md)). Procedure (deploy and rollback): [runbooks/release-deploy.md](../../runbooks/release-deploy.md).
+
+Host identity, access path, and compose project directory are UNVERIFIED in this repo; observe them on the owned host at deploy time. The retired Hetzner host and `/data/coolify/...` paths must not be used.
 
 ## Standard Deploy
-ssh -i ~/.ssh/veklom-deploy root@5.78.135.11 "
-cd /data/coolify/applications/<app-dir>
-git stash && git fetch origin && git reset --hard origin/main && git stash pop || true
-docker compose up -d --build
-"
+Deploy the reviewed SHA per runbooks/release-deploy.md.
 
 ## Rollback
-git -C /data/coolify/applications/<app-dir> log --oneline -10
-git -C /data/coolify/applications/<app-dir> reset --hard <good-sha>
-docker compose -f /data/coolify/applications/<app-dir>/docker-compose.yml up -d --build
+Redeploy the previous known-good SHA per runbooks/release-deploy.md, then:
 curl https://<domain>/health
 
-## Credentials Required (Coolify-injected only)
+## Credentials Required (injected by owned-host deployment secret management; mechanism UNVERIFIED)
 - SEKED_HMAC_SECRET (min 64 chars, hard error if missing)
-- OLLAMA_BASE_URL = http://167.233.202.195:11434
-- PORT = 3009 (ABIDE), 3003 (cAPI)
+- OLLAMA_BASE_URL (Ollama on owned/local hardware; address UNVERIFIED - the former Hetzner address is retired)
+- PORT = 3009 (ABIDE), 3003 (cAPI) (LAST_KNOWN)

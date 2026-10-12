@@ -24,4 +24,4 @@
 ## Hard Gates
 1. Zero hardcoded secrets in deployed code
 2. Lockerphycer returns 401 for unauthenticated requests
-3. All HMAC/JWT secrets sourced from Coolify environment
+3. All HMAC/JWT secrets sourced from the owned host's deployment secret management (mechanism UNVERIFIED)

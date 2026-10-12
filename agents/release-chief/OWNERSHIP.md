@@ -2,8 +2,7 @@
 
 ## Files Owned
 - .github/workflows/ in ALL repositories
-- deploy_all.sh (master deploy script)
-- run_deploys.ps1
+- runbooks/release-deploy.md (deployment procedure)
 - CHANGELOG.md in all repositories
 - VERSION files in all repositories
 - reports/releases.jsonl (release archive)

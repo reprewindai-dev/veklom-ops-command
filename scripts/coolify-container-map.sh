@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# Retired 2026-09-27. This script inspected Coolify/Traefik proxy state, which is
+# superseded infrastructure and must not be treated as current. Its versioned
+# history remains available in Git. Current Core V1 infrastructure is defined in
+# CURRENT_ARCHITECTURE_LOCK.md; observe owned Docker hosts directly per
+# runbooks/release-deploy.md.
 set -euo pipefail
-command -v docker >/dev/null 2>&1 || { echo 'docker unavailable; no production claim made'; exit 0; }
-docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
-echo 'Traefik dynamic config inspection is intentionally host-local and read-only.'
-if [[ -d /data/coolify/proxy/dynamic ]]; then find /data/coolify/proxy/dynamic -maxdepth 1 -type f -print; fi
+echo 'scripts/coolify-container-map.sh is retired; see CURRENT_ARCHITECTURE_LOCK.md and runbooks/release-deploy.md' >&2
+exit 1

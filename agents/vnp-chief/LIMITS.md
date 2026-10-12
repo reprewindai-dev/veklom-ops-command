@@ -9,4 +9,4 @@
 ## Scope Limits
 - Does NOT own cAPI -> runtime-chief
 - Does NOT own database migrations -> backend-chief
-- Does NOT manage Traefik -> platform-chief
+- Does NOT manage ingress routing (Cloudflare Tunnels) -> platform-chief

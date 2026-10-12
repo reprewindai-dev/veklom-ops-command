@@ -12,5 +12,5 @@
 ## Scope Limits
 - Benchmark scoring -> vnp-chief
 - Database migrations -> backend-chief
-- Traefik routing -> platform-chief
+- Ingress routing (Cloudflare Tunnels) -> platform-chief
 - Secret rotation -> security-chief
