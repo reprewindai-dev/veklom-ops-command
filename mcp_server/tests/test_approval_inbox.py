@@ -148,3 +148,14 @@ def test_preflight_is_answered_for_the_approver_origin(http):
 def test_rest_of_the_server_still_requires_bearer(http):
     client, _, _ = http
     assert client.post("/mcp", json={}).status_code == 401
+
+
+def test_server_address_shows_a_friendly_page_not_401(http):
+    client, _, _ = http
+    page = client.get("/")
+    assert page.status_code == 200 and "Veklom Gate server is running" in page.text
+    assert "https://approve.example.com/" in page.text
+    assert client.get("/favicon.ico").status_code == 204
+    # Everything an agent can use stays locked.
+    assert client.post("/", json={}).status_code == 401
+    assert client.get("/mcp").status_code == 401

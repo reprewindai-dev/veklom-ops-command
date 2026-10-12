@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import hmac
 import json
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import JSONResponse, PlainTextResponse
+from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from .approval import ApprovalError
@@ -17,6 +18,7 @@ from .tool_annotations import apply_tool_annotations
 
 MAX_REQUEST_BYTES = 1_048_576
 DELIVER_PATH = "/approvals/deliver"
+PUBLIC_PATHS = {"/health", "/", "/favicon.ico"}
 
 
 def _host_without_port(host: str) -> str:
@@ -40,7 +42,7 @@ class InboundSecurityMiddleware:
             return
 
         path = str(scope.get("path", ""))
-        if path == "/health":
+        if path in PUBLIC_PATHS and scope.get("method") in {"GET", "HEAD"}:
             await self.app(scope, receive, send)
             return
 
@@ -130,6 +132,32 @@ async def deliver_approval(request: Request) -> JSONResponse:
         return JSONResponse({"delivered": False, "error": str(exc)}, status_code=400, headers=_cors_headers())
     audit.append(tool="deliver_approval", action="approval.deliver", risk_tier="high", outcome="success", request={"request_id": result["request_id"]}, approved_by=result["approved_by"])
     return JSONResponse(result, headers=_cors_headers())
+
+
+@mcp.custom_route("/", methods=["GET"])
+async def landing(_: Request) -> HTMLResponse:
+    """A person who opens the server address sees what it is, not a bare 401. Reveals no operational state."""
+    approver = html.escape(SETTINGS.approver_url or "")
+    link = (
+        f"<p>To approve what your agent asks for, open your <a href=\"{approver}\">approval page</a>.</p>"
+        if approver
+        else "<p>Approvals are signed with the <code>veklom-mcp-approve</code> tool.</p>"
+    )
+    return HTMLResponse(
+        "<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\">"
+        "<title>Veklom Gate server</title>"
+        "<body style=\"font:16px/1.5 system-ui,sans-serif;max-width:560px;margin:12vh auto;padding:0 20px\">"
+        "<h1 style=\"font-size:22px\">Veklom Gate server is running</h1>"
+        "<p>This address is for AI agents. They connect at <code>/mcp</code> with their access token; "
+        "there is nothing to do here in a browser.</p>"
+        f"{link}</body>",
+        headers={"Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'"},
+    )
+
+
+@mcp.custom_route("/favicon.ico", methods=["GET"])
+async def favicon(_: Request) -> Response:
+    return Response(status_code=204)
 
 
 @mcp.custom_route("/health", methods=["GET"])
