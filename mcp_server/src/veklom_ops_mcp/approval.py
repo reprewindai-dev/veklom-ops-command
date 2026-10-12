@@ -108,14 +108,27 @@ class ApprovalAuthority:
     def __init__(self, settings: Settings = SETTINGS):
         self.settings = settings
 
-    def _public_key(self) -> Ed25519PublicKey:
-        raw_b64 = self.settings.approval_public_key_b64
-        if not raw_b64:
+    def _public_keys(self) -> list[Ed25519PublicKey]:
+        """Every trusted approver key. Comma-separated, so several devices or people can each approve."""
+        configured = [item.strip() for item in (self.settings.approval_public_key_b64 or "").split(",") if item.strip()]
+        if not configured:
             raise ApprovalError("Approval verifier public key is not configured.")
-        raw = _b64decode(raw_b64)
-        if len(raw) != 32:
-            raise ApprovalError("Ed25519 approval public key must be exactly 32 raw bytes.")
-        return Ed25519PublicKey.from_public_bytes(raw)
+        keys = []
+        for raw_b64 in configured:
+            raw = _b64decode(raw_b64)
+            if len(raw) != 32:
+                raise ApprovalError("Ed25519 approval public key must be exactly 32 raw bytes.")
+            keys.append(Ed25519PublicKey.from_public_bytes(raw))
+        return keys
+
+    def _verify_signature(self, signature: bytes, payload: bytes) -> None:
+        for key in self._public_keys():
+            try:
+                key.verify(signature, payload)
+                return
+            except InvalidSignature:
+                continue
+        raise InvalidSignature()
 
     def verify_and_consume(self, token: str, *, tool: str, action: str, params: dict[str, Any]) -> ApprovalClaims:
         claims = self.verify_signed(token)
@@ -144,7 +157,7 @@ class ApprovalAuthority:
         if version != TOKEN_VERSION:
             raise ApprovalError("Unsupported approval token version; mint a v2 (audience-bound) approval.")
         try:
-            self._public_key().verify(supplied_sig, payload)
+            self._verify_signature(supplied_sig, payload)
         except InvalidSignature as exc:
             raise ApprovalError("Approval signature is invalid.") from exc
         try:

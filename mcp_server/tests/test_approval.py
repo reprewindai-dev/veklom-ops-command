@@ -157,3 +157,20 @@ def test_approver_refuses_unpinned_audience(tmp_path):
     request = build_approval_request(audience="someone-elses-prod", tool="stop_application", action="service.stop", params=PARAMS, ttl_seconds=600)
     with pytest.raises(ApprovalError, match="not in VEKLOM_MCP_APPROVER_AUDIENCES"):
         resolve_request(_cli_args(request_json=json.dumps(request)), [AUD])
+
+
+def test_several_trusted_devices_can_each_approve_but_others_cannot(tmp_path):
+    phone_pub, phone_priv = generate_keypair()
+    laptop_pub, laptop_priv = generate_keypair()
+    _, stranger_priv = generate_keypair()
+    authority = ApprovalAuthority(replace(
+        SETTINGS,
+        approval_public_key_b64=f"{phone_pub}, {laptop_pub}",
+        approval_audience=AUD,
+        approval_store=tmp_path / "approvals.jsonl",
+        approval_ttl_seconds=600,
+    ))
+    assert consume(authority, issue(ApprovalSigner(phone_priv))).approved_by == "founder:test"
+    assert consume(authority, issue(ApprovalSigner(laptop_priv))).approved_by == "founder:test"
+    with pytest.raises(ApprovalError, match="signature"):
+        consume(authority, issue(ApprovalSigner(stranger_priv)))

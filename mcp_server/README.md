@@ -63,7 +63,7 @@ Gate responses are allowlist-projected twice (in the gate and again in the MCP).
 The MCP is cryptographically unable to approve its own high-risk request.
 
 - the MCP server stores only `VEKLOM_MCP_APPROVAL_PUBLIC_KEY_B64`;
-- the matching private key stays with a human or a separately trusted approval environment;
+- the matching private key stays with a human or a separately trusted approval environment; list several public keys, comma-separated, to let several devices or people approve;
 - each deployment has an approval **audience** (`VEKLOM_MCP_APPROVAL_AUDIENCE`, e.g. `acme-prod`); write mode refuses to start without one.
 
 Generate a pair in the trusted approval environment:
