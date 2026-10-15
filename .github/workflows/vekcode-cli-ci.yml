@@ -4,12 +4,12 @@ on:
   push:
     branches: [main, vekcode/cli-integration]
     paths:
-      - runner/vekcode/**
+      - runner/**
       - .github/workflows/vekcode-cli-ci.yml
   pull_request:
     branches: [main]
     paths:
-      - runner/vekcode/**
+      - runner/**
       - .github/workflows/vekcode-cli-ci.yml
   workflow_dispatch:
 
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   repository-context:
-    name: Context tests (${{ matrix.os }}, Node ${{ matrix.node }})
+    name: CLI tests (${{ matrix.os }}, Node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -39,5 +39,5 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - name: Run committed repository-context tests
-        run: node --test --test-reporter=tap runner/vekcode/repository-context.test.mjs
+      - name: Run committed context and worker-boundary tests
+        run: node --test --test-reporter=tap runner/vekcode/repository-context.test.mjs runner/vekcode/worker-boundary.test.mjs
