@@ -2,11 +2,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 import { resolveCapability } from './capi-client.mjs';
 
-const execAsync = promisify(exec);
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const team = process.env.VEKLOM_DEPARTMENT;
 const missionPath = process.env.VEKLOM_MISSION_PATH;
@@ -42,7 +39,7 @@ function assertReportShape(report) {
   
   // Robust Schema Fallbacks for small models
   report.handoff_to = report.handoff_to || "command-desk";
-  report.status = report.status || "aligned";
+  report.status = report.status || "needs_clarification";
   report.mission_id = report.mission_id || "mission-default";
   report.department = report.department || team;
   report.captain = report.captain || "Poltergeist";
@@ -54,7 +51,7 @@ function assertReportShape(report) {
   report.definition_of_done = Array.isArray(report.definition_of_done) ? report.definition_of_done : [];
   
   if (!['aligned', 'blocked', 'needs_clarification'].includes(report.status)) {
-    report.status = 'aligned';
+    report.status = 'needs_clarification';
   }
   return report;
 }
@@ -63,31 +60,12 @@ function fence(value) {
   return ['```text', value.trim(), '```'].join('\n');
 }
 
-async function callLLM(messages, useTools = false) {
+async function callLLM(messages) {
   const body = {
     model,
     temperature: 0.1,
     messages
   };
-
-  if (useTools) {
-    body.tools = [
-      {
-        type: "function",
-        function: {
-          name: "run_bash",
-          description: "Run a shell/bash command in the project root. Use this to read files, write code, run tests, and use git.",
-          parameters: {
-            type: "object",
-            properties: {
-              command: { type: "string", description: "The bash command to run" }
-            },
-            required: ["command"]
-          }
-        }
-      }
-    ];
-  }
 
   let attempt = 0;
   while (attempt < 3) {
@@ -162,50 +140,17 @@ Return JSON only with mission_id, department, captain, mission_understanding, ow
   report.reported_at = new Date().toISOString();
 
   await writeFile(outputPath, `${JSON.stringify(report)}\n`);
-  console.log(JSON.stringify({ team, phase: 'aligned', status: report.status, worker_id: report.worker_id }));
+  console.log(JSON.stringify({ team, phase: 'report_written', status: report.status, worker_id: report.worker_id }));
 
   if (report.status !== 'aligned') {
     return; // Stop if not aligned
   }
 
-  // Skip Phase 2 execution loop for alignment-only missions (e.g. verification, audit)
-  // Set VEKLOM_ALIGNMENT_ONLY=true to collect alignment reports without running bash execution.
-  if (process.env.VEKLOM_ALIGNMENT_ONLY === 'true') {
-    console.log(JSON.stringify({ team, phase: 'alignment_only', msg: 'Skipping Phase 2 per VEKLOM_ALIGNMENT_ONLY=true' }));
-    return;
+  // Report generation is not permission to execute model-produced commands.
+  if (process.env.VEKLOM_ALIGNMENT_ONLY === 'false') {
+    throw new Error('GOVERNED_EXECUTION_NOT_CONNECTED: raw model shell execution is disabled; use the canonical reviewed capability executor.');
   }
-
-  // Phase 2: Autonomous Execution Loop
-  console.log(JSON.stringify({ team, phase: 'execution', msg: 'Beginning autonomous execution loop' }));
-  
-  let execMessages = [
-    { role: 'system', content: `You are the ${team} agent. You are a fully autonomous developer capable of running bash commands to complete your mission. You are running in the directory: ${ROOT}` },
-    { role: 'user', content: `Mission Instructions: ${JSON.stringify(mission, null, 2)}\n\nUse the 'run_bash' tool to explore the repository, modify code, run tests, and use git to commit and push PR branches. Once you have completed the mission, provide a final summary without calling any tools to end execution.` }
-  ];
-
-  for (let i = 0; i < 20; i++) {
-    const res = await callLLM(execMessages, true);
-    const msg = res.choices[0].message;
-    execMessages.push(msg);
-
-    if (msg.tool_calls && msg.tool_calls.length > 0) {
-      for (const tc of msg.tool_calls) {
-        if (tc.function.name === 'run_bash') {
-          let command = '';
-          try {
-            command = JSON.parse(tc.function.arguments).command;
-            const { stdout, stderr } = await execAsync(command, { cwd: ROOT });
-            execMessages.push({ role: 'tool', tool_call_id: tc.id, name: 'run_bash', content: (stdout + '\n' + stderr).slice(-10000) || 'Success (no output)' });
-          } catch (err) {
-            execMessages.push({ role: 'tool', tool_call_id: tc.id, name: 'run_bash', content: `Command failed: ${err.message}` });
-          }
-        }
-      }
-    } else {
-      console.log(JSON.stringify({ team, phase: 'finished', msg: 'Execution completed', summary: msg.content }));
-      break;
-    }
-  }
+  console.log(JSON.stringify({ team, phase: 'report_only', authority: 'none', execution: 'not_started' }));
 }
 
 main().catch((error) => {
