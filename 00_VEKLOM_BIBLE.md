@@ -9,6 +9,30 @@
 
 ---
 
+## 0. 2026-09-22 Capability OS Continuum Supersession
+
+For architecture/proof integration, the accepted Veklom proof-and-seal continuum is now the canonical anchor. Read:
+
+- [`CURRENT_ARCHITECTURE_LOCK.md`](./CURRENT_ARCHITECTURE_LOCK.md)
+- [`continuum/CONTINUUM_AGENT_CONTRACT.md`](./continuum/CONTINUUM_AGENT_CONTRACT.md)
+- [`continuum/VEKLOM_CONTINUUM_MANIFEST.json`](./continuum/VEKLOM_CONTINUUM_MANIFEST.json)
+
+**RC1 is not accepted and is not the anchor.** Release candidates package/integrate the continuum; they do not redefine it.
+
+The manifest records accepted proof programs separately from their proof classification and tested boundary. That distinction is mandatory: do not downplay an accepted scoped seal because a current release lacks wiring, and do not inflate a bounded test into a universal claim.
+
+Cross-repository hard rules:
+
+- CAPPO is the sole consequence authority.
+- GnomLedger / PGL owns canonical evidence/provenance/lineage closure.
+- V-Chip authority-lineage mechanisms are integrated through CAPPO, never beside it as a second gate.
+- The real VirtualDB source must be canonically exported/hash-bound; the four-file `virtualdb-stub` is not an implementation.
+- Existing sealed artifacts must be migrated/hash-linked rather than regenerated from narrative text.
+
+> **Topology note:** older dated Coolify/Hetzner topology sections below are historical/last-known where they conflict with `CURRENT_ARCHITECTURE_LOCK.md`, which currently locks Core V1 to owned/local hardware + Docker + Cloudflare Tunnels.
+
+---
+
 ## 1. Truth Hierarchy
 
 When sources disagree, use this order:

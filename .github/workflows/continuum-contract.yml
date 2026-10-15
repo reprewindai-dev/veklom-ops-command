@@ -1,0 +1,28 @@
+name: Continuum Contract
+
+on:
+  pull_request:
+    paths:
+      - "continuum/**"
+      - "AGENTS.md"
+      - "CURRENT_ARCHITECTURE_LOCK.md"
+      - "00_VEKLOM_BIBLE.md"
+      - "scripts/validate_continuum_manifest.py"
+      - ".github/workflows/continuum-contract.yml"
+  push:
+    paths:
+      - "continuum/**"
+      - "AGENTS.md"
+      - "CURRENT_ARCHITECTURE_LOCK.md"
+      - "00_VEKLOM_BIBLE.md"
+      - "scripts/validate_continuum_manifest.py"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/validate_continuum_manifest.py

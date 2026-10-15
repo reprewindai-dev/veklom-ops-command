@@ -1,0 +1,354 @@
+{
+  "schema_version": "1.0",
+  "continuum_id": "VEKLOM-CAPOS-CONTINUUM-2026-09-22",
+  "canonical_anchor": {
+    "name": "Accepted Veklom proof-and-seal continuum",
+    "accepted": true,
+    "rule": "The Capability OS is the integrated expression of the accepted proven/sealed continuum. A release candidate is downstream packaging and may not redefine, shrink, or downgrade the anchor."
+  },
+  "release_candidates": {
+    "RC1": {
+      "accepted": false,
+      "role": "downstream integration/release candidate",
+      "rule": "RC1 is not the proof anchor and may not be used to invalidate already accepted scoped seals."
+    }
+  },
+  "truth_policy": {
+    "order": [
+      "independently verified consequence/state at the real sink",
+      "live machine/kernel/OS telemetry",
+      "cryptographically sealed raw runtime artifact",
+      "application runtime logs",
+      "current implementation/source",
+      "tests and harness output",
+      "architecture/documentation narrative"
+    ],
+    "no_synthetic_promotion": true
+  },
+  "ownership": {
+    "consequence_authority": {
+      "canonical": "CAPPO",
+      "sole": true,
+      "rule": "No V-Chip gate, lab gate, proxy, payment rail, PGL service, or new subsystem may become a second ALLOW/DENY consequence authority."
+    },
+    "evidence": "GnomLedger / PGL",
+    "identity_and_secret_domains": [
+      "LockerPhycer",
+      "Veklom ID"
+    ],
+    "governed_connection_and_discovery": "cAPI / Covenant",
+    "capability_lifecycle": [
+      "VCCP",
+      "UCH",
+      "UCR"
+    ],
+    "blueprint_contract_compilation": "ABIDE",
+    "observation": "VNP",
+    "execution_substrates": [
+      "BYOS",
+      "Hyper-V",
+      "OCI",
+      "VFRAC where actually integrated"
+    ],
+    "vchip_role": "Authority-lineage and stale-incarnation falsification lineage that must be integrated through CAPPO rather than wired beside it.",
+    "virtualdb_role": "Governed state-continuity/materialization lineage. The real local VirtualDB source must be exported canonically; virtualdb-stub is not an implementation."
+  },
+  "hard_invariants": [
+    {
+      "id": "I-COMPUTE-AUTHORITY-SEPARATION",
+      "expression": "computational_possession != current_consequence_authority",
+      "implementation_rule": "Copied code, runtime, state, or historical credentials must not by themselves grant the right to cause the next governed consequence."
+    },
+    {
+      "id": "I-ACCEPTED-EFFECT",
+      "expression": "AcceptedEffect => Identity ∧ Policy ∧ OperationSpecificAuthority ∧ CurrentTargetState ∧ ExecutionBoundary ∧ DurableEvidence",
+      "implementation_rule": "These are hard gates, not a weighted score."
+    },
+    {
+      "id": "I-EVIDENCE-NOT-PERMISSION",
+      "expression": "Evidence != Permission",
+      "implementation_rule": "PGL/GnomLedger records and verifies; it does not silently become consequence authority."
+    },
+    {
+      "id": "I-MONOTONIC-AUTHORITY",
+      "expression": "stale_incarnation_or_epoch => no_governed_consequence",
+      "implementation_rule": "When authority advances, a computationally complete stale incarnation must be denied at the consequence boundary under the tested binding model."
+    },
+    {
+      "id": "I-RC1-NOT-ANCHOR",
+      "expression": "RC1 != accepted_continuum",
+      "implementation_rule": "Integration candidates must conform to the continuum; they do not redefine it."
+    },
+    {
+      "id": "I-NO-DUPLICATE-CANONICAL-COMPONENTS",
+      "expression": "existing_component => extend_or_wire_not_recreate",
+      "implementation_rule": "Cold coding agents must resolve architecture nouns to existing canonical repositories before writing new subsystems."
+    }
+  ],
+  "proof_programs": [
+    {
+      "program_id": "P2-HOST",
+      "acceptance": "ACCEPTED_SEALED",
+      "proof_classification": "PROVEN_UNDER_TESTED_CONDITIONS",
+      "claim_scope": "Independent Hyper-V guest/runtime manifestations on one physical Windows host; controlled vNIC cut; lease/epoch handoff; stale-host and wrong-runtime denial; receipt/PGL continuity.",
+      "establishes": [
+        "execution manifestation can move while governed authority advances",
+        "boot/runtime possession is not sufficient for current consequence authority",
+        "stale authority is fenced in the tested Hyper-V conditions"
+      ],
+      "evidence_refs": [
+        "reprewindai-dev/veklom-FRONTEND:public/proofs/bound_evidence_5982badd-7c48-4ea4-bbd8-79ccce295a2c.json",
+        "reprewindai-dev/veklom-FRONTEND:public/proofs/bound_evidence_5737342f-1504-44aa-93f4-3fcd38383c5a.json",
+        "reprewindai-dev/veklom-FRONTEND:lib/proof/sealed-bundles.ts"
+      ],
+      "boundaries": [
+        "does not by itself prove two physical motherboards or TPM/hardware-root equivalence",
+        "temporal conformance defects identified in earlier Windows/Alpine runs must stay scoped to the affected runs"
+      ]
+    },
+    {
+      "program_id": "VDB-MOBILITY-P1",
+      "acceptance": "ACCEPTED_SEALED",
+      "proof_classification": "PROVEN_UNDER_TESTED_CONDITIONS",
+      "claim_scope": "Governed state survived source-runtime termination, moved in a self-contained package, rejected tamper/source-authority/stale-epoch cases, and resumed under fresh destination authority with state/provenance continuity.",
+      "establishes": [
+        "state continuity can be separated from a particular runtime manifestation",
+        "fresh destination authority can rebind a moved state package",
+        "stale/source authority does not automatically follow copied state"
+      ],
+      "evidence_refs": [
+        "reprewindai-dev/veklom-FRONTEND:public/proofs/mobility_p1_evidence_19579c43.json",
+        "reprewindai-dev/veklom-FRONTEND:lib/proof/sealed-bundles.ts"
+      ],
+      "boundaries": [
+        "does not establish arbitrary-cloud or arbitrary-Kubernetes portability",
+        "does not establish universal exactly-once behavior for every target"
+      ]
+    },
+    {
+      "program_id": "VDB-P2V",
+      "acceptance": "ACCEPTED_SEALED",
+      "proof_classification": "PROVEN_UNDER_TESTED_CONDITIONS",
+      "claim_scope": "Single-host independent-process state/evidence continuity with epoch 1→2 handoff, FENCE_DENY/STALE_DENY behavior, runtime-bound denial, and receipt/PGL chaining.",
+      "establishes": [
+        "state/evidence continuity under controlled handoff",
+        "stale writer rejection and monotonic authority handoff"
+      ],
+      "evidence_refs": [
+        "historical run: bc296269-7daa-4ee0-b87b-71f2478b5088",
+        "historical bundle: p2v_evidence_bc296269.json",
+        "historical verifier: verify_chain_p2v.py => VALID"
+      ],
+      "boundaries": [
+        "canonical repository linkage for the historical bundle still needs hash migration",
+        "single-host process separation is not a two-motherboard proof"
+      ]
+    },
+    {
+      "program_id": "POSTGRES-STALE-WRITER-P1",
+      "acceptance": "ACCEPTED",
+      "proof_classification": "ENFORCED",
+      "claim_scope": "Real PostgreSQL 16-alpine consequence sink; paused Epoch-N writer raced against promotion to Epoch N+1; stale COMMIT rejected by SERIALIZABLE; protected_data independently read back empty.",
+      "establishes": [
+        "a stale writer can be fenced at an independent database consequence boundary",
+        "absence of the forbidden mutation was independently verified"
+      ],
+      "evidence_refs": [
+        "historical driver: pg_assault_driver.py",
+        "isolated PostgreSQL sink on host port 5433 during test"
+      ],
+      "boundaries": [
+        "this proves the tested PostgreSQL race, not universal database semantics",
+        "exact artifact hashes must be migrated into the canonical evidence registry"
+      ]
+    },
+    {
+      "program_id": "CAPPO-M1P2-GOVERNED-CONSEQUENCE",
+      "acceptance": "ACCEPTED_SEALED",
+      "proof_classification": "ENFORCED",
+      "claim_scope": "CAPPO fail-closed governed consequence path including bounded mount authority, server-side token custody, allow/deny, replay handling, termination and post-termination denial, and durable evidence linkage.",
+      "establishes": [
+        "CAPPO is the sole canonical consequence authority",
+        "authority is bounded and fail-closed on tested paths",
+        "pre-effect denial can prevent target invocation on tested paths"
+      ],
+      "evidence_refs": [
+        "reprewindai-dev/cappo-backend",
+        "reprewindai-dev/gnomledger",
+        "M1/P2 sealed evidence estate"
+      ],
+      "boundaries": [
+        "do not treat every historical harness as a production deployment proof",
+        "public contracts must carry all required incarnation/epoch evidence into existing CAPPO enforcement"
+      ]
+    },
+    {
+      "program_id": "PRODUCT-0",
+      "acceptance": "ACCEPTED",
+      "proof_classification": "REPRODUCED",
+      "claim_scope": "Product-0 contract/adversarial invariants and contract conformance battery, including explicit authority, replay, custody, outcome and reconciliation semantics.",
+      "establishes": [
+        "canonical fail-closed consequence-dispatch contract behavior under the tested battery"
+      ],
+      "evidence_refs": [
+        "reprewindai-dev/cappo-backend:contracts/cappo-consequence-dispatch.openapi.yaml",
+        "reprewindai-dev/cappo-backend:tests/test_common_contract_proof.py",
+        "reported contract conformance: 11/11"
+      ],
+      "boundaries": [
+        "contract conformance is not by itself deployment proof"
+      ]
+    },
+    {
+      "program_id": "WID-1-6",
+      "acceptance": "ACCEPTED",
+      "proof_classification": "REPRODUCED",
+      "claim_scope": "Identity/evidence schema and execution-identity binding work across WID-1 through WID-6.",
+      "establishes": [
+        "identity-side evidence contracts used by governed execution"
+      ],
+      "evidence_refs": [
+        "reprewindai-dev/cappo-backend:schemas/identity/",
+        "reprewindai-dev/cappo-backend:tests/adversarial/test_wid_1_identity_schemas.py"
+      ],
+      "boundaries": [
+        "schema correctness does not imply hardware identity attestation unless independently demonstrated"
+      ]
+    },
+    {
+      "program_id": "SUBSTRATE-CONFORMANCE-HARNESS-V1",
+      "acceptance": "ACCEPTED_AS_HARNESS",
+      "proof_classification": "REPRODUCED",
+      "claim_scope": "15-step lifecycle and hostile battery exercised in the conformance harness; historical reported suite 478/478 with mock-linux VALID and hostile denials.",
+      "establishes": [
+        "reproducible invariant-test machinery and hostile test coverage"
+      ],
+      "evidence_refs": [
+        "historical command: pytest tests/ -v",
+        "historical CLI: python -m harness --target=mock-linux --mode=demo --suite=all --output=both"
+      ],
+      "boundaries": [
+        "mock/demo success is harness proof, not physical substrate proof",
+        "physical claims require the corresponding live consequence boundary"
+      ]
+    },
+    {
+      "program_id": "N8N-LOCAL-CONSEQUENCE-CHAIN",
+      "acceptance": "ACCEPTED_LOCAL",
+      "proof_classification": "PROVEN_UNDER_TESTED_CONDITIONS",
+      "claim_scope": "Local CAPPO→n8n→governed target→PostgreSQL chain with cancel/safe retry behavior, restart recovery and secret redaction; later consequence-sink work included local GnomLedger/PGL evidence.",
+      "establishes": [
+        "multi-service governed consequence integration on the tested local chain"
+      ],
+      "evidence_refs": [
+        "historical N8N-13 / N8N-16 evidence estate"
+      ],
+      "boundaries": [
+        "local chain proof is not the same as a public production deployment"
+      ]
+    },
+    {
+      "program_id": "BANDWIDTH-P1",
+      "acceptance": "ACCEPTED_BOUNDED",
+      "proof_classification": "PROVEN_UNDER_TESTED_CONDITIONS",
+      "claim_scope": "Bounded local harness for destination-scoped, byte-budgeted, replay-resistant TCP movement with mid-transfer revocation, single-use semantics and receiver-side evidence.",
+      "establishes": [
+        "NetworkCapability can govern a bounded transfer under the tested harness"
+      ],
+      "evidence_refs": [
+        "historical EVIDENCE_BUNDLE_M5.md",
+        "historical VEKLOM_CLAIM_REGISTRY.md"
+      ],
+      "boundaries": [
+        "does not prove virtualized physical bandwidth or arbitrary network fabrics",
+        "physical cross-host transport must be graded separately"
+      ]
+    },
+    {
+      "program_id": "COMPOSITE-0",
+      "acceptance": "ACCEPTED_BOUNDED",
+      "proof_classification": "PROVEN_UNDER_TESTED_CONDITIONS",
+      "claim_scope": "Verified destination state plus missing authorized ranges reconstruct the requested root while distinguishing logical bytes from physical bytes.",
+      "establishes": [
+        "governed reconstruction can reduce moved bytes when authoritative state is already present"
+      ],
+      "evidence_refs": [
+        "historical EVIDENCE_BUNDLE_M5.md",
+        "historical VEKLOM_CLAIM_REGISTRY.md"
+      ],
+      "boundaries": [
+        "does not imply zero-cost or infinite-bandwidth transport"
+      ]
+    },
+    {
+      "program_id": "VCHIP-AUTHORITY-SEPARATION",
+      "acceptance": "ACCEPTED_SCOPED",
+      "proof_classification": "NOT_FALSIFIED",
+      "claim_scope": "Earth/Mars and stale-incarnation experiments support separation between computational possession and current consequence authority under the tested V-Chip lineage.",
+      "establishes": [
+        "same/copy-equivalent computational state need not imply the right to produce the next governed consequence",
+        "epoch/holder/key/replay bindings are useful falsification dimensions"
+      ],
+      "evidence_refs": [
+        "reprewindai-dev/vchip-lab@eb95c9d9a068ae56acc9c1746af8a059e50fe4be",
+        "archive sha256: b2319f17dcf6a6436241b5daa7cf5ca3ffd0b206f4a3e3ef4b6dc3bcad28dce3",
+        "reprewindai-dev/vchip-lab:vchip/stale_authority_resurrection_proof.json",
+        "reprewindai-dev/vchip-lab:vchip/HOSTILE_BIDIRECTIONAL_RESURRECTION_SEAL.md"
+      ],
+      "boundaries": [
+        "vchip-lab intake contains E2/self-reported artifacts and is not by itself the sole evidence source for accepted cross-host claims",
+        "vchip-lab must not be wired as a second authority beside CAPPO",
+        "the four-file virtualdb-stub is not the real VirtualDB implementation"
+      ]
+    },
+    {
+      "program_id": "VFRAC-LINEAGE-FEDERATION",
+      "acceptance": "ACCEPTED_SCOPED",
+      "proof_classification": "MIXED_OBSERVED_CORRELATED_NOT_FALSIFIED",
+      "claim_scope": "VFRAC process/federation/depth/endurance experiments establish scoped execution-lineage and hierarchy behavior; OS-correlated claims are accepted where independent telemetry exists, while large-scale proof JSON alone remains self-reported evidence.",
+      "establishes": [
+        "execution manifestation can be treated separately from current authority",
+        "bounded hierarchical/federated lineage can be exercised across tested depths",
+        "endurance degradation must be separated from observer/launcher failure"
+      ],
+      "evidence_refs": [
+        "reprewindai-dev/vchip-lab:vchip/vfrac_50node_mesh_strike.py",
+        "reprewindai-dev/vchip-lab:vchip/run_vfrac_deep_lineage_16.py",
+        "reprewindai-dev/vchip-lab:vchip/vfrac_100k_endurance_strike.py",
+        "reprewindai-dev/vchip-lab:vchip/vfrac_cross_host_result.json"
+      ],
+      "boundaries": [
+        "do not extrapolate harness scale into universal containment claims",
+        "independent OS/kernel correlation is required for physical execution claims",
+        "million-scale self-reported JSON is not equivalent to million independently observed physical workers"
+      ]
+    },
+    {
+      "program_id": "CONTINUUM-SYNTHESIS",
+      "acceptance": "ACCEPTED_ARCHITECTURAL_ANCHOR",
+      "proof_classification": "COMPOSITE_OF_SCOPED_PROOFS",
+      "claim_scope": "Capability OS composes identity continuity, capability scope, current consequence authority, execution manifestation, state continuity and evidence continuity without collapsing them into one object.",
+      "establishes": [
+        "the system must integrate the accepted proof estate rather than selecting a smaller release-candidate subset",
+        "proof scope is preserved per program while architecture composes the surviving invariants"
+      ],
+      "evidence_refs": [
+        "this manifest",
+        "00_VEKLOM_BIBLE.md",
+        "CURRENT_ARCHITECTURE_LOCK.md"
+      ],
+      "boundaries": [
+        "composition does not upgrade any constituent proof beyond its stated tested conditions"
+      ]
+    }
+  ],
+  "integration_requirements": [
+    "Every coding task must identify which continuum invariant(s) and proof program(s) it preserves, wires, or extends.",
+    "If implementation lacks a public/runtime path for an already established invariant, the task is an integration gap, not permission to invent a replacement subsystem.",
+    "CAPPO public consequence contracts must carry the incarnation/epoch fields required by CAPPO's existing enforcement when those bindings are in scope.",
+    "Capability OS surfaces must render proof state from real evidence/registries and never synthesize production proof.",
+    "Existing accepted seals must be hash-linked into the canonical evidence registry rather than recreated from prose.",
+    "The real VirtualDB source must be exported from the canonical local tree before any agent treats VirtualDB as source-integrated.",
+    "V-Chip and VFRAC research code may supply mechanisms/tests, but authority decisions integrate through CAPPO and evidence closes through GnomLedger/PGL."
+  ]
+}

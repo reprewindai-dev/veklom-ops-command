@@ -1,5 +1,11 @@
 # AGENTS.md — READ FIRST
 
+## Mandatory Capability OS continuum bootstrap
+
+Before any Veklom implementation, review, continuation, or architecture work, read [`CURRENT_ARCHITECTURE_LOCK.md`](./CURRENT_ARCHITECTURE_LOCK.md), [`continuum/CONTINUUM_AGENT_CONTRACT.md`](./continuum/CONTINUUM_AGENT_CONTRACT.md), and [`continuum/VEKLOM_CONTINUUM_MANIFEST.json`](./continuum/VEKLOM_CONTINUUM_MANIFEST.json).
+
+The accepted proof-and-seal continuum is the Capability OS architecture anchor. **RC1 is not accepted and is not the anchor.** Do not shrink the architecture to match a release candidate. Preserve each accepted proof at its stated scope, wire missing runtime edges into the existing canonical components, and keep CAPPO as the sole consequence authority.
+
 Before any work in Veklom Ops Command, read [`CURRENT_ARCHITECTURE_LOCK.md`](./CURRENT_ARCHITECTURE_LOCK.md) and [`00_VEKLOM_BIBLE.md`](./00_VEKLOM_BIBLE.md).
 
 Then read [`OPS_DOCTRINE.md`](./OPS_DOCTRINE.md), [`ENGINEERING_DOCTRINE.md`](./ENGINEERING_DOCTRINE.md), and [`AGENT_MANIFEST.md`](./AGENT_MANIFEST.md) only to the extent they do not conflict with the current architecture lock.
