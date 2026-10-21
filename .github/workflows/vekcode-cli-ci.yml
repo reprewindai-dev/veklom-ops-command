@@ -1,0 +1,43 @@
+name: Vekcode CLI tests
+
+on:
+  push:
+    branches: [main, vekcode/cli-integration]
+    paths:
+      - runner/**
+      - .github/workflows/vekcode-cli-ci.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - runner/**
+      - .github/workflows/vekcode-cli-ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vekcode-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-context:
+    name: CLI tests (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['20', '22']
+    steps:
+      - name: Check out source without retained credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Run committed context and worker-boundary tests
+        run: node --test --test-reporter=tap runner/vekcode/repository-context.test.mjs runner/vekcode/worker-boundary.test.mjs
