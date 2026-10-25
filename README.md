@@ -2,79 +2,41 @@
 > **VEKLOM BIBLE — READ FIRST:** [`00_VEKLOM_BIBLE.md`](./00_VEKLOM_BIBLE.md)
 > This is the canonical cross-repo architecture/runtime-truth contract. It supersedes older topology, Golden Bible, deployment-authority, and alignment docs wherever they conflict.
 
-# Veklom Ops Command
+# Veklom Ops Command (React SPA)
 
-Veklom Ops Command is the standalone cross-repository operating control plane for Veklom's Poltergeist-powered DevOps teams. It gives every IDE and approved machine interface the same source-backed teams, runbooks, verification scripts, reports, release gates, and governed operational capabilities.
+Veklom Ops Command is the standalone cross-repository operating control plane for Veklom's Poltergeist-powered DevOps teams and Capability OS continuum. This application is written in **React 19 + TypeScript + Vite + Tailwind CSS**, running on port 3000.
 
-## Operating truth
+## Overview & Ported Features
 
-- GitHub `main` is source truth.
-- Runtime is owned/local hardware + Docker + Cloudflare Tunnels, per [`CURRENT_ARCHITECTURE_LOCK.md`](./CURRENT_ARCHITECTURE_LOCK.md). Coolify, Hetzner and Vercel are retired; actual deployment state is whatever fresh observation of those hosts shows, otherwise **UNVERIFIED**.
-- Cloudflare is DNS/WAF/cache, Pages static hosting and Tunnels.
-- Poltergeist is the local watcher, build queue, status, and evidence trigger.
-- Jean, Windsurf, Cursor, VS Code, Codex, Claude Code, GitHub MCP, and Veklom Ops MCP are interchangeable interfaces only to the extent their granted capabilities permit.
-- Local success is not production success.
-- A change is complete only after repo-backed change → pushed commit → deployment on the owned Docker hosts → live HTTPS proof.
-- Hot patches are emergency-only and must be reconciled back into GitHub.
-- No secrets belong in Git, chat, scripts, configs, or reports.
+- **Private Founder Control Cockpit**: Real-time Source Truth vs Production Truth matrix, active toolbox drill spotlight, Core Backend 4 service health, capability registry, security exposure cards, and live operator feed.
+- **Interactive Command Desk Dispatcher**: Queue operational instructions with risk classification (`low`, `medium`, `high`, `critical`) and approval requirements, backed by persistent local storage.
+- **Core Backend 4 Cockpit**: Live monitoring for Tier-0 backends (`veklom-byos-backend`, `cappo-backend`, `gnomledger`, `lockerphycer`) with canonical port enforcement (8088, 8002, 8001, 8092).
+- **Capability Registry**: Audit and view governed tools (GitHub MCP, Poltergeist, Jean, Web MCP, Local Shell, Aiden Runner, Veklom Gate Approver).
+- **The 9 Autonomous Departments**: Deep-dive into Command Desk, Poltergeist Platform, Production Truth, Release Control, Build & DevEx, Security & Secrets, Runtime Governance, Evidence & Ledger, and Edge Fleet & VNP Signals with raw JSONL report inspection.
+- **Toolbox Meetings & Missions**: Explore missions (`mission-backend-purge`, `mission-001`, `mission-vanguard`, `mission-002`, `mission-capi-hardening`) with full objectives, forbidden boundaries, and department alignment matrices.
+- **Veklom Gate Approver**: Authentic cryptographic device gate using WebCrypto Ed25519 non-extractable keys in IndexedDB, parameter SHA-256 fingerprint verification, 1.1s hold-to-approve single-use tokens, and device audit trail.
+- **Capability OS Continuum & Architecture Lock**: Interactive explorer for `VEKLOM_CONTINUUM_MANIFEST.json`, hard invariants (`I-COMPUTE-AUTHORITY-SEPARATION`, `I-ACCEPTED-EFFECT`, `I-EVIDENCE-NOT-PERMISSION`, `I-MONOTONIC-AUTHORITY`, `I-RC1-NOT-ANCHOR`), proof programs (`P2-HOST`, `CAPPO-M1P2`, `VDB-MOBILITY-P1`, `POSTGRES-STALE-WRITER-P1`), and truth hierarchy policy.
 
-## Core Backend 4
-
-These are Tier 0 and receive the strictest gates:
-
-1. `veklom-byos-backend`
-2. `cappo-backend`
-3. `gnomledger`
-4. `lockerphycer`
-
-The ops command repo governs operations across these repos; it is not embedded in any one of them.
-
-## Nine-department team-of-teams
-
-The canonical departments are Command Desk, Poltergeist Platform, Production Truth, Release Control, Build & DevEx, Security & Secrets, Runtime Governance, Evidence & Ledger, and Edge Fleet & VNP Signals. Each is an independent Poltergeist project with `team.md`, tool-agnostic contracts, scripts, reports, and a `poltergeist.config.json`. `scripts/start-watch-teams.sh` starts one daemon per team, while `scripts/status-watch-teams.sh` aggregates state.
-
-Named people are persona anchors only. They do not imply employment, endorsement, or public affiliation.
-
-Before major work, complete `runbooks/toolbox-meeting.md` and create an explicit department handoff using `standards/interdepartment-message.schema.json`.
-
-## Founder panel
-
-Run `./scripts/start-panel.sh` from Git Bash, `powershell -ExecutionPolicy Bypass -File .\scripts\start-panel.ps1` from Windows PowerShell, or double-click `scripts/start-panel.cmd`. Then open `http://127.0.0.1:4173`. The private panel reads this repository's version, branch, commit, canonical team configs, reports, and change state. Its Command Desk message box appends approval-gated instructions to `reports/command-desk-inbox.jsonl` for the operating team to process.
-
-The actual department execution layer is `runner/runner.mjs`. Configure an approved model/API key and run `scripts/run-agent-mission.ps1`; without those credentials the runner refuses to execute and does not fabricate reports.
-
-Continuous operation is defined in `AUTONOMY_DOCTRINE.md` and started with `scripts/start-agent-watch.ps1`.
-
-## Veklom Ops MCP
-
-`mcp_server/` is the machine-facing operations and evidence plane. It is **not** a generic shell and it is **not** an unrestricted production administrator.
-
-Its authority model is:
-
-- **LOW** — autonomous when the capability is read-only or explicitly classified as safe.
-- **MEDIUM** — runtime-evaluated; autonomous only when guardrails prove the action safe, otherwise approval is required.
-- **HIGH** — explicit, one-time external approval is required.
-- **FORBIDDEN** — never executable, including with approval.
-
-Database writes, arbitrary shell, secret-value export, zero-trust bypass, fail-closed disablement, air-gap removal, destructive volume operations, and equivalent trust-boundary violations are forbidden capabilities rather than merely high-risk actions.
-
-See [`mcp_server/README.md`](./mcp_server/README.md) for the tool, credential, audit, Apps SDK, and deployment design.
-
-## Safe start
+## Quick Start
 
 ```bash
-./scripts/verify-repo-structure.sh
-./scripts/status-watch-teams.sh
+# Install dependencies
+npm install
+
+# Start development server on port 3000
+npm run dev
+
+# Build for production
+npm run build
+
+# Run TypeScript lint verification
+npm run lint
 ```
 
-To enable watchers, install Poltergeist and Watchman using the upstream instructions, then run `./scripts/start-watch-teams.sh`. Watchers do not gain production authority merely by running; all consequential operations remain subject to capability policy.
+## Operating Truth & Invariants
 
-## Scope boundary
-
-This repository can **observe, verify, diagnose, correct, deploy, and operate** when the requested action is inside an explicitly granted capability and passes the risk policy. It never grants standing unrestricted production access.
-
-The invariant is:
-
-`observe → classify → authorize → act within scope → verify → record evidence`
-
-When runtime facts are missing, risk classification fails toward approval. When an action violates a non-bypassable trust boundary, it is denied regardless of who requests it.
+- GitHub `main` is source truth.
+- Runtime is owned/local hardware + Docker + Cloudflare Tunnels, per [`CURRENT_ARCHITECTURE_LOCK.md`](./CURRENT_ARCHITECTURE_LOCK.md). Coolify, Hetzner and Vercel are retired.
+- CAPPO is the sole consequence authority.
+- GnomLedger / PGL is the evidence domain.
+- Local success is not production success.

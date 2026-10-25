@@ -1,0 +1,7 @@
+{
+  "name": "Veklom Ops Command",
+  "description": "Cross-repository operating control plane for Veklom's Poltergeist-powered DevOps teams, Core Backend 4, Veklom Gate Approver, and Capability OS continuum.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
