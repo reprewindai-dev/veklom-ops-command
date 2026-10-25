@@ -1,9 +1,18 @@
-import React from 'react';
-import { Shield, Cpu, Activity, FileText, KeyRound, Layers, AlertTriangle } from 'lucide-react';
+import { Shield, Cpu, Activity, FileText, KeyRound, Layers, AlertTriangle, Radio } from 'lucide-react';
+
+export type NavTab =
+  | 'cockpit'
+  | 'compilers'
+  | 'governance'
+  | 'hardware_ledger'
+  | 'toolbox'
+  | 'departments'
+  | 'gate'
+  | 'continuum';
 
 interface HeaderProps {
-  activeTab: 'cockpit' | 'toolbox' | 'departments' | 'gate' | 'continuum';
-  setActiveTab: (tab: 'cockpit' | 'toolbox' | 'departments' | 'gate' | 'continuum') => void;
+  activeTab: NavTab;
+  setActiveTab: (tab: NavTab) => void;
   version: string;
   branch: string;
   commit: string;
@@ -40,6 +49,9 @@ export const Header: React.FC<HeaderProps> = ({
                 Veklom Ops Command
                 <span className="text-xs font-mono font-normal text-[#8d9aaa] bg-[#121720] px-2 py-0.5 rounded border border-[#26303d]">
                   v{version}
+                </span>
+                <span className="text-[10px] font-mono font-bold text-[#66e3c4] bg-[#10241b] px-2 py-0.5 rounded border border-[#66e3c4]/30">
+                  mini : sovereign
                 </span>
               </h1>
             </div>
@@ -91,6 +103,42 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('compilers')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer ${
+              activeTab === 'compilers'
+                ? 'bg-[#121720] text-[#66e3c4] border border-[#26303d] shadow-sm'
+                : 'text-[#8d9aaa] hover:text-[#eef3f8] hover:bg-[#121720]/50'
+            }`}
+          >
+            <FileText className="w-4 h-4 text-[#66e3c4]" />
+            <span>Compilers (Mini & HRM)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('governance')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer ${
+              activeTab === 'governance'
+                ? 'bg-[#121720] text-[#66e3c4] border border-[#26303d] shadow-sm'
+                : 'text-[#8d9aaa] hover:text-[#eef3f8] hover:bg-[#121720]/50'
+            }`}
+          >
+            <Shield className="w-4 h-4 text-[#ffca6b]" />
+            <span>MCP Governance & Tiers</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('hardware_ledger')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer ${
+              activeTab === 'hardware_ledger'
+                ? 'bg-[#121720] text-[#66e3c4] border border-[#26303d] shadow-sm'
+                : 'text-[#8d9aaa] hover:text-[#eef3f8] hover:bg-[#121720]/50'
+            }`}
+          >
+            <Radio className="w-4 h-4 text-[#66e3c4]" />
+            <span>BLADE-HSM & vChip</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('toolbox')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer ${
               activeTab === 'toolbox'
@@ -135,10 +183,11 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Continuum & Architecture Lock</span>
+            <span>Continuum & Lock</span>
           </button>
         </nav>
       </div>
     </header>
   );
 };
+

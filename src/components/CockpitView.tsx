@@ -143,6 +143,60 @@ export const CockpitView: React.FC<CockpitViewProps> = ({
         </div>
       </section>
 
+      {/* Sovereign Compiler Spine Spotlight (Mini, EcobeEngine & ABIDE 2) */}
+      <section className="bg-[#121720]/90 border border-[#26303d] rounded-xl p-5 sm:p-6 shadow-md backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#26303d]/70 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#66e3c4]"></div>
+            <h2 className="text-base font-bold text-[#eef3f8]">
+              Sovereign Compiler Spine: <span className="text-[#66e3c4] font-mono">reprewindai-dev / mini</span>
+            </h2>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#10241b] border border-[#66e3c4]/30 text-[#66e3c4] font-mono">
+              M(s) ⊆ A_permitted
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href="#compilers"
+              className="text-xs font-mono text-[#66e3c4] hover:underline px-2.5 py-1 rounded bg-[#10151d] border border-[#26303d] flex items-center gap-1.5"
+            >
+              Open Compilers Workbench →
+            </a>
+          </div>
+        </div>
+
+        <p className="text-xs text-[#8d9aaa] mb-4 leading-relaxed font-mono">
+          Decouples probabilistic model reasoning from physical execution. Ingests candidate actions through a dual-path pre-execution compiler, routes through machine-facing MCP authority tiers, and commits all consequence receipts to GnomLedger.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+          <div className="p-3 bg-[#0e131b] rounded-lg border border-[#26303d] space-y-1">
+            <span className="text-[10px] text-[#8d9aaa] uppercase block">Fast-Path Filter</span>
+            <strong className="text-[#66e3c4] block">Zero Jailbreak Frame</strong>
+            <span className="text-[10px] text-[#8d9aaa]">Channel authority hierarchy</span>
+          </div>
+
+          <div className="p-3 bg-[#0e131b] rounded-lg border border-[#26303d] space-y-1">
+            <span className="text-[10px] text-[#8d9aaa] uppercase block">HRM Pre-Execution</span>
+            <strong className="text-[#66e3c4] block">AST Bound Guard</strong>
+            <span className="text-[10px] text-[#8d9aaa]">Path traversal &amp; bounds safe</span>
+          </div>
+
+          <div className="p-3 bg-[#0e131b] rounded-lg border border-[#26303d] space-y-1">
+            <span className="text-[10px] text-[#8d9aaa] uppercase block">ApexBlueprint v4.02</span>
+            <strong className="text-[#66e3c4] block">11/11 Conformance</strong>
+            <span className="text-[10px] text-[#8d9aaa]">Canonical ports 8001-8095</span>
+          </div>
+
+          <div className="p-3 bg-[#0e131b] rounded-lg border border-[#26303d] space-y-1">
+            <span className="text-[10px] text-[#8d9aaa] uppercase block">ABIDE 2 Contract</span>
+            <strong className="text-[#66e3c4] block">6-Step Topology</strong>
+            <span className="text-[10px] text-[#8d9aaa]">CAPPO Consequence Bound</span>
+          </div>
+        </div>
+      </section>
+
       {/* 2. Active Toolbox Meeting */}
       <section className="bg-[#121720]/90 border border-[#26303d] rounded-xl p-5 sm:p-6 shadow-md backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#26303d]/70 mb-4">

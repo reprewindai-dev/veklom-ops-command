@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
+import { Header, NavTab } from './components/Header';
 import { CockpitView } from './components/CockpitView';
+import { CompilersView } from './components/CompilersView';
+import { GovernanceView } from './components/GovernanceView';
+import { HardwareLedgerView } from './components/HardwareLedgerView';
 import { ToolboxView } from './components/ToolboxView';
 import { DepartmentsView } from './components/DepartmentsView';
 import { GateApproverView } from './components/GateApproverView';
@@ -18,7 +21,7 @@ import {
 import { CommandMessage, GateApprovalRequest, ToolboxMeeting } from './types';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'cockpit' | 'toolbox' | 'departments' | 'gate' | 'continuum'>('cockpit');
+  const [activeTab, setActiveTab] = useState<NavTab>('cockpit');
   const [activeMission, setActiveMission] = useState<ToolboxMeeting>(initialToolboxMeetings[0]);
 
   // Messages with local storage persistence
@@ -39,7 +42,7 @@ export function App() {
   const [modalData, setModalData] = useState<unknown>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  // Listen to hash changes if someone navigates with `#gate` or approval link `#r=...`
+  // Listen to hash changes if someone navigates with `#gate`, `#compilers`, etc.
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash;
@@ -47,6 +50,12 @@ export function App() {
         setActiveTab('gate');
       } else if (hash === '#gate') {
         setActiveTab('gate');
+      } else if (hash === '#compilers') {
+        setActiveTab('compilers');
+      } else if (hash === '#governance') {
+        setActiveTab('governance');
+      } else if (hash === '#hardware_ledger') {
+        setActiveTab('hardware_ledger');
       } else if (hash === '#toolbox') {
         setActiveTab('toolbox');
       } else if (hash === '#departments') {
@@ -140,6 +149,18 @@ export function App() {
             onOpenReport={handleOpenReport}
             onInitiateGateApproval={handleInitiateGateApproval}
           />
+        )}
+
+        {activeTab === 'compilers' && (
+          <CompilersView />
+        )}
+
+        {activeTab === 'governance' && (
+          <GovernanceView />
+        )}
+
+        {activeTab === 'hardware_ledger' && (
+          <HardwareLedgerView />
         )}
 
         {activeTab === 'toolbox' && (
