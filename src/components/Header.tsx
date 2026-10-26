@@ -1,6 +1,7 @@
 import { Shield, Cpu, Activity, FileText, KeyRound, Layers, AlertTriangle, Radio } from 'lucide-react';
 
 export type NavTab =
+  | 'antigravity_ide'
   | 'cockpit'
   | 'compilers'
   | 'governance'
@@ -85,6 +86,18 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Navigation Tabs */}
         <nav className="flex items-center gap-1 sm:gap-2 mt-4 -mb-3 overflow-x-auto pb-2 scrollbar-none border-t border-[#26303d]/40 pt-2 text-xs sm:text-sm font-medium">
+          <button
+            onClick={() => setActiveTab('antigravity_ide')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer ${
+              activeTab === 'antigravity_ide'
+                ? 'bg-[#151c27] text-[#66e3c4] border border-[#66e3c4] shadow-sm font-bold'
+                : 'text-[#8d9aaa] hover:text-[#eef3f8] hover:bg-[#121720]/50'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-[#66e3c4] animate-pulse"></span>
+            <span>Capability Studio (Sovereign IDE)</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('cockpit')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer ${

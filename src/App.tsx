@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header, NavTab } from './components/Header';
+import { AntigravityDesktopIde } from './components/antigravity/AntigravityDesktopIde';
 import { CockpitView } from './components/CockpitView';
 import { CompilersView } from './components/CompilersView';
 import { GovernanceView } from './components/GovernanceView';
@@ -8,6 +8,7 @@ import { ToolboxView } from './components/ToolboxView';
 import { DepartmentsView } from './components/DepartmentsView';
 import { GateApproverView } from './components/GateApproverView';
 import { ContinuumView } from './components/ContinuumView';
+import { Header, NavTab } from './components/Header';
 import { ReportModal } from './components/ReportModal';
 import {
   initialCoreBackend4,
@@ -21,7 +22,7 @@ import {
 import { CommandMessage, GateApprovalRequest, ToolboxMeeting } from './types';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<NavTab>('cockpit');
+  const [activeTab, setActiveTab] = useState<NavTab>('antigravity_ide');
   const [activeMission, setActiveMission] = useState<ToolboxMeeting>(initialToolboxMeetings[0]);
 
   // Messages with local storage persistence
@@ -50,6 +51,10 @@ export function App() {
         setActiveTab('gate');
       } else if (hash === '#gate') {
         setActiveTab('gate');
+      } else if (hash === '#ide' || hash === '#antigravity' || hash === '#antigravity_ide' || !hash) {
+        setActiveTab('antigravity_ide');
+      } else if (hash === '#cockpit') {
+        setActiveTab('cockpit');
       } else if (hash === '#compilers') {
         setActiveTab('compilers');
       } else if (hash === '#governance') {
@@ -119,6 +124,27 @@ export function App() {
 
   const queuedCount = messages.filter((m) => m.status === 'queued').length;
 
+  // Primary Experience: When on 'antigravity_ide', render the full-bleed Antigravity Desktop IDE
+  if (activeTab === 'antigravity_ide') {
+    return (
+      <div className="relative w-screen h-screen overflow-hidden">
+        <AntigravityDesktopIde />
+        
+        {/* Discreet bottom-left toggle to access Command Ops Cockpit if desired */}
+        <div className="fixed bottom-2 left-2 z-30">
+          <button
+            onClick={() => setActiveTab('cockpit')}
+            className="opacity-20 hover:opacity-100 transition-opacity px-2 py-1 bg-[#1a1e26] border border-[#2d3545] text-[10px] font-mono text-[#8b949e] hover:text-[#66e3c4] rounded shadow-lg"
+            title="Switch to Ops Command Cockpit"
+          >
+            Switch to Ops Matrix
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Secondary/Admin View: Full Ops Command Cockpit and Continuum
   return (
     <div className="min-h-screen flex flex-col bg-[#0b0e13]">
       <Header
@@ -151,17 +177,11 @@ export function App() {
           />
         )}
 
-        {activeTab === 'compilers' && (
-          <CompilersView />
-        )}
+        {activeTab === 'compilers' && <CompilersView />}
 
-        {activeTab === 'governance' && (
-          <GovernanceView />
-        )}
+        {activeTab === 'governance' && <GovernanceView />}
 
-        {activeTab === 'hardware_ledger' && (
-          <HardwareLedgerView />
-        )}
+        {activeTab === 'hardware_ledger' && <HardwareLedgerView />}
 
         {activeTab === 'toolbox' && (
           <ToolboxView
@@ -193,22 +213,11 @@ export function App() {
         )}
       </main>
 
-      <footer className="border-t border-[#26303d] py-4 px-7 bg-[#0b0e13] text-xs font-mono text-[#8d9aaa] flex flex-col sm:flex-row items-center justify-between gap-2 mt-auto">
-        <div>
-          Veklom Ops Command · Poltergeist DevOps & Capability OS Control Plane
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[#66e3c4]">Sole Consequence Authority: CAPPO</span>
-          <span>·</span>
-          <span>Evidence: GnomLedger / PGL</span>
-        </div>
-      </footer>
-
       <ReportModal
-        title={modalTitle}
-        data={modalData}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        title={modalTitle}
+        data={modalData}
       />
     </div>
   );

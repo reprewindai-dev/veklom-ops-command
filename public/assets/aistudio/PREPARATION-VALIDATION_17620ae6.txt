@@ -1,0 +1,224 @@
+PowerShell parser/runtime: NOT AVAILABLE; not executed.
+Node isolated resolver baseline:
+TAP version 13
+# Subtest: posix: exact mount
+ok 1 - posix: exact mount
+  ---
+  duration_ms: 2.31306
+  ...
+# Subtest: posix: removed mount rejects
+not ok 2 - posix: removed mount rejects
+  ---
+  duration_ms: 1.497877
+  location: '/tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:16:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:16:53)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: posix: reorder preserves binding
+ok 3 - posix: reorder preserves binding
+  ---
+  duration_ms: 0.717797
+  ...
+# Subtest: posix: empty roots reject
+ok 4 - posix: empty roots reject
+  ---
+  duration_ms: 0.999801
+  ...
+# Subtest: posix: undefined roots reject
+ok 5 - posix: undefined roots reject
+  ---
+  duration_ms: 0.737223
+  ...
+# Subtest: posix: replacement identity rejects
+not ok 6 - posix: replacement identity rejects
+  ---
+  duration_ms: 0.796061
+  location: '/tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:20:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:20:60)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: posix: traversal rejects
+ok 7 - posix: traversal rejects
+  ---
+  duration_ms: 1.120205
+  ...
+# Subtest: windows: exact mount
+ok 8 - windows: exact mount
+  ---
+  duration_ms: 1.055007
+  ...
+# Subtest: windows: removed mount rejects
+not ok 9 - windows: removed mount rejects
+  ---
+  duration_ms: 1.933735
+  location: '/tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:16:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:16:53)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: windows: reorder preserves binding
+ok 10 - windows: reorder preserves binding
+  ---
+  duration_ms: 0.845486
+  ...
+# Subtest: windows: empty roots reject
+ok 11 - windows: empty roots reject
+  ---
+  duration_ms: 0.7143
+  ...
+# Subtest: windows: undefined roots reject
+ok 12 - windows: undefined roots reject
+  ---
+  duration_ms: 0.661032
+  ...
+# Subtest: windows: replacement identity rejects
+not ok 13 - windows: replacement identity rejects
+  ---
+  duration_ms: 0.822035
+  location: '/tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:20:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/vek-win-node-check-3k8s4tst/scripts/workspace-binding.test.mjs:20:60)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: windows: traversal rejects
+ok 14 - windows: traversal rejects
+  ---
+  duration_ms: 0.768896
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 10
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 86.521446
+
+Node isolated resolver patched:
+TAP version 13
+# Subtest: posix: exact mount
+ok 1 - posix: exact mount
+  ---
+  duration_ms: 2.046868
+  ...
+# Subtest: posix: removed mount rejects
+ok 2 - posix: removed mount rejects
+  ---
+  duration_ms: 0.872676
+  ...
+# Subtest: posix: reorder preserves binding
+ok 3 - posix: reorder preserves binding
+  ---
+  duration_ms: 0.635242
+  ...
+# Subtest: posix: empty roots reject
+ok 4 - posix: empty roots reject
+  ---
+  duration_ms: 0.60325
+  ...
+# Subtest: posix: undefined roots reject
+ok 5 - posix: undefined roots reject
+  ---
+  duration_ms: 0.59496
+  ...
+# Subtest: posix: replacement identity rejects
+ok 6 - posix: replacement identity rejects
+  ---
+  duration_ms: 0.630502
+  ...
+# Subtest: posix: traversal rejects
+ok 7 - posix: traversal rejects
+  ---
+  duration_ms: 0.619131
+  ...
+# Subtest: windows: exact mount
+ok 8 - windows: exact mount
+  ---
+  duration_ms: 0.898625
+  ...
+# Subtest: windows: removed mount rejects
+ok 9 - windows: removed mount rejects
+  ---
+  duration_ms: 0.706421
+  ...
+# Subtest: windows: reorder preserves binding
+ok 10 - windows: reorder preserves binding
+  ---
+  duration_ms: 1.585176
+  ...
+# Subtest: windows: empty roots reject
+ok 11 - windows: empty roots reject
+  ---
+  duration_ms: 0.576083
+  ...
+# Subtest: windows: undefined roots reject
+ok 12 - windows: undefined roots reject
+  ---
+  duration_ms: 0.518302
+  ...
+# Subtest: windows: replacement identity rejects
+ok 13 - windows: replacement identity rejects
+  ---
+  duration_ms: 0.54524
+  ...
+# Subtest: windows: traversal rejects
+ok 14 - windows: traversal rejects
+  ---
+  duration_ms: 0.62368
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71.275956
